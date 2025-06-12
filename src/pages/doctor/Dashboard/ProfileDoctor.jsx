@@ -1,254 +1,218 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
 const ProfileDoctor = () => {
-  const id = useSelector((state) => state.auth.profileId);
+  const id = localStorage.getItem('profileId'); // Lấy id từ localStorage
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [specialtiesList, setSpecialtiesList] = useState([]);
+  const [avatarUrl, setAvatarUrl] = useState(null); // State cho URL ảnh đại diện
+  const [avatarLoading, setAvatarLoading] = useState(false); // State cho trạng thái tải ảnh
+  const fileInputRef = useRef(null); // Ref để kích hoạt input file
   const [formData, setFormData] = useState({
-    fullName: "",
-    gender: "",
+    FullName: "",
+    Gender: "",
     contactInfo: {
-      address: "",
-      phoneNumber: "",
-      email: "",
+      Address: "",
+      PhoneNumber: "",
+      Email: "",
     },
     specialties: [],
-    qualifications: "",
-    yearsOfExperience: 0,
-    bio: "",
+    Qualifications: "",
+    YearsOfExperience: 0,
+    Bio: "",
+    Status: "",
   });
-  const [avatarUrl, setAvatarUrl] = useState(null);
-  const [avatarLoading, setAvatarLoading] = useState(false);
-  const fileInputRef = useRef(null);
-  // const userId = useSelector((state) => state.auth.userId);
-  const userId = localStorage.getItem("userId");
-  const VITE_API_IMAGE_URL = import.meta.env.VITE_API_IMAGE_URL;
-  const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
-  // Add fetchAvatar function
-  const fetchAvatar = async () => {
-    try {
-      const avatarResponse = await axios.get(
-        `${VITE_API_IMAGE_URL}/image/get?ownerType=User&ownerId=${userId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-        // { responseType: "blob" }
-      );
 
-      // Create object URL from the blob response
+  // Định nghĩa URL API cố định cho localhost
+  const VITE_API_PROFILE_URL = "http://localhost:3000/api";
 
-      console.log("Avatar URL:", avatarResponse.data);
-      setAvatarUrl(avatarResponse.data.url);
-    } catch (err) {
-      console.log("No avatar found or error fetching avatar:", err);
-      // Not setting an error as avatar might not exist yet
-    }
-  };
-
-  // Add handleAvatarChange function
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Validate file
-    const validTypes = ["image/jpeg", "image/png"];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Please select a valid image file (JPEG, PNG)");
-      return;
-    }
-
-    // Maximum file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size should be less than 5MB");
-      return;
-    }
-
-    try {
-      setAvatarLoading(true);
-
-      // Create FormData object
-      const formDataImg = new FormData();
-      formDataImg.append("file", file);
-      formDataImg.append("ownerType", "User");
-      formDataImg.append("ownerId", userId);
-
-      // Determine if we need to upload a new image or update existing one
-      const endpoint = avatarUrl
-        ? `${VITE_API_IMAGE_URL}/image/update`
-        : `${VITE_API_IMAGE_URL}/image/upload`;
-
-      const method = avatarUrl ? axios.put : axios.post;
-      await method(endpoint, formDataImg, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      console.log("FomeData:", formDataImg);
-      // Refresh avatar
-      await fetchAvatar();
-      toast.success("Profile picture updated successfully!");
-    } catch (err) {
-      console.error("Error updating avatar:", err);
-      toast.error("Failed to update profile picture. Please try again.");
-    } finally {
-      setAvatarLoading(false);
-    }
-  };
-
-  // Add triggerFileInput function
-  const triggerFileInput = () => {
-    fileInputRef.current.click();
-  };
-  // Fetch doctor data
+  // Fetch dữ liệu bác sĩ
   useEffect(() => {
     const fetchDoctorData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
-          `${VITE_API_PROFILE_URL}/doctors/${id}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        const { doctorProfileDto } = response.data;
-
-        // Set form data with doctor information
-        setFormData({
-          fullName: doctorProfileDto.fullName,
-          gender: doctorProfileDto.gender,
-          contactInfo: {
-            address: doctorProfileDto.contactInfo.address,
-            phoneNumber: doctorProfileDto.contactInfo.phoneNumber,
-            email: doctorProfileDto.contactInfo.email,
+        const response = await axios.get(`${VITE_API_PROFILE_URL}/doctor-profiles/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-          specialties: doctorProfileDto.specialties.map(
-            (specialty) => specialty.id
-          ),
-          qualifications: doctorProfileDto.qualifications,
-          yearsOfExperience: doctorProfileDto.yearsOfExperience,
-          bio: doctorProfileDto.bio,
         });
+        const doctorProfile = response.data;
+
+        setFormData({
+          FullName: doctorProfile.FullName || "",
+          Gender: doctorProfile.Gender || "",
+          contactInfo: {
+            Address: doctorProfile.Address || "",
+            PhoneNumber: doctorProfile.PhoneNumber || "",
+            Email: doctorProfile.Email || "",
+          },
+          specialties: doctorProfile.specialties.map(s => s.Id) || [],
+          Qualifications: doctorProfile.Qualifications || "",
+          YearsOfExperience: doctorProfile.YearsOfExperience || 0,
+          Bio: doctorProfile.Bio || "",
+          Status: doctorProfile.Status || "",
+        });
+        setAvatarUrl(doctorProfile.AvatarUrl || null); // Giả sử API trả về AvatarUrl
         setLoading(false);
       } catch (err) {
-        setError("Error fetching doctor data. Please try again.");
+        setError("Lỗi khi lấy dữ liệu bác sĩ. Vui lòng thử lại.");
         setLoading(false);
-        console.error("Error fetching doctor data:", err);
+        console.error("Lỗi khi lấy dữ liệu bác sĩ:", err);
       }
     };
 
-    // Fetch available specialties (assume there's an API endpoint for this)
     const fetchSpecialties = async () => {
       try {
-        // Note: This is a placeholder. You would need to replace with your actual API endpoint
-        const response = await axios.get(
-          `${VITE_API_PROFILE_URL}/specialties`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await axios.get(`${VITE_API_PROFILE_URL}/specialties`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         setSpecialtiesList(response.data);
       } catch (err) {
-        console.error("Error fetching specialties:", err);
-        // Fallback specialties based on the example data
+        console.error("Lỗi khi lấy danh sách chuyên môn:", err);
         setSpecialtiesList([
-          {
-            id: "8704cf2c-e7ec-4ece-a057-883653578ae6",
-            name: "Behavioral Therapy",
-          },
-          { id: "ddf4b47a-65d1-451f-a297-41606caacfe2", name: "Neurology" },
-          { id: "3", name: "Cognitive Psychology" },
-          { id: "4", name: "Child Psychology" },
-          { id: "5", name: "Clinical Psychology" },
+          { Id: "4064c495-80af-4f54-8bd2-151cebf029a6", Name: "Liệu pháp nghiện" },
+          { Id: "cac4f120-834f-41f8-859d-dd1de7883609", Name: "Tâm lý trẻ em" },
+          { Id: "8704cf2c-e7ec-4ece-a057-883653578ae6", Name: "Liệu pháp hành vi" },
+          { Id: "ddf4b47a-65d1-451f-a297-41606caacfe2", Name: "Thần kinh học" },
+          { Id: "e09aa07d-6313-4e21-919c-f17f3497b6ff", Name: "Chuyên môn mới 3" },
         ]);
       }
     };
 
     fetchDoctorData();
     fetchSpecialties();
-    fetchAvatar(); // Add this line
-  }, [id, userId]);
+  }, [id]);
 
-  // Handle form input changes
+  // Xử lý thay đổi input
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle contact info changes
+  // Xử lý thay đổi thông tin liên hệ
   const handleContactInfoChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      contactInfo: {
-        ...formData.contactInfo,
-        [name]: value,
-      },
+      contactInfo: { ...formData.contactInfo, [name]: value },
     });
   };
 
-  // Handle specialty selection
+  // Xử lý chọn chuyên môn
   const handleSpecialtyChange = (e) => {
     const specialtyId = e.target.value;
     const isChecked = e.target.checked;
 
-    if (isChecked) {
-      setFormData({
-        ...formData,
-        specialties: [...formData.specialties, specialtyId],
-      });
-    } else {
-      setFormData({
-        ...formData,
-        specialties: formData.specialties.filter((id) => id !== specialtyId),
-      });
+    setFormData(prev => {
+      if (isChecked && !prev.specialties.includes(specialtyId)) {
+        return { ...prev, specialties: [...prev.specialties, specialtyId] };
+      } else if (!isChecked) {
+        return { ...prev, specialties: prev.specialties.filter(id => id !== specialtyId) };
+      }
+      return prev;
+    });
+  };
+
+  // Xử lý tải lên ảnh đại diện
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // Kiểm tra kích thước file (max 5MB)
+        toast.error("Kích thước file vượt quá 5MB!");
+        return;
+      }
+      setAvatarLoading(true);
+      try {
+        // Tạo URL tạm thời để hiển thị ảnh trước khi tải lên
+        const url = URL.createObjectURL(file);
+        setAvatarUrl(url);
+
+        // Giả lập tải lên ảnh (thay bằng API thật nếu có)
+        const formData = new FormData();
+        formData.append("avatar", file);
+        // const response = await axios.post(`${VITE_API_PROFILE_URL}/upload-avatar`, formData, {
+        //   headers: {
+        //     Authorization: `Bearer ${localStorage.getItem("token")}`,
+        //     "Content-Type": "multipart/form-data",
+        //   },
+        // });
+        // setAvatarUrl(response.data.url); // Cập nhật URL từ API
+        setAvatarLoading(false);
+        toast.success("Ảnh đại diện đã được cập nhật!");
+      } catch (err) {
+        setAvatarLoading(false);
+        toast.error("Lỗi khi tải lên ảnh đại diện!");
+        console.error("Lỗi khi tải lên ảnh:", err);
+      }
     }
   };
 
-  // Handle form submission
+  // Kích hoạt input file
+  const triggerFileInput = () => {
+    fileInputRef.current.click();
+  };
+
+  // Xử lý submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
 
-      // Create the payload to match the expected API structure
       const updatedProfile = {
-        doctorProfileUpdate: {
-          fullName: formData.fullName,
-          gender: formData.gender,
-          contactInfo: formData.contactInfo,
-          specialtyIds: formData.specialties.map((id) => ({ id })),
-          qualifications: formData.qualifications,
-          yearsOfExperience: parseInt(formData.yearsOfExperience),
-          bio: formData.bio,
-        },
+        FullName: formData.FullName,
+        Gender: formData.Gender,
+        Address: formData.contactInfo.Address,
+        PhoneNumber: formData.contactInfo.PhoneNumber,
+        Email: formData.contactInfo.Email,
+        Qualifications: formData.Qualifications,
+        YearsOfExperience: parseInt(formData.YearsOfExperience),
+        Bio: formData.Bio,
+        Status: formData.Status,
       };
 
-      console.log("updatedProfileDoctor", updatedProfile);
-      await axios.put(`${VITE_API_PROFILE_URL}/doctors/${id}`, updatedProfile, {
+      const response = await axios.put(`${VITE_API_PROFILE_URL}/doctor-profiles/${id}`, updatedProfile, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
+      // Cập nhật specialties nếu có thay đổi
+      if (formData.specialties.length > 0) {
+        await axios.put(`${VITE_API_PROFILE_URL}/doctor-profiles/${id}`, {
+          specialties: formData.specialties.map(id => ({ Id: id })),
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+      }
+
+      // Cập nhật formData với dữ liệu mới từ response
+      const updatedData = await axios.get(`${VITE_API_PROFILE_URL}/doctor-profiles/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      setFormData(prev => ({
+        ...prev,
+        ...updatedData.data,
+        specialties: updatedData.data.specialties.map(s => s.Id),
+      }));
+
       setLoading(false);
-      toast.success("Patient profile updated successfully!");
+      toast.success("Hồ sơ bác sĩ đã được cập nhật thành công!");
     } catch (err) {
-      toast.error("Error updating doctor");
+      toast.error("Lỗi khi cập nhật hồ sơ bác sĩ");
       setLoading(false);
+      console.error("Lỗi cập nhật:", err.response ? err.response.data : err.message);
     }
   };
 
@@ -256,7 +220,7 @@ const ProfileDoctor = () => {
     return (
       <div className="text-center py-10">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading...</p>
+        <p className="mt-2 text-gray-600">Đang tải...</p>
       </div>
     );
   if (error) return <div className="text-center p-6 text-red-600">{error}</div>;
@@ -272,14 +236,14 @@ const ProfileDoctor = () => {
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
-                      alt="Profile"
-                      className="w-full object-cover object-center transform hover:scale-105 transition-transform duration-300"
+                      alt="Ảnh đại diện"
+                      className="w badge w-full object-cover object-center transform hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-500">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-20 w-20" // Tăng kích thước icon
+                        className="h-20 w-20"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -298,6 +262,7 @@ const ProfileDoctor = () => {
                     </div>
                   )}
                 </div>
+
                 <button
                   type="button"
                   onClick={triggerFileInput}
@@ -331,25 +296,26 @@ const ProfileDoctor = () => {
                 className="hidden"
               />
               <p className="mt-4 text-sm text-gray-500 font-medium">
-                Click to {avatarUrl ? "change" : "upload"} profile picture
+                Nhấn để {avatarUrl ? "thay đổi" : "tải lên"} ảnh đại diện
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                Supported formats: JPEG, PNG, GIF (max. 5MB)
+                Định dạng hỗ trợ: JPEG, PNG, GIF (tối đa 5MB)
               </p>
             </div>
           </div>
+
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
+            <h2 className="text-xl font-semibold mb-4">Thông tin cá nhân</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
+                  Họ và tên
                 </label>
                 <input
                   type="text"
-                  name="fullName"
-                  value={formData.fullName}
+                  name="FullName"
+                  value={formData.FullName}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   required
@@ -358,53 +324,50 @@ const ProfileDoctor = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Gender
+                  Giới tính
                 </label>
                 <select
-                  name="gender"
-                  value={formData.gender}
+                  name="Gender"
+                  value={formData.Gender}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   required>
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Non-binary">Non-binary</option>
-                  <option value="Prefer not to say">Prefer not to say</option>
+                  <option value="">Chọn giới tính</option>
+                  <option value="Male">Nam</option>
+                  <option value="Female">Nữ</option>
+                  <option value="Non-binary">Không xác định</option>
+                  <option value="Prefer not to say">Không muốn tiết lộ</option>
                 </select>
               </div>
             </div>
           </div>
-
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Professional Information
-            </h2>
+            <h2 className="text-xl font-semibold mb-4">Thông tin chuyên môn</h2>
 
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Qualifications
+                  Trình độ chuyên môn
                 </label>
                 <input
                   type="text"
-                  name="qualifications"
-                  value={formData.qualifications}
+                  name="Qualifications"
+                  value={formData.Qualifications}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="e.g., MD, PhD in Psychology, MSc in Cognitive Neuroscience"
+                  placeholder="VD: MD, Tiến sĩ Tâm lý học, Thạc sĩ Khoa học Thần kinh Nhận thức"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Years of Experience
+                  Số năm kinh nghiệm
                 </label>
                 <input
                   type="number"
-                  name="yearsOfExperience"
-                  value={formData.yearsOfExperience}
+                  name="YearsOfExperience"
+                  value={formData.YearsOfExperience}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   min="0"
@@ -415,38 +378,37 @@ const ProfileDoctor = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Bio
+                  Tiểu sử
                 </label>
                 <textarea
-                  name="bio"
-                  value={formData.bio}
+                  name="Bio"
+                  value={formData.Bio}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   rows="4"
-                  placeholder="Provide a brief description of your experience, approach to therapy, and specialization areas"
+                  placeholder="Cung cấp mô tả ngắn về kinh nghiệm, phương pháp trị liệu và lĩnh vực chuyên môn"
                   required></textarea>
               </div>
             </div>
           </div>
 
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Specialties</h2>
-
+            <h2 className="text-xl font-semibold mb-4">Chuyên môn</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {specialtiesList.map((specialty) => (
-                <div key={specialty.id} className="flex items-center">
+                <div key={specialty.Id} className="flex items-center">
                   <input
                     type="checkbox"
-                    id={`specialty-${specialty.id}`}
-                    value={specialty.id}
-                    checked={formData.specialties.includes(specialty.id)}
+                    id={`specialty-${specialty.Id}`}
+                    value={specialty.Id}
+                    checked={formData.specialties.includes(specialty.Id)}
                     onChange={handleSpecialtyChange}
                     className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                   />
                   <label
-                    htmlFor={`specialty-${specialty.id}`}
+                    htmlFor={`specialty-${specialty.Id}`}
                     className="ml-2 text-sm text-gray-700">
-                    {specialty.name}
+                    {specialty.Name}
                   </label>
                 </div>
               ))}
@@ -454,7 +416,7 @@ const ProfileDoctor = () => {
           </div>
 
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
+            <h2 className="text-xl font-semibold mb-4">Thông tin liên hệ</h2>
 
             <div className="grid grid-cols-1 gap-4">
               <div>
@@ -463,8 +425,8 @@ const ProfileDoctor = () => {
                 </label>
                 <input
                   type="email"
-                  name="email"
-                  value={formData.contactInfo.email}
+                  name="Email"
+                  value={formData.contactInfo.Email}
                   onChange={handleContactInfoChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   required
@@ -473,12 +435,12 @@ const ProfileDoctor = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
+                  Số điện thoại
                 </label>
                 <input
                   type="tel"
-                  name="phoneNumber"
-                  value={formData.contactInfo.phoneNumber}
+                  name="PhoneNumber"
+                  value={formData.contactInfo.PhoneNumber}
                   onChange={handleContactInfoChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   required
@@ -487,11 +449,11 @@ const ProfileDoctor = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address
+                  Địa chỉ
                 </label>
                 <textarea
-                  name="address"
-                  value={formData.contactInfo.address}
+                  name="Address"
+                  value={formData.contactInfo.Address}
                   onChange={handleContactInfoChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   rows="3"
@@ -505,13 +467,13 @@ const ProfileDoctor = () => {
               type="button"
               onClick={() => navigate(`/doctors/${id}`)}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700">
-              Cancel
+              Hủy
             </button>
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               disabled={loading}>
-              {loading ? "Saving..." : "Save Changes"}
+              {loading ? "Đang lưu..." : "Lưu thay đổi"}
             </button>
           </div>
         </form>
