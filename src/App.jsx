@@ -93,7 +93,7 @@ function App() {
           {/* Các route chính */}
           <Route path="/" element={<Intro />} />
           <Route path="regist" element={<Regist />} />
-          <Route path="verify-email" element={<VerifyDoctorEmail />} />
+          {/* <Route path="verify-email" element={<VerifyDoctorEmail />} /> */}
           <Route path="/EMO" element={<Home />}>
             <Route index element={<Navigate to="learnAboutEmo" replace />} />
             <Route path="learnAboutEmo" element={<LearnAboutEmo />} />
