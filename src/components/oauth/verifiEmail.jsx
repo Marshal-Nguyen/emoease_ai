@@ -39,7 +39,9 @@ const VerifyDoctorEmail = () => {
         const userId = payload.sub;
 
         // Gọi API để verify doctor email
-        await axios.post("/api/verify-doctor-email", { userId });
+        await axios.post("http://localhost:3000/api/verify-doctor-email", {
+          userId,
+        });
         setVerificationStatus("success");
 
         // Chuyển hướng sau 3 giây
