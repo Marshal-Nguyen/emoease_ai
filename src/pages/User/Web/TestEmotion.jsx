@@ -36,7 +36,7 @@ const TestEmotion = () => {
   });
   const [totalQuestions, setTotalQuestions] = useState(0);
   const patientId = useSelector((state) => state.auth.profileId);
-  const testId = "8fc88dbb-daee-4b17-9eca-de6cfe886097";
+  const testId = "093b2667-6fe8-4ab5-be07-a2e603fdaa66";
 
   const API_TEST = import.meta.env.VITE_API_TEST_URL; // Lấy API Test từ .env
   const API_KEY = import.meta.env.VITE_API_GPT_KEY; // Lấy API Key từ .env
@@ -47,11 +47,11 @@ const TestEmotion = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `${API_TEST}/test-questions/${testId}?pageSize=21`,
+          `http://localhost:3000/api/tests/${testId}/questions?pageIndex=1&pageSize=21`,
           {
             headers: {
-              // "Content-Type": "application/json",
-              Authorization: `Bearer ${YOUR_TOKEN}`,
+              "Content-Type": "application/json",
+              // Authorization: `Bearer ${YOUR_TOKEN}`,
             },
           }
         );
@@ -62,8 +62,9 @@ const TestEmotion = () => {
 
         const data = await response.json();
         const sortedQuestions = data.testQuestions.data.sort(
-          (a, b) => a.order - b.order
+          (a, b) => a.Order - b.Order
         );
+        console.log("Fetched questions:", sortedQuestions);
         setQuestions(sortedQuestions);
         setTotalQuestions(sortedQuestions.length);
         setLoading(false);
@@ -113,9 +114,9 @@ const TestEmotion = () => {
       ([index, selectedOption]) => {
         const question = questions[parseInt(index)];
         const selectedOptionObj = question.options.find(
-          (opt) => opt.content === selectedOption
+          (opt) => opt.Content === selectedOption
         );
-        return selectedOptionObj.id;
+        return selectedOptionObj.Id;
       }
     );
 
@@ -129,7 +130,7 @@ const TestEmotion = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${YOUR_TOKEN}`,
+        // Authorization: `Bearer ${YOUR_TOKEN}`,
       },
       body: JSON.stringify(payload),
     })
@@ -139,7 +140,7 @@ const TestEmotion = () => {
         return fetch(`${API_TEST}/test-result/${data.testResultId}`, {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${YOUR_TOKEN}`,
+            // Authorization: `Bearer ${YOUR_TOKEN}`,
           },
         });
       })
@@ -163,10 +164,10 @@ const TestEmotion = () => {
               messages: [
                 {
                   role: "system",
-                  content:
+                  Content:
                     "Bạn là một chuyên gia tâm lý, hãy chẩn đoán dựa trên điểm số DASS-21 và đưa ra lời khuyên cụ thể.Dịch ra tiếng anh",
                 },
-                { role: "user", content: prompt },
+                { role: "user", Content: prompt },
               ],
               max_tokens: 300,
             },
@@ -179,7 +180,7 @@ const TestEmotion = () => {
           )
           .then((chatGptResponse) => {
             const chatGptReply =
-              chatGptResponse.data.choices[0].message.content;
+              chatGptResponse.data.choices[0].message.Content;
             setRecommend(chatGptReply); // Cập nhật recommendation từ ChatGPT
           })
           .catch((error) => {
@@ -245,7 +246,7 @@ const TestEmotion = () => {
                     },
                   }}
                   className="text-2xl font-semibold mb-8 p-5 text-center italic">
-                  {currentQuestionIndex + 1}. {currentQuestion.content}
+                  {currentQuestionIndex + 1}. {currentQuestion.Content}
                 </motion.p>
                 <motion.div
                   className="flex flex-col w-full space-y-4 px-6"
@@ -277,15 +278,15 @@ const TestEmotion = () => {
                         scale: 0.98,
                         transition: { duration: 0.1 },
                       }}
-                      onClick={() => handleOptionChange(option.content)}
+                      onClick={() => handleOptionChange(option.Content)}
                       className={`p-4 rounded-lg transition-all duration-300 ${
-                        answers[currentQuestionIndex] === option.content
-                          ? `${colorMap[option.content]} ${
-                              textColorMap[option.content]
+                        answers[currentQuestionIndex] === option.Content
+                          ? `${colorMap[option.Content]} ${
+                              textColorMap[option.Content]
                             } scale-105 shadow-md`
                           : "bg-gray-100 hover:bg-gray-200 text-gray-800"
                       }`}>
-                      {option.content}
+                      {option.Content}
                     </motion.button>
                   ))}
                 </motion.div>

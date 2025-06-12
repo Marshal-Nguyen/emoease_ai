@@ -84,6 +84,7 @@ import Chat from "./components/Chatbox/Chat";
 import PatientBooking from "./pages/doctor/Dashboard/PatientBooking";
 import Shopping from "./pages/User/Dashboard/Shopping";
 import OAuthCallback from "./components/oauth/callback";
+import VerifyDoctorEmail from "./components/oauth/verifiEmail";
 function App() {
   return (
     <>
@@ -92,6 +93,7 @@ function App() {
           {/* Các route chính */}
           <Route path="/" element={<Intro />} />
           <Route path="regist" element={<Regist />} />
+          <Route path="/verify-email" element={<VerifyDoctorEmail />} />
           <Route path="/EMO" element={<Home />}>
             <Route index element={<Navigate to="learnAboutEmo" replace />} />
             <Route path="learnAboutEmo" element={<LearnAboutEmo />} />
