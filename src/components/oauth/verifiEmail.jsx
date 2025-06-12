@@ -44,7 +44,7 @@ const VerifyDoctorEmail = () => {
 
         // Chuyển hướng sau 3 giây
         setTimeout(() => {
-          navigate("/login");
+          navigate("/EMO");
         }, 3000);
       } catch (error) {
         console.error("Error verifying email:", error);
