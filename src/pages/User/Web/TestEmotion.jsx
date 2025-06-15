@@ -126,7 +126,7 @@ const TestEmotion = () => {
       selectedOptionIds: selectedOptionIds,
     };
 
-    fetch(`${API_TEST}/test-results`, {
+    fetch(`http://localhost:3000/api/tests/test-results`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -137,12 +137,15 @@ const TestEmotion = () => {
       .then((response) => response.json())
       .then((data) => {
         console.log("Submission successful:", data.testResultId);
-        return fetch(`${API_TEST}/test-result/${data.testResultId}`, {
-          headers: {
-            "Content-Type": "application/json",
-            // Authorization: `Bearer ${YOUR_TOKEN}`,
-          },
-        });
+        return fetch(
+          `http://localhost:3000/api/tests/test-result/${data.testResultId}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              // Authorization: `Bearer ${YOUR_TOKEN}`,
+            },
+          }
+        );
       })
       .then((response) => response.json())
       .then((resultData) => {
@@ -164,10 +167,10 @@ const TestEmotion = () => {
               messages: [
                 {
                   role: "system",
-                  Content:
+                  content:
                     "Bạn là một chuyên gia tâm lý, hãy chẩn đoán dựa trên điểm số DASS-21 và đưa ra lời khuyên cụ thể.Dịch ra tiếng anh",
                 },
-                { role: "user", Content: prompt },
+                { role: "user", content: prompt },
               ],
               max_tokens: 300,
             },
@@ -180,7 +183,7 @@ const TestEmotion = () => {
           )
           .then((chatGptResponse) => {
             const chatGptReply =
-              chatGptResponse.data.choices[0].message.Content;
+              chatGptResponse.data.choices[0].message.content;
             setRecommend(chatGptReply); // Cập nhật recommendation từ ChatGPT
           })
           .catch((error) => {
