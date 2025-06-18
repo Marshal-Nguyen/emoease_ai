@@ -1,156 +1,133 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  HubConnectionBuilder,
-  HttpTransportType,
-  HubConnectionState,
-} from "@microsoft/signalr";
 import { MessageCircle, User, Send, Circle } from "lucide-react";
+import supabase from "../../Supabase/supabaseClient";
 
 const Chat = () => {
-  const [connection, setConnection] = useState(null);
   const [messages, setMessages] = useState([]);
   const [users, setUsers] = useState([]);
   const [messageInput, setMessageInput] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
-  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("userRole");
   const userId = localStorage.getItem("userId");
-  const username = localStorage.getItem("username");
-  const VITE_API_CHAT_URL = import.meta.env.VITE_API_CHAT_URL;
-  useEffect(() => {
-    if (!token) {
-      console.error("No token found. Please log in.");
-      return;
-    }
+  const [myId, setMyId] = useState(null);
 
-    const connect = new HubConnectionBuilder()
-      .withUrl(`${VITE_API_CHAT_URL}/chatHub`, {
-        accessTokenFactory: () => token,
-        skipNegotiation: true,
-        transport: HttpTransportType.WebSockets,
-      })
-      .withAutomaticReconnect()
-      .build();
-
-    setConnection(connect);
-
-    return () => {
-      if (connect) connect.stop();
-    };
-  }, [token]);
-
-  useEffect(() => {
-    if (!connection) return;
-
-    const startConnection = async () => {
-      try {
-        await connection.start();
-        console.log("Connected to ChatHub");
-      } catch (err) {
-        console.error("Connection failed: ", err);
-      }
-    };
-
-    startConnection();
-  }, [connection]);
-
-  useEffect(() => {
-    if (!connection) return;
-
-    connection.on("Users", (users) => {
-      console.log("Users received:", users);
-      setUsers(users);
-    });
-
-    connection.on("ReceiveNewMessage", (message) => {
-      console.log("Received new message:", message);
-      console.log("Current userId:", userId);
-      setMessages((prev) => {
-        if (prev.some((msg) => msg.id === message.id)) return prev;
-        return [...prev, message];
-      });
-    });
-
-    connection.on("ReceiveMessageList", (messageList) => {
-      console.log("Received message list:", messageList);
-      console.log("Current userId:", userId);
-      setMessages(messageList);
-    });
-
-    connection.on("NotifyTypingToUser", (senderId) => {
-      console.log("Typing from:", senderId);
-      if (selectedUser && senderId === selectedUser.id) {
-        setIsTyping(true);
-        setTimeout(() => setIsTyping(false), 2000);
-      }
-    });
-
-    return () => {
-      connection.off("Users");
-      connection.off("ReceiveNewMessage");
-      connection.off("ReceiveMessageList");
-      connection.off("NotifyTypingToUser");
-    };
-  }, [connection, selectedUser]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const realtimeChannelRef = useRef(null);
 
   const sendMessage = async () => {
-    if (!connection || !selectedUser || !messageInput.trim()) return;
+    if (!messageInput.trim() || !selectedUser || !selectedUser.Id) return;
 
-    const message = {
-      receiverId: selectedUser.id,
-      senderId: userId,
+    const { error } = await supabase.from("ManageChat").insert({
+      senderid: myId,
+      receiverid: selectedUser.Id,
       content: messageInput,
+    });
+
+    if (!error) setMessageInput("");
+    else console.error("Send message error:", error);
+  };
+
+  const fetchMessages = async (selectedUserId) => {
+    const { data, error } = await supabase
+      .from("ManageChat")
+      .select("*")
+      .or(
+        `and(senderid.eq.${myId},receiverid.eq.${selectedUserId}),and(senderid.eq.${selectedUserId},receiverid.eq.${myId})`
+      )
+      .order("created_at", { ascending: true });
+
+    if (!error) setMessages(data);
+    else console.error("Error fetching messages:", error);
+  };
+
+  const loadMessages = async (id) => {
+    const selected = users.find((u) => u.Id === id);
+    if (!selected) return;
+    setSelectedUser(selected);
+    await fetchMessages(id);
+  };
+
+  useEffect(() => {
+    const fetchChatUsers = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:3000/api/chat-users/${userRole}/${localStorage.getItem(
+            "id"
+          )}`
+        );
+        const data = await res.json();
+        setUsers(data);
+      } catch (err) {
+        console.error("Fetch users error:", err);
+      }
     };
 
-    try {
-      await connection.invoke("SendMessage", message);
-      setMessageInput("");
+    fetchChatUsers();
+  }, [userRole]);
 
-      // Load lại tin nhắn ngay sau khi gửi thành công
-      const recipientId = selectedUser.id.toString();
-      await connection.invoke("LoadMessages", recipientId, 1);
-    } catch (err) {
-      console.error("Failed to send message: ", err);
+  useEffect(() => {
+    const fetchMyself = async () => {
+      const { data, error } = await supabase.auth.getUser();
+      if (data?.user) {
+        setMyId(data.user.id);
+        localStorage.setItem("id", data.user.id);
+      } else {
+        console.error("Could not get current user:", error);
+      }
+    };
+
+    fetchMyself();
+  }, [userRole, userId]);
+
+  useEffect(() => {
+    if (!selectedUser || !myId) return;
+
+    if (realtimeChannelRef.current) {
+      supabase.removeChannel(realtimeChannelRef.current);
+      realtimeChannelRef.current = null;
     }
-  };
 
-  const loadMessages = async (userId) => {
-    if (!connection) return;
+    const channel = supabase
+      .channel(`realtime-chat-${selectedUser.Id}-${myId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "ManageChat",
+        },
+        (payload) => {
+          const newMessage = payload.new;
+          const isCurrentChat =
+            (newMessage.senderid === myId &&
+              newMessage.receiverid === selectedUser.Id) ||
+            (newMessage.senderid === selectedUser.Id &&
+              newMessage.receiverid === myId);
 
-    const user = users.find((u) => u.id === userId);
-    if (!user) return;
+          if (isCurrentChat) {
+            setMessages((prev) => [...prev, newMessage]);
+          }
+        }
+      )
+      .subscribe();
 
-    setSelectedUser(user);
+    realtimeChannelRef.current = channel;
 
-    try {
-      const recipientId = userId.toString();
-      await connection.invoke("LoadMessages", recipientId, 1);
-    } catch (err) {
-      console.error("Failed to load messages: ", err);
-    }
-  };
+    return () => {
+      supabase.removeChannel(channel);
+      realtimeChannelRef.current = null;
+    };
+  }, [selectedUser, myId]);
 
-  const notifyTyping = async () => {
-    if (!connection || !selectedUser) return;
-
-    try {
-      await connection.invoke("NotifyTyping", selectedUser.id);
-    } catch (err) {
-      console.error("Failed to notify typing: ", err);
-    }
-  };
-
-  const scrollToBottom = () => {
+  // Tự động scroll xuống cuối khi có tin nhắn
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [messages]);
 
+  console.log("Sending message from", myId, "to", selectedUser?.Id);
+
+  console.log(users);
   return (
     <div className="flex h-screen bg-gray-100">
       <div className="w-1/4 bg-white border-r shadow-lg">
@@ -168,13 +145,14 @@ const Chat = () => {
             {users.length > 0 ? (
               users.map((user) => (
                 <div
-                  key={user.id}
-                  onClick={() => loadMessages(user.id)}
+                  key={user.Id}
+                  onClick={() => loadMessages(user.Id)}
                   className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
-                    selectedUser?.id === user.id
+                    selectedUser?.Id === user.Id
                       ? "bg-blue-100 text-blue-800"
                       : "hover:bg-gray-100"
-                  }`}>
+                  }`}
+                >
                   <User className="w-6 h-6 mr-3" />
                   <div className="flex-grow">
                     <p className="font-medium">{user.fullName}</p>
@@ -182,11 +160,6 @@ const Chat = () => {
                       {user.isOnline ? "Online" : "Offline"}
                     </p>
                   </div>
-                  {user.unreadCount > 0 && (
-                    <span className="bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
-                      {user.unreadCount}
-                    </span>
-                  )}
                 </div>
               ))
             ) : (
@@ -195,6 +168,7 @@ const Chat = () => {
           </div>
         </div>
       </div>
+
       {selectedUser ? (
         <div className="flex-grow flex flex-col">
           <div className="bg-white p-4 shadow-sm flex items-center">
@@ -208,9 +182,6 @@ const Chat = () => {
                   }`}
                 />
                 {selectedUser.isOnline ? "Online" : "Offline"}
-                {isTyping && (
-                  <span className="ml-2 text-xs italic">Typing...</span>
-                )}
               </div>
             </div>
           </div>
@@ -219,17 +190,19 @@ const Chat = () => {
               <div
                 key={msg.id}
                 className={`flex ${
-                  msg.senderId === userId ? "justify-end" : "justify-start"
-                }`}>
+                  msg.senderid === userId ? "justify-end" : "justify-start"
+                }`}
+              >
                 <div
                   className={`max-w-md p-3 rounded-lg ${
-                    msg.senderId === userId
+                    msg.senderid === userId
                       ? "bg-blue-500 text-white"
                       : "bg-white text-gray-800 shadow-sm"
-                  }`}>
+                  }`}
+                >
                   {msg.content}
                   <span className="block text-xs opacity-75 mt-1">
-                    {new Date(msg.createdDate).toLocaleTimeString()}
+                    {new Date(msg.created_at).toLocaleTimeString()}
                   </span>
                 </div>
               </div>
@@ -240,17 +213,15 @@ const Chat = () => {
             <input
               type="text"
               value={messageInput}
-              onChange={(e) => {
-                setMessageInput(e.target.value);
-                notifyTyping();
-              }}
+              onChange={(e) => setMessageInput(e.target.value)}
               placeholder="Type a message..."
               className="flex-grow p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               onKeyPress={(e) => e.key === "Enter" && sendMessage()}
             />
             <button
               onClick={sendMessage}
-              className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors">
+              className="bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors"
+            >
               <Send className="w-6 h-6" />
             </button>
           </div>
