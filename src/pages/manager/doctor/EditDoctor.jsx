@@ -26,7 +26,7 @@ const ProfileDoctor = () => {
     const fetchAvatar = async (doctorId) => {
         try {
             const avatarResponse = await axios.get(
-                `https://psychologysupport-image.azurewebsites.net/image/get?ownerType=User&ownerId=${doctorId}`
+                `https://anhtn.id.vn/image-service/image/get?ownerType=User&ownerId=${doctorId}`
             );
             setAvatarUrl(avatarResponse.data.url);
         } catch (err) {
@@ -57,8 +57,8 @@ const ProfileDoctor = () => {
             formDataImg.append("ownerId", id);
 
             const endpoint = avatarUrl
-                ? "https://psychologysupport-image.azurewebsites.net/image/update"
-                : "https://psychologysupport-image.azurewebsites.net/image/upload";
+                ? "https://anhtn.id.vn/image-service/image/update"
+                : "https://anhtn.id.vn/image-service/image/upload";
 
             const method = avatarUrl ? axios.put : axios.post;
             await method(endpoint, formDataImg, {
@@ -81,7 +81,7 @@ const ProfileDoctor = () => {
             try {
                 setLoading(true);
                 const response = await axios.get(
-                    `https://psychologysupport-profile.azurewebsites.net/doctors/${userId}`
+                    `https://anhtn.id.vn/profile-service/doctors/${userId}`
                 );
                 const { doctorProfileDto } = response.data;
                 const doctorId = doctorProfileDto.userId;
@@ -111,7 +111,7 @@ const ProfileDoctor = () => {
         const fetchSpecialties = async () => {
             try {
                 const response = await axios.get(
-                    "https://psychologysupport-profile.azurewebsites.net/specialties?PageIndex=1&PageSize=10"
+                    "https://anhtn.id.vn/profile-service/specialties?PageIndex=1&PageSize=10"
                 );
                 setSpecialtiesList(response.data.specialties);
             } catch (err) {
@@ -170,7 +170,7 @@ const ProfileDoctor = () => {
                 },
             };
             await axios.put(
-                `https://psychologysupport-profile.azurewebsites.net/doctors/${userId}`,
+                `https://anhtn.id.vn/profile-service/doctors/${userId}`,
                 updatedProfile
             );
             setLoading(false);

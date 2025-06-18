@@ -44,7 +44,7 @@ const HistoryBooking = () => {
         setError(null);
 
         try {
-            const url = `https://psychologysupport-scheduling.azurewebsites.net/bookings`;
+            const url = `https://anhtn.id.vn/scheduling-service/bookings`;
             const response = await axios.get(url, {
                 params: {
                     PageIndex: pageIndex,
@@ -88,7 +88,7 @@ const HistoryBooking = () => {
                 if (!doctorsData[doctorId]) {
                     try {
                         const response = await axios.get(
-                            `https://psychologysupport-profile.azurewebsites.net/doctors/${doctorId}`
+                            `https://anhtn.id.vn/profile-service/doctors/${doctorId}`
                         );
                         doctorsData[doctorId] = response.data.doctorProfileDto;
                     } catch (doctorErr) {
@@ -127,7 +127,7 @@ const HistoryBooking = () => {
 
         try {
             await axios.put(
-                `https://psychologysupport-scheduling.azurewebsites.net/bookings/${selectedBooking.bookingCode}/status`,
+                `https://anhtn.id.vn/scheduling-service/bookings/${selectedBooking.bookingCode}/status`,
                 {
                     status: "Cancelled",
                 }

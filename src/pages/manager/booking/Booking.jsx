@@ -8,9 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import { MdFilterList } from "react-icons/md";
 
-const BASE_API_URL = "https://psychologysupport-scheduling.azurewebsites.net/bookings";
-const PATIENT_API_URL = "https://psychologysupport-profile.azurewebsites.net/patients/";
-const DOCTOR_API_URL = "https://psychologysupport-profile.azurewebsites.net/doctors/";
+const BASE_API_URL = "https://anhtn.id.vn/scheduling-service/bookings";
+const PATIENT_API_URL = "https://anhtn.id.vn/profile-service/patients/";
+const DOCTOR_API_URL = "https://anhtn.id.vn/profile-service/doctors/";
 
 const BookingList = () => {
     const [bookings, setBookings] = useState([]);

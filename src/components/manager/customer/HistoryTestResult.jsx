@@ -13,7 +13,7 @@ const HistoryTestResult = () => {
             try {
                 setLoading(true);
                 const response = await fetch(
-                    `https://psychologysupport-test.azurewebsites.net/test-results/${id}?PageIndex=0&PageSize=10&SortBy=TakenAt&SortOrder=desc`
+                    `https://anhtn.id.vn/test-service/test-results/${id}?PageIndex=0&PageSize=10&SortBy=TakenAt&SortOrder=desc`
                 );
 
                 if (!response.ok) {

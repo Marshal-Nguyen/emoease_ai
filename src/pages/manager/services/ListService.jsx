@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import Loader from "../../../components/Web/Loader";
 import { useNavigate } from "react-router-dom";
 
-const BASE_API_URL = "https://psychologysupport-subscription.azurewebsites.net/service-packages";
+const BASE_API_URL = "https://anhtn.id.vn/subscription-service/service-packages";
 
 const ServicePackageList = () => {
     const [packages, setPackages] = useState([]);

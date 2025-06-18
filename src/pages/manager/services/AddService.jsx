@@ -28,7 +28,7 @@ const ServicePackageForm = () => {
 
         try {
             const response = await axios.post(
-                'https://psychologysupport-subscription.azurewebsites.net/service-packages',
+                'https://anhtn.id.vn/subscription-service/service-packages',
                 {
                     servicePackage: {
                         name: formData.name,

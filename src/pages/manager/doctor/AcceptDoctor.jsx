@@ -62,7 +62,7 @@ const DoctorManagement = () => {
             };
 
             const response = await axios.post(
-                'https://psychologysupport-profile.azurewebsites.net/doctor-profiles',
+                'https://anhtn.id.vn/profile-service/doctor-profiles',
                 doctorProfile
             );
 

@@ -7,8 +7,8 @@ import Loader from "../../../components/Web/Loader";
 import { useNavigate } from "react-router-dom";
 import { MdFilterList } from "react-icons/md";
 
-const BASE_API_URL = "https://psychologysupport-payment.azurewebsites.net/payments";
-const PATIENT_API_URL = "https://psychologysupport-profile.azurewebsites.net/patients";
+const BASE_API_URL = "https://anhtn.id.vn/payment-service/payments";
+const PATIENT_API_URL = "https://anhtn.id.vn/profile-service/patients";
 
 // Hàm định dạng ngày giờ
 const formatDateTime = (isoString) => {

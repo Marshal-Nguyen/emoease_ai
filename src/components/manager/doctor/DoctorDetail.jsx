@@ -25,7 +25,7 @@ const ProfileDoctor = () => {
     const fetchAvatar = async (doctorId) => {
         try {
             const avatarResponse = await axios.get(
-                `https://psychologysupport-image.azurewebsites.net/image/get?ownerType=User&ownerId=${doctorId}`
+                `https://anhtn.id.vn/image-service/image/get?ownerType=User&ownerId=${doctorId}`
             );
             setAvatarUrl(avatarResponse.data.url);
         } catch (err) {
@@ -36,7 +36,7 @@ const ProfileDoctor = () => {
     const fetchPatientName = async (patientId) => {
         try {
             const response = await axios.get(
-                `https://psychologysupport-profile.azurewebsites.net/patients/${patientId}`
+                `https://anhtn.id.vn/profile-service/patients/${patientId}`
             );
             return response.data.patientProfileDto.fullName;
         } catch (err) {
@@ -47,7 +47,7 @@ const ProfileDoctor = () => {
 
     const fetchBookings = async (doctorId, status) => {
         try {
-            let url = `https://psychologysupport-scheduling.azurewebsites.net/bookings?PageIndex=1&PageSize=30&DoctorId=${doctorId}`;
+            let url = `https://anhtn.id.vn/scheduling-service/bookings?PageIndex=1&PageSize=30&DoctorId=${doctorId}`;
             if (status !== "All") {
                 url += `&Status=${status}`;
             }
@@ -73,7 +73,7 @@ const ProfileDoctor = () => {
             try {
                 setLoading(true);
                 const response = await axios.get(
-                    `https://psychologysupport-profile.azurewebsites.net/doctors/${userId}`
+                    `https://anhtn.id.vn/profile-service/doctors/${userId}`
                 );
                 const { doctorProfileDto } = response.data;
                 const doctorId = doctorProfileDto.userId;
@@ -102,7 +102,7 @@ const ProfileDoctor = () => {
         const fetchSpecialties = async () => {
             try {
                 const response = await axios.get(
-                    "https://psychologysupport-profile.azurewebsites.net/specialties?PageIndex=1&PageSize=10"
+                    "https://anhtn.id.vn/profile-service/specialties?PageIndex=1&PageSize=10"
                 );
                 setSpecialtiesList(response.data.specialties);
             } catch (err) {

@@ -8,9 +8,9 @@ import { useNavigate } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import { MdFilterList } from "react-icons/md";
 
-const BASE_API_URL = "https://psychologysupport-profile.azurewebsites.net/patients";
-const IMAGE_API_URL = "https://psychologysupport-image.azurewebsites.net/image/get";
-const SUBSCRIPTION_API_URL = "https://psychologysupport-subscription.azurewebsites.net/service-packages";
+const BASE_API_URL = "https://anhtn.id.vn/profile-service/patients";
+const IMAGE_API_URL = "https://anhtn.id.vn/image-service/image/get";
+const SUBSCRIPTION_API_URL = "https://anhtn.id.vn/subscription-service/service-packages";
 
 const PsychologistList = () => {
   const [customers, setCustomers] = useState([]);
@@ -219,8 +219,8 @@ const PsychologistList = () => {
                     </td>
                     <td
                       className={`px-6 py-4 italic ${customer.personalityTraits === "Introversion"
-                          ? "text-blue-600"
-                          : "text-red-600"
+                        ? "text-blue-600"
+                        : "text-red-600"
                         }`}
                     >
                       {customer.personalityTraits}

@@ -23,34 +23,34 @@ const BookingDetail = () => {
             try {
                 // Fetch booking details
                 const bookingResponse = await axios.get(
-                    `https://psychologysupport-scheduling.azurewebsites.net/bookings/${id}`
+                    `https://anhtn.id.vn/scheduling-service/bookings/${id}`
                 );
                 const bookingData = bookingResponse.data.booking;
                 setBooking(bookingData);
 
                 // Fetch doctor details
                 const doctorResponse = await axios.get(
-                    `https://psychologysupport-profile.azurewebsites.net/doctors/${bookingData.doctorId}`
+                    `https://anhtn.id.vn/profile-service/doctors/${bookingData.doctorId}`
                 );
                 const doctorData = doctorResponse.data.doctorProfileDto;
                 setDoctor(doctorData);
 
                 // Fetch patient details
                 const patientResponse = await axios.get(
-                    `https://psychologysupport-profile.azurewebsites.net/patients/${bookingData.patientId}`
+                    `https://anhtn.id.vn/profile-service/patients/${bookingData.patientId}`
                 );
                 const patientData = patientResponse.data.patientProfileDto;
                 setPatient(patientData);
 
                 // Fetch doctor image
                 const doctorImageResponse = await axios.get(
-                    `https://psychologysupport-image.azurewebsites.net/image/get?ownerType=User&ownerId=${doctorData.userId}`
+                    `https://anhtn.id.vn/image-service/image/get?ownerType=User&ownerId=${doctorData.userId}`
                 );
                 setDoctorImage(doctorImageResponse.data.url);
 
                 // Fetch patient image
                 const patientImageResponse = await axios.get(
-                    `https://psychologysupport-image.azurewebsites.net/image/get?ownerType=User&ownerId=${patientData.userId}`
+                    `https://anhtn.id.vn/image-service/image/get?ownerType=User&ownerId=${patientData.userId}`
                 );
                 setPatientImage(patientImageResponse.data.url);
 

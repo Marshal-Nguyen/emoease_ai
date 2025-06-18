@@ -132,9 +132,13 @@ const LogIn = () => {
 
       const response = await axios.get(url);
       const packages = response.data.servicePackages.data;
-
+      console.log("Packages:", packages);
       // Kiểm tra xem có gói nào đã được mua không
-      return packages.some((pkg) => pkg.isPurchased === true);
+      const hasPurchased = packages.some(
+        (pkg) => pkg.purchaseStatus === "Purchased"
+      );
+      console.log("Purchased packages:", hasPurchased);
+      return hasPurchased;
     } catch (error) {
       console.error("Error checking purchased packages:", error);
       return false; // Trả về false nếu có lỗi

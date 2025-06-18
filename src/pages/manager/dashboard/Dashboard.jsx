@@ -202,38 +202,38 @@ export default function Dashboard() {
                 setLoading(true);
 
                 const [totalUsersData, usersData, doctorsData, productsData, subscriptionsData, bookingsData, topDoctorsData, dailyRevenueData] = await Promise.all([
-                    fetch("https://psychologysupport-profile.azurewebsites.net/patients?PageIndex=1&PageSize=10")
+                    fetch("https://anhtn.id.vn/profile-service/patients?PageIndex=1&PageSize=10")
                         .then(res => res.json())
                         .then(data => data.paginatedResult.totalCount.toLocaleString()),
 
                     Promise.all(["Male", "Female", "Else"].map(gender =>
-                        fetch(`https://psychologysupport-profile.azurewebsites.net/patients/total?startDate=${dates.start}&endDate=${dates.end}&gender=${gender}`)
+                        fetch(`https://anhtn.id.vn/profile-service/patients/total?startDate=${dates.start}&endDate=${dates.end}&gender=${gender}`)
                             .then(res => res.json())
                             .then(data => [gender.toLowerCase(), data.totalPatients.toLocaleString()])
                     )).then(Object.fromEntries),
 
-                    fetch("https://psychologysupport-profile.azurewebsites.net/doctors?PageIndex=1&PageSize=10")
+                    fetch("https://anhtn.id.vn/profile-service/doctors?PageIndex=1&PageSize=10")
                         .then(res => res.json()),
 
-                    fetch(`https://psychologysupport-subscription.azurewebsites.net/service-packages/total?startDate=${dates.start}&endDate=${dates.end}`)
+                    fetch(`https://anhtn.id.vn/subscription-service/service-packages/total?startDate=${dates.start}&endDate=${dates.end}`)
                         .then(res => res.json()),
 
                     Promise.all(["AwaitPayment", "Active", "Expired", "Cancelled"].map(status =>
-                        fetch(`https://psychologysupport-subscription.azurewebsites.net/user-subscriptions/total?startDate=${dates.start}&endDate=${dates.end}&status=${status}`)
+                        fetch(`https://anhtn.id.vn/subscription-service/user-subscriptions/total?startDate=${dates.start}&endDate=${dates.end}&status=${status}`)
                             .then(res => res.json())
                             .then(data => [status, data.totalCount.toLocaleString()])
                     )).then(Object.fromEntries),
 
                     Promise.all(["Completed", "AwaitMeeting", "Cancelled"].map(status =>
-                        fetch(`https://psychologysupport-scheduling.azurewebsites.net/bookings/count?StartDate=${dates.start}&EndDate=${dates.end}&BookingStatus=${status}`)
+                        fetch(`https://anhtn.id.vn/scheduling-service/bookings/count?StartDate=${dates.start}&EndDate=${dates.end}&BookingStatus=${status}`)
                             .then(res => res.json())
                             .then(data => [status, data.totalBookings.toLocaleString()])
                     )).then(Object.fromEntries),
 
-                    fetch(`https://psychologysupport-scheduling.azurewebsites.net/bookings/top-doctors?StartDate=${dates.start}&EndDate=${dates.end}`)
+                    fetch(`https://anhtn.id.vn/scheduling-service/bookings/top-doctors?StartDate=${dates.start}&EndDate=${dates.end}`)
                         .then(res => res.json()),
 
-                    fetch(`https://psychologysupport-payment.azurewebsites.net/payments/daily-revenue?startTime=${dates.start}&endTime=${dates.end}`)
+                    fetch(`https://anhtn.id.vn/payment-service/payments/daily-revenue?startTime=${dates.start}&endTime=${dates.end}`)
                         .then(res => res.json())
                 ]);
 

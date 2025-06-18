@@ -19,14 +19,14 @@ const CustomerDetail = () => {
         const fetchCustomer = async () => {
             try {
                 // Fetch patient profile
-                const response = await fetch(`https://psychologysupport-profile.azurewebsites.net/patients/${id}`);
+                const response = await fetch(`https://anhtn.id.vn/profile-service/patients/${id}`);
                 if (!response.ok) throw new Error("Failed to fetch patient data");
                 const data = await response.json();
                 setCustomer(data.patientProfileDto);
 
                 // Fetch profile image
                 const imageResponse = await fetch(
-                    `https://psychologysupport-image.azurewebsites.net/image/get?ownerType=User&ownerId=${data.patientProfileDto.userId}`
+                    `https://anhtn.id.vn/image-service/image/get?ownerType=User&ownerId=${data.patientProfileDto.userId}`
                 );
                 setProfileImage(
                     imageResponse.ok
@@ -36,7 +36,7 @@ const CustomerDetail = () => {
 
                 // Fetch purchased package
                 const subscriptionResponse = await fetch(
-                    `https://psychologysupport-subscription.azurewebsites.net/service-packages?PageIndex=1&PageSize=10&patientId=${id}`
+                    `https://anhtn.id.vn/subscription-service/service-packages?PageIndex=1&PageSize=10&patientId=${id}`
                 );
                 if (!subscriptionResponse.ok) throw new Error("Failed to fetch subscription data");
                 const subscriptionData = await subscriptionResponse.json();

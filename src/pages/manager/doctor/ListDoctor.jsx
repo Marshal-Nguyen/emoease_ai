@@ -8,8 +8,8 @@ import { motion } from "framer-motion";
 import Loader from "../../../components/Web/Loader";
 import { useNavigate } from "react-router-dom";
 
-const BASE_API_URL = "https://psychologysupport-profile.azurewebsites.net/doctors";
-const IMAGE_API_URL = "https://psychologysupport-image.azurewebsites.net/image/get";
+const BASE_API_URL = "https://anhtn.id.vn/profile-service/doctors";
+const IMAGE_API_URL = "https://anhtn.id.vn/image-service/image/get";
 
 const PsychologistList = () => {
     const [doctors, setDoctors] = useState([]);
