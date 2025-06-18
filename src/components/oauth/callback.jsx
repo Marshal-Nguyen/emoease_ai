@@ -37,6 +37,7 @@ const OAuthCallback = () => {
           );
 
           const { token, role, profileId, user_id } = res.data;
+          console.log("access_token:", access_token);
           console.log("token:", token);
           console.log("role:", role);
           console.log("profileId:", profileId);
@@ -57,7 +58,7 @@ const OAuthCallback = () => {
           // Then dispatch to Redux
           dispatch(
             setCredentials({
-              token,
+              token: access_token,
               role,
               profileId,
               user_id,

@@ -51,7 +51,7 @@ const TestEmotion = () => {
           {
             headers: {
               "Content-Type": "application/json",
-              // Authorization: `Bearer ${YOUR_TOKEN}`,
+              Authorization: `Bearer ${YOUR_TOKEN}`,
             },
           }
         );
@@ -130,7 +130,7 @@ const TestEmotion = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // Authorization: `Bearer ${YOUR_TOKEN}`,
+        Authorization: `Bearer ${YOUR_TOKEN}`,
       },
       body: JSON.stringify(payload),
     })
@@ -142,7 +142,7 @@ const TestEmotion = () => {
           {
             headers: {
               "Content-Type": "application/json",
-              // Authorization: `Bearer ${YOUR_TOKEN}`,
+              Authorization: `Bearer ${YOUR_TOKEN}`,
             },
           }
         );
@@ -213,130 +213,143 @@ const TestEmotion = () => {
   return (
     <div className="grid grid-cols-7 grid-rows-5 w-full min-h-[calc(100vh-110px)]">
       <div className="col-span-4 row-span-5 pl-5 p-5 h-full">
-        <div className="h-full flex flex-col">
-          {currentQuestion && (
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={currentQuestionIndex}
-                initial={{ opacity: 0, x: 50 }}
-                animate={{
-                  opacity: 1,
-                  x: 0,
-                  transition: {
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 30,
-                    duration: 0.5,
-                  },
-                }}
-                exit={{
-                  opacity: 0,
-                  x: -50,
-                  transition: {
-                    duration: 0.3,
-                  },
-                }}
-                className="flex flex-col items-center p-6 rounded-lg text-xl w-full">
-                <motion.p
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{
-                    y: 0,
-                    opacity: 1,
-                    transition: {
-                      delay: 0.2,
-                      duration: 0.4,
-                      ease: "easeOut",
-                    },
-                  }}
-                  className="text-2xl font-semibold mb-8 p-5 text-center italic">
-                  {currentQuestionIndex + 1}. {currentQuestion.Content}
-                </motion.p>
+        <div className="lg:col-span-3">
+          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8 h-full">
+            {!submitted ? (
+              <AnimatePresence mode="wait" initial={false}>
                 <motion.div
-                  className="flex flex-col w-full space-y-4 px-6"
-                  initial={{ opacity: 0 }}
-                  animate={{
-                    opacity: 1,
-                    transition: {
-                      staggerChildren: 0.1,
-                      delayChildren: 0.3,
-                    },
-                  }}>
-                  {currentQuestion.options.map((option) => (
-                    <motion.button
-                      key={option.id}
+                  key={currentQuestionIndex}
+                  initial={{ opacity: 0, x: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -20, scale: 0.95 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="h-full flex flex-col">
+                  <div className="flex-1 flex flex-col justify-center">
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.2, duration: 0.4 }}
+                      className="text-center mb-12">
+                      <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-full text-lg font-bold mb-6">
+                        {currentQuestionIndex + 1}
+                      </div>
+                      <h2 className="text-2xl lg:text-3xl font-semibold text-gray-800 leading-relaxed px-4">
+                        {currentQuestion?.Content}
+                      </h2>
+                    </motion.div>
+
+                    <motion.div
+                      className="space-y-4 max-w-2xl mx-auto w-full"
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                        transition: {
-                          duration: 0.4,
-                          ease: "easeOut",
-                        },
-                      }}
-                      whileHover={{
-                        scale: 1.02,
-                        transition: { duration: 0.2 },
-                      }}
-                      whileTap={{
-                        scale: 0.98,
-                        transition: { duration: 0.1 },
-                      }}
-                      onClick={() => handleOptionChange(option.Content)}
-                      className={`p-4 rounded-lg transition-all duration-300 ${
-                        answers[currentQuestionIndex] === option.Content
-                          ? `${colorMap[option.Content]} ${
-                              textColorMap[option.Content]
-                            } scale-105 shadow-md`
-                          : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                      }`}>
-                      {option.Content}
-                    </motion.button>
-                  ))}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4, staggerChildren: 0.1 }}>
+                      {currentQuestion?.options.map((option, index) => (
+                        <motion.button
+                          key={option.Id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 * index }}
+                          whileHover={{ scale: 1.02, y: -2 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleOptionChange(option.Content)}
+                          className={`w-full p-5 rounded-xl transition-all duration-300 text-left shadow-lg hover:shadow-xl border-2 ${
+                            answers[currentQuestionIndex] === option.Content
+                              ? `${
+                                  colorMap[option.Content]
+                                } text-white shadow-2xl transform scale-[1.02]`
+                              : "bg-white hover:bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300"
+                          }`}>
+                          <div className="flex items-center">
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 mr-4 transition-all ${
+                                answers[currentQuestionIndex] === option.Content
+                                  ? "bg-white border-white"
+                                  : "border-gray-300"
+                              }`}>
+                              {answers[currentQuestionIndex] ===
+                                option.Content && (
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="w-2 h-2 bg-current rounded-full m-0.5"
+                                />
+                              )}
+                            </div>
+                            <span className="font-medium">
+                              {option.Content}
+                            </span>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  </div>
+
+                  {/* Submit Button */}
+                  {isLastQuestion && (
+                    <motion.div
+                      className="mt-8 text-center"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.6 }}>
+                      <button
+                        onClick={handleSubmit}
+                        disabled={!answers[currentQuestionIndex]}
+                        className={`group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ${
+                          !answers[currentQuestionIndex]
+                            ? "opacity-50 cursor-not-allowed"
+                            : "hover:scale-105 active:scale-95"
+                        }`}>
+                        <span className="flex items-center">
+                          Submit Assessment
+                          <svg
+                            className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 7l5 5m0 0l-5 5m5-5H6"
+                            />
+                          </svg>
+                        </span>
+                      </button>
+                    </motion.div>
+                  )}
                 </motion.div>
+              </AnimatePresence>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="h-full flex flex-col items-center justify-center text-center">
+                <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mb-6">
+                  <svg
+                    className="w-10 h-10 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                  Assessment Complete!
+                </h2>
+                <p className="text-gray-600 text-lg mb-8">
+                  Your results are ready for review.
+                </p>
+                <button
+                  onClick={handleTestAgain}
+                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+                  Take Assessment Again
+                </button>
               </motion.div>
-            </AnimatePresence>
-          )}
-
-          <div className="mt-auto flex justify-center mb-6">
-            {isLastQuestion && !submitted && (
-              <button
-                onClick={handleSubmit}
-                disabled={!answers[currentQuestionIndex]}
-                className={`relative flex items-center justify-center py-4 px-8 text-black text-base font-bold rounded-full overflow-hidden bg-[#f6f3f8] transition-all duration-400 ease-in-out shadow-md hover:scale-105 hover:text-white hover:shadow-lg active:scale-90 before:absolute before:top-0 before:-left-full before:w-full before:h-full before:bg-gradient-to-r before:from-blue-500 before:to-blue-300 before:transition-all before:duration-500 before:ease-in-out before:z-[-1] before:rounded-xl hover:before:left-0 ${
-                  !answers[currentQuestionIndex]
-                    ? "opacity-60 cursor-not-allowed"
-                    : ""
-                }`}>
-                Submit
-                <svg
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="w-5 h-5 ml-2 -mr-1 transition duration-250 group-hover:translate-x-1">
-                  <path
-                    clipRule="evenodd"
-                    d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                    fillRule="evenodd"
-                  />
-                </svg>
-              </button>
-            )}
-
-            {submitted && (
-              <button
-                onClick={handleTestAgain}
-                className="relative flex items-center justify-center py-4 px-8 text-black text-base font-bold rounded-full overflow-hidden bg-[#f6f3f8] transition-all duration-400 ease-in-out shadow-md hover:scale-105 hover:text-white hover:shadow-lg active:scale-90 before:absolute before:top-0 before:-left-full before:w-full before:h-full before:bg-gradient-to-r before:from-blue-500 before:to-blue-300 before:transition-all before:duration-500 before:ease-in-out before:z-[-1] before:rounded-xl hover:before:left-0">
-                Try Again
-                <svg
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="w-5 h-5 ml-2 -mr-1 transition duration-250 group-hover:translate-x-1">
-                  <path
-                    clipRule="evenodd"
-                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                    fillRule="evenodd"
-                  />
-                </svg>
-              </button>
             )}
           </div>
         </div>

@@ -78,26 +78,8 @@ const LogIn = () => {
     } catch (err) {
       console.error("Login error:", err);
 
-      // Kiểm tra nếu lỗi là 401 (Unauthorized) thì thử refresh token
       if (err.response && err.response.status === 401) {
-        try {
-          const formRefreshToken = {
-            token: localStorage.getItem("token") || "",
-            refreshToken: localStorage.getItem("refresh_token") || "",
-          };
-
-          const refreshResponse = await axios.post(
-            `${API_AUTH}/Auth/refresh-token`,
-            formRefreshToken,
-            { headers: { "Content-Type": "application/json" } }
-          );
-
-          await handleAuthSuccess(refreshResponse.data);
-        } catch (refreshErr) {
-          console.error("Refresh token failed:", refreshErr);
-          toast.error("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
-          logout();
-        }
+        toast.error("Tài khoản hoặc mật khẩu sai");
       } else {
         toast.error("Lỗi đăng nhập, vui lòng thử lại!");
       }
@@ -107,13 +89,9 @@ const LogIn = () => {
   // ✅ Hàm lưu token và cập nhật state
   const handleAuthSuccess = async (data) => {
     try {
-      const token = data.token;
-      const decodedToken = jwtDecode(token);
-      const { role, user_id, profileId } = decodedToken;
+      const { token, refresh_token, role, user_id, profileId } = data;
 
-      console.log("Decoded token data:", { role, user_id, profileId }); // Debug log
-
-      // Set Redux state first
+      // Lưu Redux trước
       dispatch(
         setCredentials({
           token,
@@ -123,8 +101,9 @@ const LogIn = () => {
         })
       );
 
-      // Then set other states
-      // localStorage.setItem("isLoggedIn", "true");
+      // Lưu localStorage (nếu muốn)
+      localStorage.setItem("refresh_token", refresh_token);
+
       setIsLoggedIn(true);
       dispatch(closeLoginModal());
       fetchAvatar(user_id);
@@ -165,6 +144,7 @@ const LogIn = () => {
   const handleLogout = async () => {
     try {
       await auth.signOut();
+      localStorage.removeItem("refresh_token");
       dispatch(clearCredentials());
       setIsLoggedIn(false);
       setAvatarUrl(null); // Reset avatarUrl
