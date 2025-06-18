@@ -423,14 +423,7 @@ const ProfileDoctor = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email
                 </label>
-                <input
-                  type="email"
-                  name="Email"
-                  value={formData.contactInfo.Email}
-                  onChange={handleContactInfoChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required
-                />
+                <span className="px-3 py-2 text-gray-600">{formData.contactInfo.Email}</span>
               </div>
 
               <div>
@@ -463,12 +456,7 @@ const ProfileDoctor = () => {
           </div>
 
           <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={() => navigate(`/doctors/${id}`)}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700">
-              Hủy
-            </button>
+
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

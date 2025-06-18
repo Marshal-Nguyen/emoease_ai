@@ -1,45 +1,36 @@
 import axios from "axios";
-import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
-import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
-import PhysicalActivitiesRecommendation from "../../../components/Dashboard/Patient/PhysicalActivitiesRecommendation";
-import TherapeuticActivitiesRecommendation from "../../../components/Dashboard/Patient/TherapeuticActivitiesRecommendation";
 
-// Modified EditProfileForm to include avatar functionality
 const EditProfileForm = () => {
-  const profileId = useSelector((state) => state.auth.profileId);
-  const userId = localStorage.getItem("userId");
-  console.log("Test Profile", profileId);
-  console.log("Test User", userId);
+  const profileId = localStorage.getItem("profileId") || "123"; // Lấy profileId từ localStorage, fallback là "123"
+  const userId = localStorage.getItem("userId") || "456"; // Lấy userId từ localStorage, fallback là "456"
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("physical");
   const [avatarLoading, setAvatarLoading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState("https://via.placeholder.com/150"); // Default avatar
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
-    fullName: "",
-    gender: "",
-    allergies: "",
-    personalityTraits: "",
-    contactInfo: {
-      address: "",
-      phoneNumber: "",
-      email: "",
-    },
+    FullName: "",
+    Gender: "",
+    Allergies: "",
+    PersonalityTraits: "",
+    Address: "",
+    Email: "",
+    PhoneNumber: "",
     recommendedActivities: [],
   });
-  const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
-  const VITE_API_IMAGE_URL = import.meta.env.VITE_API_IMAGE_URL;
-  // Fetch patient data
+
+  // Fetch patient data from API
   useEffect(() => {
     const fetchPatientData = async () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${VITE_API_PROFILE_URL}/patients/${profileId}`,
+          `http://localhost:3000/api/patient-profiles/${profileId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -47,19 +38,17 @@ const EditProfileForm = () => {
             },
           }
         );
-        const { patientProfileDto } = response.data;
+        const patientProfileDto = response.data;
 
         // Set form data with patient information
         setFormData({
-          fullName: patientProfileDto.fullName,
-          gender: patientProfileDto.gender,
-          allergies: patientProfileDto.allergies,
-          personalityTraits: patientProfileDto.personalityTraits,
-          contactInfo: {
-            address: patientProfileDto.contactInfo.address,
-            phoneNumber: patientProfileDto.contactInfo.phoneNumber,
-            email: patientProfileDto.contactInfo.email,
-          },
+          FullName: patientProfileDto.FullName || "",
+          Gender: patientProfileDto.Gender || "",
+          Allergies: patientProfileDto.Allergies || "",
+          PersonalityTraits: patientProfileDto.PersonalityTraits || "",
+          Address: patientProfileDto.Address || "",
+          Email: patientProfileDto.Email || "",
+          PhoneNumber: patientProfileDto.PhoneNumber || "",
           recommendedActivities: patientProfileDto.recommendedActivities || [],
         });
         setLoading(false);
@@ -71,45 +60,19 @@ const EditProfileForm = () => {
     };
 
     fetchPatientData();
-    fetchAvatar();
   }, [profileId]);
 
-  // Fetch avatar image
-  const fetchAvatar = async () => {
-    try {
-      const avatarResponse = await axios.get(
-        `${VITE_API_IMAGE_URL}/image/get?ownerType=User&ownerId=${userId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      // Create object URL from the blob response
-
-      console.log("Avatar URL:", avatarResponse.data);
-      setAvatarUrl(avatarResponse.data.url);
-    } catch (err) {
-      console.log("No avatar found or error fetching avatar:", err);
-      // Not setting an error as avatar might not exist yet
-    }
-  };
-
-  // Handle uploading or updating avatar
+  // Handle uploading or updating avatar (giả lập vì không có API ảnh)
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file
     const validTypes = ["image/jpeg", "image/png"];
     if (!validTypes.includes(file.type)) {
       toast.error("Please select a valid image file (JPEG, PNG)");
       return;
     }
 
-    // Maximum file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image size should be less than 5MB");
       return;
@@ -117,28 +80,8 @@ const EditProfileForm = () => {
 
     try {
       setAvatarLoading(true);
-
-      // Create FormData object
-      const formDataImg = new FormData();
-      formDataImg.append("file", file);
-      formDataImg.append("ownerType", "User");
-      formDataImg.append("ownerId", userId);
-
-      // Determine if we need to upload a new image or update existing one
-      const endpoint = avatarUrl
-        ? `${VITE_API_IMAGE_URL}/image/update`
-        : `${VITE_API_IMAGE_URL}/image/upload`;
-
-      const method = avatarUrl ? axios.put : axios.post;
-      await method(endpoint, formDataImg, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      console.log("FomeData:", formDataImg);
-      // Refresh avatar
-      await fetchAvatar();
+      const fakeAvatarUrl = URL.createObjectURL(file); // Giả lập upload ảnh
+      setAvatarUrl(fakeAvatarUrl);
       toast.success("Profile picture updated successfully!");
     } catch (err) {
       console.error("Error updating avatar:", err);
@@ -159,27 +102,7 @@ const EditProfileForm = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle contact info changes
-  const handleContactInfoChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      contactInfo: {
-        ...formData.contactInfo,
-        [name]: value,
-      },
-    });
-  };
-
-  // Handle selected activities
-  const handleActivitiesSelected = (activities) => {
-    setFormData({
-      ...formData,
-      recommendedActivities: activities,
-    });
-  };
-
-  // Handle form submission
+  // Handle form submission to update profile
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -187,17 +110,17 @@ const EditProfileForm = () => {
 
       // Create the payload to match the expected API structure
       const updatedProfile = {
-        patientProfileUpdate: {
-          fullName: formData.fullName,
-          gender: formData.gender,
-          allergies: formData.allergies,
-          personalityTraits: formData.personalityTraits,
-          contactInfo: formData.contactInfo,
-        },
+        FullName: formData.FullName,
+        Gender: formData.Gender,
+        Allergies: formData.Allergies,
+        PersonalityTraits: formData.PersonalityTraits,
+        Address: formData.Address,
+        Email: formData.Email,
+        PhoneNumber: formData.PhoneNumber,
       };
 
       await axios.put(
-        `${VITE_API_PROFILE_URL}/patients/${profileId}`,
+        `http://localhost:3000/api/patient-profiles/${profileId}`,
         updatedProfile,
         {
           headers: {
@@ -230,12 +153,9 @@ const EditProfileForm = () => {
       <div className="h-full overflow-y-auto p-2">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Section */}
-
           <div className="bg-white shadow-md rounded-lg p-6">
-            {/* <h2 className="text-xl font-semibold mb-4">Profile Picture</h2> */}
             <div className="flex flex-col items-center">
               <div className="relative">
-                {/* Tăng kích thước và thêm styles cho container */}
                 <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-200 border-4 border-purple-200 shadow-lg">
                   {avatarUrl ? (
                     <img
@@ -247,10 +167,11 @@ const EditProfileForm = () => {
                     <div className="w-full h-full flex items-center justify-center text-gray-500">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-20 w-20" // Tăng kích thước icon
+                        className="h-20 w-20"
                         fill="none"
                         viewBox="0 0 24 24"
-                        stroke="currentColor">
+                        stroke="currentColor"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -266,17 +187,18 @@ const EditProfileForm = () => {
                     </div>
                   )}
                 </div>
-                {/* Điều chỉnh vị trí và kích thước nút upload */}
                 <button
                   type="button"
                   onClick={triggerFileInput}
-                  className="absolute bottom-2 right-2 bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700 focus:outline-none transform hover:scale-110 transition-transform duration-200">
+                  className="absolute bottom-2 right-2 bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700 focus:outline-none transform hover:scale-110 transition-transform duration-200"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-6 w-6"
                     fill="none"
                     viewBox="0 0 24 24"
-                    stroke="currentColor">
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -309,7 +231,6 @@ const EditProfileForm = () => {
           </div>
           <div className="bg-white shadow-md rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Personal Information</h2>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -317,24 +238,24 @@ const EditProfileForm = () => {
                 </label>
                 <input
                   type="text"
-                  name="fullName"
-                  value={formData.fullName}
+                  name="FullName"
+                  value={formData.FullName}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   required
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Gender
                 </label>
                 <select
-                  name="gender"
-                  value={formData.gender}
+                  name="Gender"
+                  value={formData.Gender}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required>
+                  required
+                >
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
@@ -345,18 +266,57 @@ const EditProfileForm = () => {
             </div>
           </div>
           <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email:
+                </label>
+                <p className="px-3 py-2  mt-1">
+                  {formData.Email}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number:
+                </label>
+                <input
+                  type="tel"
+                  name="PhoneNumber"
+                  value={formData.PhoneNumber}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address:
+                </label>
+                <textarea
+                  name="Address"
+                  value={formData.Address}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  rows="3"
+                  required
+                ></textarea>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white shadow-md rounded-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Psychology Profile</h2>
-
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Personality Traits
                 </label>
                 <select
-                  name="personalityTraits"
-                  value={formData.personalityTraits}
+                  name="PersonalityTraits"
+                  value={formData.PersonalityTraits}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md">
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
                   <option value="">Select Personality Trait</option>
                   <option value="Introversion">Introversion</option>
                   <option value="Extroversion">Extroversion</option>
@@ -367,128 +327,31 @@ const EditProfileForm = () => {
                   <option value="Openness">Openness</option>
                 </select>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Allergies
                 </label>
                 <input
                   type="text"
-                  name="allergies"
-                  value={formData.allergies}
+                  name="Allergies"
+                  value={formData.Allergies}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  placeholder="List any allergies or enter 'None'"
+                  placeholder="List any Allergies or enter 'None'"
                 />
               </div>
             </div>
           </div>
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
 
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.contactInfo.email}
-                  onChange={handleContactInfoChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  name="phoneNumber"
-                  value={formData.contactInfo.phoneNumber}
-                  onChange={handleContactInfoChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address
-                </label>
-                <textarea
-                  name="address"
-                  value={formData.contactInfo.address}
-                  onChange={handleContactInfoChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  rows="3"
-                  required></textarea>
-              </div>
-            </div>
-          </div>
           <div className="flex justify-end space-x-4">
-            <button
-              type="button"
-              onClick={() => navigate(`/patients/${profileId}`)}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700">
-              Cancel
-            </button>
+
             <button
               type="submit"
               className="px-4 py-2 bg-gradient-to-r from-[#9284e0] to-[#5849b1] text-white rounded-md hover:bg-blue-700"
-              disabled={loading}>
+              disabled={loading}
+            >
               {loading ? "Saving..." : "Save Changes"}
             </button>
-          </div>
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Recommended Activities
-            </h2>
-
-            {/* Tab Navigation */}
-            <div className="flex border-b border-gray-200 mb-4">
-              <button
-                type="button"
-                onClick={() => setActiveTab("physical")}
-                className={`px-4 py-2 -mb-px ${
-                  activeTab === "physical"
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}>
-                Physical Activities
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("therapeutic")}
-                className={`px-4 py-2 -mb-px ${
-                  activeTab === "therapeutic"
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}>
-                Therapeutic Activities
-              </button>
-            </div>
-
-            {/* Tab Content */}
-            <div>
-              {activeTab === "physical" && (
-                <PhysicalActivitiesRecommendation
-                  profileId={profileId}
-                  onActivitiesSelected={handleActivitiesSelected}
-                  initialSelectedActivities={formData.recommendedActivities}
-                />
-              )}
-              {activeTab === "therapeutic" && (
-                <TherapeuticActivitiesRecommendation
-                  profileId={profileId}
-                  onActivitiesSelected={handleActivitiesSelected}
-                  initialSelectedActivities={formData.recommendedActivities}
-                />
-              )}
-            </div>
           </div>
         </form>
       </div>
