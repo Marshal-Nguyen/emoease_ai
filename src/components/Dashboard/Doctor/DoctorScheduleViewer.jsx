@@ -27,77 +27,10 @@ export default function DoctorScheduleViewer({ doctorId }) {
 
   const [isBusyLoading, setIsBusyLoading] = useState(false);
   const [busyMessage, setBusyMessage] = useState({ type: "", text: "" });
-  const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API_SCHEDULE_URL;
-  const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
+  const VITE_API_SCHEDULE_URL = "http://localhost:3000/api";
   const daysOfWeek = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
-  const markDoctorBusy = async () => {
-    if (!selectedDate) {
-      setBusyMessage({
-        type: "warning",
-        text: "Please select a date to mark as busy.",
-      });
-      return;
-    }
 
-    if (!isDateEligibleForUpdate(selectedDate)) {
-      setBusyMessage({
-        type: "error",
-        text: "Only dates at least 3 days in the future can be marked as busy.",
-      });
-      return;
-    }
-
-    setIsBusyLoading(true);
-    setBusyMessage({ type: "", text: "" });
-
-    try {
-      const formattedDate = selectedDate
-        .toLocaleDateString("en-CA")
-        .split("T")[0]; // Format: YYYY-MM-DD
-
-      const response = await axios.post(
-        `${VITE_API_SCHEDULE_URL}/doctor-busy`,
-        {
-          doctorBusyDto: {
-            doctorId: doctorId,
-            date: formattedDate,
-          },
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (response.status === 200 || response.status === 201) {
-        setBusyMessage({
-          type: "success",
-          text: `Successfully marked ${selectedDate.toLocaleDateString()} as a busy day.`,
-        });
-
-        // Refresh the schedule for the selected date
-        fetchSchedule(selectedDate);
-      } else {
-        setBusyMessage({
-          type: "error",
-          text: "Failed to mark the day as busy. Please try again.",
-        });
-      }
-    } catch (error) {
-      console.error("Error marking day as busy:", error);
-      setBusyMessage({
-        type: "error",
-        text:
-          error.response?.data?.message ||
-          "An error occurred while marking the day as busy.",
-      });
-    } finally {
-      setIsBusyLoading(false);
-    }
-  };
-  // Kiểm tra xem ngày đã chọn có sau ngày hiện tại 3 ngày không
+  // Kiểm tra xem ngày đã chọn có sau ngày hiện tại 7 ngày không
   const isDateEligibleForUpdate = (date) => {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
@@ -154,59 +87,65 @@ export default function DoctorScheduleViewer({ doctorId }) {
     setUpdateMessage({ type: "", text: "" });
   };
 
-  // Xử lý khi chọn slot
-  const handleSlotSelection = (slot) => {
-    if (slot.status !== "Available") return;
-
-    if (!isDateEligibleForUpdate(selectedDate)) {
-      setUpdateMessage({
-        type: "error",
-        text: "Only time slots at least 7 days in the future can be modified.",
-      });
-      return;
-    }
-
-    setSelectedSlots((prev) => {
-      const isAlreadySelected = prev.some(
-        (s) => s.startTime === slot.startTime
+  // Lấy lịch đã đặt khi thay đổi ngày
+  const fetchSchedule = async (date) => {
+    setIsLoading(true);
+    try {
+      const formattedDate = date.toLocaleDateString("en-CA").split("T")[0]; // Format: YYYY-MM-DD
+      const response = await axios.get(
+        `${VITE_API_SCHEDULE_URL}/doctors/${doctorId}/${formattedDate}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
-      if (isAlreadySelected) {
-        return prev.filter((s) => s.startTime !== slot.startTime);
-      } else {
-        return [...prev, slot];
-      }
-    });
-
-    setUpdateMessage({ type: "", text: "" });
+      const { slots, message } = response.data;
+      // Chuyển đổi dữ liệu từ API về định dạng frontend
+      const formattedSlots = slots.map(slot => ({
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        status: slot.isAvailable ? (slot.isBooked ? "Booked" : "Available") : "Unavailable",
+      }));
+      setScheduledSlots(formattedSlots || []);
+      setUpdateMessage({ type: "", text: message });
+    } catch (error) {
+      console.error("Lỗi khi lấy lịch trình:", error);
+      setScheduledSlots([]);
+      setUpdateMessage({ type: "error", text: "Failed to fetch schedule." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Gửi yêu cầu cập nhật trạng thái slots
-  const updateSlotAvailability = async () => {
-    if (selectedSlots.length === 0) {
-      setUpdateMessage({
+  // Đặt ngày bận
+  const markDoctorBusy = async () => {
+    if (!selectedDate) {
+      setBusyMessage({
         type: "warning",
-        text: "Please select at least one available time slot.",
+        text: "Please select a date to mark as busy.",
       });
       return;
     }
 
-    setIsUpdating(true);
-    setUpdateMessage({ type: "", text: "" });
+    if (!isDateEligibleForUpdate(selectedDate)) {
+      setBusyMessage({
+        type: "error",
+        text: "Only dates at least 7 days in the future can be marked as busy.",
+      });
+      return;
+    }
+
+    setIsBusyLoading(true);
+    setBusyMessage({ type: "", text: "" });
 
     try {
-      const formattedDate = selectedDate
-        .toLocaleDateString("en-CA")
-        .split("T")[0]; // Format: YYYY-MM-DD
-      const startTimes = selectedSlots.map((slot) => slot.startTime);
-
-      const response = await axios.post(
-        `${VITE_API_SCHEDULE_URL}/doctor-availabilities`,
+      const formattedDate = selectedDate.toLocaleDateString("en-CA").split("T")[0]; // Format: YYYY-MM-DD
+      const response = await axios.put(
+        `${VITE_API_SCHEDULE_URL}/doctors/${doctorId}/${formattedDate}`,
         {
-          doctorAvailabilityCreate: {
-            doctorId: doctorId,
-            date: formattedDate,
-            startTimes: startTimes,
-          },
+          isAvailable: false,
         },
         {
           headers: {
@@ -216,41 +155,59 @@ export default function DoctorScheduleViewer({ doctorId }) {
         }
       );
 
-      if (response.status === 200 || response.status === 201) {
-        setUpdateMessage({
+      if (response.status === 200) {
+        setBusyMessage({
           type: "success",
-          text: "Time slots have been successfully updated.",
+          text: `Successfully marked ${selectedDate.toLocaleDateString()} as a busy day.`,
         });
-
-        // Cập nhật lại danh sách slots
-        fetchSchedule(selectedDate);
-        setSelectedSlots([]);
+        fetchSchedule(selectedDate); // Cập nhật lại lịch sau khi đặt bận
       } else {
-        setUpdateMessage({
+        setBusyMessage({
           type: "error",
-          text: "Failed to update time slots. Please try again.",
+          text: "Failed to mark the day as busy. Please try again.",
         });
       }
     } catch (error) {
-      console.error("Error updating availability:", error);
-      setUpdateMessage({
+      console.error("Error marking day as busy:", error);
+      setBusyMessage({
         type: "error",
         text:
           error.response?.data?.message ||
-          "An error occurred while updating time slots.",
+          "An error occurred while marking the day as busy.",
       });
     } finally {
-      setIsUpdating(false);
+      setIsBusyLoading(false);
     }
   };
 
-  // Lấy lịch đã đặt khi thay đổi ngày
-  const fetchSchedule = async (date) => {
-    setIsLoading(true);
+  // Đặt ngày làm việc
+  const markDoctorAvailable = async () => {
+    if (!selectedDate) {
+      setBusyMessage({
+        type: "warning",
+        text: "Please select a date to mark as available.",
+      });
+      return;
+    }
+
+    if (!isDateEligibleForUpdate(selectedDate)) {
+      setBusyMessage({
+        type: "error",
+        text: "Only dates at least 7 days in the future can be marked as available.",
+      });
+      return;
+    }
+
+    setIsBusyLoading(true);
+    setBusyMessage({ type: "", text: "" });
+
     try {
-      const formattedDate = date.toLocaleDateString("en-CA").split("T")[0]; // Format: YYYY-MM-DD
-      const response = await axios.get(
-        `${VITE_API_SCHEDULE_URL}/doctor-schedule/${doctorId}/${formattedDate}`,
+      const formattedDate = selectedDate.toLocaleDateString("en-CA").split("T")[0]; // Format: YYYY-MM-DD
+      const response = await axios.put(
+        `${VITE_API_SCHEDULE_URL}/doctors/${doctorId}/${formattedDate}`,
+        {
+          isAvailable: true,
+        },
         {
           headers: {
             "Content-Type": "application/json",
@@ -258,13 +215,47 @@ export default function DoctorScheduleViewer({ doctorId }) {
           },
         }
       );
-      setScheduledSlots(response.data.timeSlots || []);
+
+      if (response.status === 200) {
+        setBusyMessage({
+          type: "success",
+          text: `Successfully marked ${selectedDate.toLocaleDateString()} as a working day.`,
+        });
+        fetchSchedule(selectedDate); // Cập nhật lại lịch sau khi đặt làm việc
+      } else {
+        setBusyMessage({
+          type: "error",
+          text: "Failed to mark the day as available. Please try again.",
+        });
+      }
     } catch (error) {
-      console.error("Lỗi khi lấy lịch trình:", error);
-      setScheduledSlots([]);
+      console.error("Error marking day as available:", error);
+      setBusyMessage({
+        type: "error",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while marking the day as available.",
+      });
     } finally {
-      setIsLoading(false);
+      setIsBusyLoading(false);
     }
+  };
+
+  // Xử lý khi chọn slot (không cần thiết nữa vì backend đã xử lý trạng thái)
+  const handleSlotSelection = (slot) => {
+    if (slot.status !== "Available" || !isDateEligibleForUpdate(selectedDate)) return;
+    setUpdateMessage({
+      type: "warning",
+      text: "Slot selection is disabled. Use the backend to manage availability.",
+    });
+  };
+
+  // Loại bỏ chức năng cập nhật slot vì backend đã xử lý
+  const updateSlotAvailability = () => {
+    setUpdateMessage({
+      type: "warning",
+      text: "Slot updates are managed via backend API. Use PUT to set availability.",
+    });
   };
 
   useEffect(() => {
@@ -339,7 +330,6 @@ export default function DoctorScheduleViewer({ doctorId }) {
               currentDate.getMonth() === todayDate.getMonth() &&
               currentDate.getFullYear() === todayDate.getFullYear();
 
-            // Kiểm tra xem ngày này có đủ điều kiện để cập nhật không
             const isEligible = isDateEligibleForUpdate(currentDate);
 
             return (
@@ -348,19 +338,17 @@ export default function DoctorScheduleViewer({ doctorId }) {
                 className={`flex justify-center items-center h-10 rounded-full
                   cursor-pointer transition-colors duration-200
                   ${isEligible ? "hover:bg-purple-100" : "opacity-70"}
-                  ${
-                    isSelectedDate ? "bg-purple-600 text-white font-medium" : ""
+                  ${isSelectedDate ? "bg-purple-600 text-white font-medium" : ""
                   }
-                  ${
-                    isTodayDate && !isSelectedDate
-                      ? "border border-purple-500 font-medium"
-                      : ""
+                  ${isTodayDate && !isSelectedDate
+                    ? "border border-purple-500 font-medium"
+                    : ""
                   }
-                  ${
-                    !isEligible && !isSelectedDate && !isTodayDate
-                      ? "text-gray-400"
-                      : ""
+                  ${currentDate < todayDate && !isSelectedDate
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "hover:bg-purple-100"
                   }
+                  
                 `}
                 onClick={() => handleDateClick(day)}>
                 {day}
@@ -369,22 +357,8 @@ export default function DoctorScheduleViewer({ doctorId }) {
           })}
         </div>
 
-        {/* Hiển thị thông báo */}
-        {updateMessage.text && (
-          <div
-            className={`mb-4 p-3 rounded-lg ${
-              updateMessage.type === "error"
-                ? "bg-red-100 text-red-700"
-                : updateMessage.type === "success"
-                ? "bg-green-100 text-green-700"
-                : "bg-yellow-100 text-yellow-700"
-            }`}>
-            {updateMessage.text}
-          </div>
-        )}
-
         {/* Hiển thị lịch hẹn */}
-        <div className="mt-4">
+        <div>
           <h4 className="font-medium text-purple-800 flex items-center mb-3">
             <Users size={18} className="mr-2" />
             Scheduled Appointments for {selectedDate.toLocaleDateString()}
@@ -396,60 +370,37 @@ export default function DoctorScheduleViewer({ doctorId }) {
             </div>
           ) : scheduledSlots.length > 0 ? (
             <div className="space-y-2">
-              {scheduledSlots.map((slot, i) => {
-                const isSelected = selectedSlots.some(
-                  (s) => s.startTime === slot.startTime
-                );
-
-                return (
-                  <div
-                    key={i}
-                    className={`p-3 border rounded-lg flex justify-between items-center cursor-pointer
-                      ${
-                        slot.status === "Unavailable"
-                          ? "bg-red-50 border-red-200"
-                          : slot.status === "Booked"
-                          ? "bg-blue-50 border-blue-200"
-                          : isSelected
-                          ? "bg-purple-100 border-purple-300"
-                          : "bg-green-50 border-green-200"
-                      }
-                    `}
-                    onClick={() => handleSlotSelection(slot)}>
-                    <div className="flex items-center">
-                      <Clock size={16} className="mr-2 text-gray-600" />
-                      <span className="font-medium">
-                        {`${slot.startTime.slice(0, 5)} - ${slot.endTime.slice(
-                          0,
-                          5
-                        )}`}
-                      </span>
-                    </div>
-                    <div className="flex items-center">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium mr-2
-                        ${
-                          slot.status === "Unavailable"
-                            ? "bg-red-100 text-red-800"
-                            : slot.status === "Booked"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
-                        }
-                      `}>
-                        {slot.status}
-                      </span>
-
-                      {slot.status === "Available" &&
-                        isDateEligibleForUpdate(selectedDate) &&
-                        (isSelected ? (
-                          <CheckCircle size={18} className="text-purple-600" />
-                        ) : (
-                          <XCircle size={18} className="text-gray-400" />
-                        ))}
-                    </div>
+              {scheduledSlots.map((slot, i) => (
+                <div
+                  key={i}
+                  className={`p-3 border rounded-lg flex justify-between items-center
+                    ${slot.status === "Unavailable"
+                      ? "bg-red-50 border-red-200"
+                      : slot.status === "Booked"
+                        ? "bg-blue-50 border-blue-200"
+                        : "bg-green-50 border-green-200"
+                    }
+                  `}
+                  onClick={() => handleSlotSelection(slot)}>
+                  <div className="flex items-center">
+                    <Clock size={16} className="mr-2 text-gray-600" />
+                    <span className="font-medium">
+                      {`${slot.startTime} - ${slot.endTime}`}
+                    </span>
                   </div>
-                );
-              })}
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium
+                      ${slot.status === "Unavailable"
+                        ? "bg-red-100 text-red-800"
+                        : slot.status === "Booked"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
+                      }
+                    `}>
+                    {slot.status}
+                  </span>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
@@ -462,26 +413,50 @@ export default function DoctorScheduleViewer({ doctorId }) {
             </div>
           )}
         </div>
+        {isDateEligibleForUpdate(selectedDate) && scheduledSlots.length > 0 && (
+          <div className="mt-4">
+            <button
+              className="w-full py-2 px-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+              onClick={markDoctorBusy}
+              disabled={isBusyLoading}>
+              {isBusyLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white mr-2"></div>
+                  Marking as Busy...
+                </>
+              ) : (
+                <>
+                  <BusIcon size={18} className="mr-2" />
+                  Mark {selectedDate.toLocaleDateString()} as Busy
+                </>
+              )}
+            </button>
+          </div>
+        )}
+        {/* Nút đặt ngày bận và ngày làm việc */}
+        {isDateEligibleForUpdate(selectedDate) && scheduledSlots.length <= 0 && (
+          <div className="mt-4 ">
 
-        {/* Nút cập nhật */}
-        {isDateEligibleForUpdate(selectedDate) &&
-          scheduledSlots.some((slot) => slot.status === "Available") && (
-            <div className="mt-4">
-              <button
-                className="w-full py-2 px-4 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
-                onClick={updateSlotAvailability}
-                disabled={isUpdating || selectedSlots.length === 0}>
-                {isUpdating ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white mr-2"></div>
-                    Updating...
-                  </>
-                ) : (
-                  `Set ${selectedSlots.length} Selected Slots as Unavailable`
-                )}
-              </button>
-            </div>
-          )}
+            <button
+              className="w-full py-2 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+              onClick={markDoctorAvailable}
+              disabled={isBusyLoading}>
+              {isBusyLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white mr-2"></div>
+                  Marking as Available...
+                </>
+              ) : (
+                <>
+                  <CheckCircle size={18} className="mr-2" />
+                  Mark {selectedDate.toLocaleDateString()} as Available
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+
 
         {/* Thống kê */}
         <div className="mt-6 bg-purple-50 rounded-lg p-4 space-y-3">
@@ -497,20 +472,14 @@ export default function DoctorScheduleViewer({ doctorId }) {
           <div className="flex justify-between items-center">
             <span className="text-gray-700">Available slots:</span>
             <span className="font-bold text-green-600">
-              {
-                scheduledSlots.filter((slot) => slot.status === "Available")
-                  .length
-              }
+              {scheduledSlots.filter((slot) => slot.status === "Available").length}
             </span>
           </div>
 
           <div className="flex justify-between items-center">
             <span className="text-gray-700">Unavailable slots:</span>
             <span className="font-bold text-red-600">
-              {
-                scheduledSlots.filter((slot) => slot.status === "Unavailable")
-                  .length
-              }
+              {scheduledSlots.filter((slot) => slot.status === "Unavailable").length}
             </span>
           </div>
 
@@ -520,35 +489,6 @@ export default function DoctorScheduleViewer({ doctorId }) {
               {scheduledSlots.length}
             </span>
           </div>
-
-          {selectedSlots.length > 0 && (
-            <div className="flex justify-between items-center pt-2 border-t border-purple-200">
-              <span className="text-gray-700">Selected to update:</span>
-              <span className="font-bold text-purple-600">
-                {selectedSlots.length}
-              </span>
-            </div>
-          )}
-          {isDateEligibleForUpdate(selectedDate) && (
-            <div className="mt-4">
-              <button
-                className="w-full py-2 px-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
-                onClick={markDoctorBusy}
-                disabled={isBusyLoading}>
-                {isBusyLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white mr-2"></div>
-                    Marking as Busy...
-                  </>
-                ) : (
-                  <>
-                    <BusIcon size={18} className="mr-2" />
-                    Mark {selectedDate.toLocaleDateString()} as Busy
-                  </>
-                )}
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
