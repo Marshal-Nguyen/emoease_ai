@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-toastify"
 import {
   CalendarIcon,
   Clock,
@@ -29,6 +30,21 @@ export default function DoctorScheduleViewer({ doctorId }) {
   const [busyMessage, setBusyMessage] = useState({ type: "", text: "" });
   const VITE_API_SCHEDULE_URL = "http://localhost:3000/api";
   const daysOfWeek = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+
+  // State cho form tạo lịch
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({
+    daysOfWeek: [1, 2, 3, 4, 5], // Mặc định từ T2 đến T6
+    slotsPerDay: 8,
+    slotDuration: 30,
+    month: today.getMonth() + 1, // Tháng hiện tại (1-12)
+    year: today.getFullYear(),
+  });
+  const [createScheduleMessage, setCreateScheduleMessage] = useState({
+    type: "",
+    text: "",
+  });
+  const [isCreatingSchedule, setIsCreatingSchedule] = useState(false);
 
   // Kiểm tra xem ngày đã chọn có sau ngày hiện tại 7 ngày không
   const isDateEligibleForUpdate = (date) => {
@@ -101,12 +117,12 @@ export default function DoctorScheduleViewer({ doctorId }) {
           },
         }
       );
-      const { slots, message } = response.data;
+      const { timeSlots, message } = response.data;
       // Chuyển đổi dữ liệu từ API về định dạng frontend
-      const formattedSlots = slots.map(slot => ({
+      const formattedSlots = timeSlots.map(slot => ({
         startTime: slot.startTime,
         endTime: slot.endTime,
-        status: slot.isAvailable ? (slot.isBooked ? "Booked" : "Available") : "Unavailable",
+        status: slot.status ? (slot.occupiedInfo ? "Booked" : "Available") : "Unavailable",
       }));
       setScheduledSlots(formattedSlots || []);
       setUpdateMessage({ type: "", text: message });
@@ -258,6 +274,77 @@ export default function DoctorScheduleViewer({ doctorId }) {
     });
   };
 
+  // Hàm tạo lịch mới
+  const createSchedule = async () => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1; // 1-12
+    const currentYear = currentDate.getFullYear();
+
+    // Kiểm tra tháng và năm hợp lệ (hiện tại hoặc tương lai)
+    if (
+      scheduleForm.year < currentYear ||
+      (scheduleForm.year === currentYear && scheduleForm.month < currentMonth)
+    ) {
+      setCreateScheduleMessage({
+        type: "error",
+        text: "Chỉ có thể tạo lịch cho tháng hiện tại hoặc trong tương lai.",
+      });
+      return;
+    }
+
+    setIsCreatingSchedule(true);
+    setCreateScheduleMessage({ type: "", text: "" });
+
+    try {
+      const response = await axios.post(
+        `${VITE_API_SCHEDULE_URL}/doctors/${doctorId}/schedule`,
+        {
+          daysOfWeek: scheduleForm.daysOfWeek,
+          slotsPerDay: scheduleForm.slotsPerDay,
+          slotDuration: scheduleForm.slotDuration,
+          month: scheduleForm.month,
+          year: scheduleForm.year,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        setCreateScheduleMessage({
+          type: "success",
+          text: `Đã tạo lịch làm việc cho tháng ${scheduleForm.month}/${scheduleForm.year} thành công.`,
+        });
+        // Cập nhật lại lịch nếu đang xem tháng hiện tại
+        if (
+          scheduleForm.month - 1 === currentMonthIndex &&
+          scheduleForm.year === currentYear
+        ) {
+          fetchSchedule(selectedDate);
+        }
+        setIsModalOpen(false); // Đóng modal sau khi thành công
+        toast.success(createScheduleMessage.text);
+      } else {
+        setCreateScheduleMessage({
+          type: "error",
+          text: "Không thể tạo lịch. Vui lòng thử lại.",
+        });
+      }
+    } catch (error) {
+      console.error("Lỗi khi tạo lịch:", error);
+      setCreateScheduleMessage({
+        type: "error",
+        text:
+          error.response?.data?.message || "Đã xảy ra lỗi khi tạo lịch làm việc.",
+      });
+    } finally {
+      setIsCreatingSchedule(false);
+    }
+  };
+
   useEffect(() => {
     if (!selectedDate || !doctorId) return;
     fetchSchedule(selectedDate);
@@ -266,15 +353,24 @@ export default function DoctorScheduleViewer({ doctorId }) {
   return (
     <div className="flex flex-col bg-white rounded-2xl shadow-lg border border-purple-200 overflow-hidden h-full">
       {/* Header lịch */}
-      <div className="bg-gradient-to-br from-[#8047db] to-[#c2a6ee] text-white p-4">
-        <h3 className="text-xl font-bold flex items-center">
-          <CalendarIcon size={20} className="mr-2" />
-          Consultation Schedule
+
+      <div className="flex items-center justify-between  bg-gradient-to-br from-[#8047db] to-[#c2a6ee] text-white p-4 rounded-t-xl shadow-md">
+        <h3 className="text-xl font-semibold flex items-center gap-2">
+          <CalendarIcon size={18} />
+          Doctor Schedule
         </h3>
-        <p className="text-purple-100 text-sm mt-1">
-          View and update your appointment availability
-        </p>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-white text-indigo-600  px-4 py-2 rounded-full font-medium flex items-center gap-2 hover:bg-indigo-100 transition duration-200"
+        >
+          <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+          </svg>
+          Create Schedule
+        </button>
       </div>
+
+
 
       {/* Calendar */}
       <div className="p-4 bg-white overflow-y-auto">
@@ -491,6 +587,116 @@ export default function DoctorScheduleViewer({ doctorId }) {
           </div>
         </div>
       </div>
+      {/* Modal tạo lịch */}
+      {isModalOpen && (
+        <div className="fixed inset-0  bg-[#4e4d4dbb] bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300">
+          <div className="bg-white bg-opacity-95 rounded-xl p-8 w-full max-w-lg shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
+            <div className="flex justify-between items-center mb-6">
+              <div className="bg-gradient-to-br from-[#8047db] to-[#c2a6ee] text-white p-4 rounded-lg flex items-center space-x-2">
+                <h4 className="text-xl font-bold flex items-center">Create New Schedule</h4>
+              </div>
+
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+              >
+                <XCircle size={24} className="hover:scale-110 transition-transform duration-200" />
+              </button>
+            </div>
+            <div className="flex flex-col gap-6">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Days of Week:</label>
+                <div className="flex gap-3 mt-2 flex-wrap">
+                  {daysOfWeek.map((day, index) => (
+                    <label key={index} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={scheduleForm.daysOfWeek.includes(index)}
+                        onChange={() => {
+                          setScheduleForm((prev) => ({
+                            ...prev,
+                            daysOfWeek: prev.daysOfWeek.includes(index)
+                              ? prev.daysOfWeek.filter((d) => d !== index)
+                              : [...prev.daysOfWeek, index],
+                          }));
+                        }}
+                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 transition-colors duration-200"
+                      />
+                      <span className="text-gray-700 text-sm">{day}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Month:</label>
+                <select
+                  value={scheduleForm.month}
+                  onChange={(e) =>
+                    setScheduleForm({ ...scheduleForm, month: parseInt(e.target.value) })
+                  }
+                  className="mt-2 p-2 rounded-lg text-gray-800 border border-gray-300 w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                >
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                    <option
+                      key={month}
+                      value={month}
+                      disabled={
+                        scheduleForm.year === today.getFullYear() &&
+                        month < today.getMonth() + 1
+                      }
+                      className={`${scheduleForm.year === today.getFullYear() &&
+                        month < today.getMonth() + 1
+                        ? "text-gray-400"
+                        : "text-gray-800"
+                        } bg-white hover:bg-indigo-50 transition-colors duration-200`}
+                    >
+                      Month {month}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Year:</label>
+                <select
+                  value={scheduleForm.year}
+                  onChange={(e) =>
+                    setScheduleForm({ ...scheduleForm, year: parseInt(e.target.value) })
+                  }
+                  className="mt-2 p-2 rounded-lg text-gray-800 border border-gray-300 w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
+                >
+                  {Array.from({ length: 5 }, (_, i) => today.getFullYear() + i).map((year) => (
+                    <option
+                      key={year}
+                      value={year}
+                      className="text-gray-800 bg-white hover:bg-indigo-50 transition-colors duration-200"
+                    >
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={createSchedule}
+                disabled={isCreatingSchedule}
+                className={`mt-6 p-3 rounded-lg font-medium text-white flex items-center justify-center w-full transition-all duration-200 ${isCreatingSchedule
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700 active:scale-95"
+                  }`}
+              >
+                {isCreatingSchedule ? (
+                  <span>Creating...</span>
+                ) : (
+                  <>
+                    <CheckCircle size={20} className="mr-2" />
+                    Create Schedule
+                  </>
+                )}
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

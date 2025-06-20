@@ -39,8 +39,8 @@ export default function Booking() {
 
   const daysOfWeek = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
   const profileId = useSelector((state) => state.auth.profileId);
-  const API_SCHEDULING_SERVICE = import.meta.env.VITE_API_SCHEDULE_URL;
-  const API_PROFILE_SERVICE = import.meta.env.VITE_API_PROFILE_URL;
+  const API_SCHEDULING_SERVICE = "http://localhost:3000/api";
+  const API_PROFILE_SERVICE = "http://localhost:3000/api";
   // Hàm lấy số ngày trong tháng (cải tiến)
   const getDaysInMonth = (year, month) => {
     const firstDay = new Date(year, month, 1).getDay();
@@ -94,7 +94,7 @@ export default function Booking() {
           .toLocaleDateString("en-CA")
           .split("T")[0]; // Format: YYYY-MM-DD
         const response = await axios.get(
-          `${API_SCHEDULING_SERVICE}/doctor-schedule/${doctorId}/${formattedDate}`,
+          `${API_SCHEDULING_SERVICE}/doctors/${doctorId}/${formattedDate}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -125,14 +125,14 @@ export default function Booking() {
     const fetchDoctorInfo = async () => {
       try {
         const response = await axios.get(
-          `${API_PROFILE_SERVICE}/doctors/${doctorId}`,
+          `${API_PROFILE_SERVICE}/doctor-profiles/${doctorId}`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
           }
         );
-        setDoctor(response.data.doctorProfileDto);
+        setDoctor(response.data);
         setLoading(false);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu bác sĩ:", error);
@@ -203,7 +203,7 @@ export default function Booking() {
       console.error("Lỗi khi đặt lịch:", error);
       toast.error(
         error.response?.data?.message ||
-          "Đã xảy ra lỗi khi đặt lịch. Vui lòng thử lại sau."
+        "Đã xảy ra lỗi khi đặt lịch. Vui lòng thử lại sau."
       );
     }
   };
@@ -251,7 +251,7 @@ export default function Booking() {
                     doctor.image ||
                     "https://cdn-healthcare.hellohealthgroup.com/2023/09/1695616991_65110fdf078417.49245494.jpg"
                   }
-                  alt={doctor.fullName}
+                  alt={doctor.FullName}
                   className="w-24 h-24 rounded-full object-cover border-2 border-purple-200 shadow-md transition-transform duration-300 hover:scale-105"
                 />
                 <div className="absolute bottom-0 right-0 bg-[#fa8a95] text-gray-800 px-2 py-1 rounded-full text-xs font-bold flex items-center shadow-md">
@@ -262,19 +262,19 @@ export default function Booking() {
 
               <div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-1">
-                  {doctor.fullName}
+                  {doctor.FullName}
                 </h3>
                 <p className="text-md text-purple-600 font-medium mb-2">
-                  {doctor.specialties?.map((spec) => spec.name).join(", ")}
+                  {doctor.specialties?.map((spec) => spec.Name).join(", ")}
                 </p>
                 <div className="flex flex-col space-y-1">
                   <div className="flex items-center text-gray-600">
                     <Phone size={16} className="mr-2 text-purple-500" />
-                    <span>{doctor.contactInfo?.phoneNumber}</span>
+                    <span>{doctor.PhoneNumber}</span>
                   </div>
                   <div className="flex items-center text-gray-600">
                     <Mail size={16} className="mr-2 text-purple-500" />
-                    <span>{doctor.contactInfo?.email}</span>
+                    <span>{doctor.Email}</span>
                   </div>
                 </div>
               </div>
@@ -303,7 +303,7 @@ export default function Booking() {
                   <Heart size={20} className="text-purple-600" />
                 </div>
                 <p className="font-bold text-gray-800">
-                  {doctor.yearsOfExperience}
+                  {doctor.YearsOfExperience}
                 </p>
                 <p className="text-xs text-gray-500">YOE</p>
               </div>
@@ -329,7 +329,7 @@ export default function Booking() {
                 <div>
                   <p className="font-medium text-gray-700">Work Address</p>
                   <p className="text-gray-600">
-                    {doctor.contactInfo?.address || "Chưa cập nhật địa chỉ"}
+                    {doctor.Address || "Chưa cập nhật địa chỉ"}
                   </p>
                 </div>
               </div>
@@ -344,7 +344,7 @@ export default function Booking() {
                     Degrees & Certificates
                   </p>
                   <p className="text-gray-600">
-                    {doctor.qualifications || "Chưa cập nhật thông tin"}
+                    {doctor.Qualifications || "Chưa cập nhật thông tin"}
                   </p>
                 </div>
               </div>
@@ -359,8 +359,8 @@ export default function Booking() {
                     Years of Experience
                   </p>
                   <p className="text-gray-600">
-                    {doctor.yearsOfExperience
-                      ? `${doctor.yearsOfExperience} năm kinh nghiệm`
+                    {doctor.YearsOfExperience
+                      ? `${doctor.YearsOfExperience} năm kinh nghiệm`
                       : "Chưa cập nhật thông tin"}
                   </p>
                 </div>
@@ -372,19 +372,19 @@ export default function Booking() {
                 </p>
                 <div className="ml-10">
                   <p className="text-gray-600 leading-relaxed italic">
-                    <span className="ml-8 font-medium">{doctor.fullName}</span>{" "}
+                    <span className="ml-8 font-medium">{doctor.FullName}</span>{" "}
                     has over{" "}
                     <span className="font-medium">
-                      {doctor.yearsOfExperience}
+                      {doctor.YearsOfExperience}
                     </span>{" "}
                     years of experience in{" "}
-                    {doctor.specialties?.map((spec) => spec.name).join(", ")}.
+                    {doctor.specialties?.map((spec) => spec.Name).join(", ")}.
                   </p>
 
                   <p className="text-gray-600 leading-relaxed mt-2 italic">
                     <span className="ml-8"></span> He is currently working at{" "}
                     <span className="font-medium">
-                      {doctor.contactInfo?.address || "Address not updated"}
+                      {doctor.Address || "Address not updated"}
                     </span>{" "}
                     and serves as a lecturer at the University of Medicine and
                     Pharmacy in Ho Chi Minh City.
@@ -393,7 +393,7 @@ export default function Booking() {
                   <p className="text-gray-600 leading-relaxed mt-2 italic">
                     <span className="ml-8"></span> Specializing in the treatment
                     of anxiety, depression, psychological trauma, and family
-                    conflicts, {doctor.fullName} is dedicated to providing
+                    conflicts, {doctor.FullName} is dedicated to providing
                     evidence-based and personalized care.
                   </p>
 
@@ -405,7 +405,7 @@ export default function Booking() {
 
                   <p className="text-gray-600 leading-relaxed mt-2 italic">
                     <span className="ml-8"></span>
-                    {doctor.bio || "Biography not updated."}
+                    {doctor.Bio || "Biography not updated."}
                   </p>
                 </div>
               </div>
@@ -488,20 +488,17 @@ export default function Booking() {
                     <div
                       key={idx}
                       className={`flex justify-center items-center h-10 rounded-full
-                        ${
-                          isPastDate
-                            ? "text-gray-400 cursor-not-allowed"
-                            : "cursor-pointer hover:bg-purple-100 transition-colors duration-200"
+                        ${isPastDate
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "cursor-pointer hover:bg-purple-100 transition-colors duration-200"
                         }
-                        ${
-                          isSelectedDate
-                            ? "bg-purple-600 text-white font-medium"
-                            : ""
+                        ${isSelectedDate
+                          ? "bg-purple-600 text-white font-medium"
+                          : ""
                         }
-                        ${
-                          isTodayDate && !isSelectedDate
-                            ? "border border-purple-500 font-medium"
-                            : ""
+                        ${isTodayDate && !isSelectedDate
+                          ? "border border-purple-500 font-medium"
+                          : ""
                         }
                       `}
                       onClick={() => !isPastDate && handleDateClick(day)}>
@@ -524,12 +521,11 @@ export default function Booking() {
                       <button
                         key={i}
                         className={`p-3 border rounded-xl text-sm font-medium transition-all duration-200
-                          ${
-                            slot.status === "Available"
-                              ? selectedTimeSlot === slot
-                                ? "bg-purple-600 text-white border-purple-600 shadow-md"
-                                : "bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100"
-                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          ${slot.status === "Available"
+                            ? selectedTimeSlot === slot
+                              ? "bg-purple-600 text-white border-purple-600 shadow-md"
+                              : "bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
                           }`}
                         disabled={slot.status !== "Available"}
                         onClick={() =>
@@ -583,10 +579,9 @@ export default function Booking() {
               </div>
               <button
                 className={`w-full py-4 rounded-xl mt-6 font-bold text-white shadow-md transition-all duration-300 
-                  ${
-                    selectedTimeSlot
-                      ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
-                      : "bg-gray-400"
+                  ${selectedTimeSlot
+                    ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
+                    : "bg-gray-400"
                   }`}
                 onClick={handleBookingContinue}
                 disabled={!selectedTimeSlot}>

@@ -38,7 +38,7 @@ const DoctorList = () => {
   // Refs for specialty scrolling
   const specialtyScrollRef = useRef(null);
   const YOUR_TOKEN = localStorage.getItem("token");
-  const API_PROFILE = import.meta.env.VITE_API_PROFILE_URL;
+  const API_PROFILE = "http://localhost:3000/api";
   const fetchDoctors = async (params = {}) => {
     // Don't set loading true immediately to prevent flashing on quick responses
     const loadingTimeout = setTimeout(() => {
@@ -62,7 +62,7 @@ const DoctorList = () => {
         mergedParams.EndDate = formattedEndDate;
       }
 
-      const doctorsResponse = await axios.get(`${API_PROFILE}/doctors`, {
+      const doctorsResponse = await axios.get(`${API_PROFILE}/doctor-profiles`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${YOUR_TOKEN}`,
@@ -70,7 +70,7 @@ const DoctorList = () => {
         params: mergedParams,
       });
 
-      setDoctors(doctorsResponse.data.doctorProfiles.data || []);
+      setDoctors(doctorsResponse.data.data || []);
     } catch (error) {
       console.error("Error fetching doctors:", error);
     } finally {
@@ -100,7 +100,7 @@ const DoctorList = () => {
           }
         );
 
-        setSpecialties(specialtiesResponse.data.specialties || []);
+        setSpecialties(specialtiesResponse.data || []);
         fetchDoctors(); // Initial doctor fetch
       } catch (error) {
         console.error("Error fetching initial data:", error);
@@ -180,7 +180,7 @@ const DoctorList = () => {
               <span
                 key={idx}
                 className="text-xs whitespace-nowrap bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full flex-shrink-0">
-                {spec.name}
+                {spec.Name}
               </span>
             ))}
           </div>
@@ -216,7 +216,7 @@ const DoctorList = () => {
               doctor.image ||
               "https://cdn-healthcare.hellohealthgroup.com/2023/09/1695616991_65110fdf078417.49245494.jpg?w=1920&q=100"
             }
-            alt={doctor.fullName}
+            alt={doctor.FullName}
             className="w-24 h-24 rounded-full border-4 border-white object-cover"
           />
         </div>
@@ -230,13 +230,13 @@ const DoctorList = () => {
               fill="currentColor"
             />
             <span className="text-sm font-semibold">
-              {doctor.rating || "N/A"}
+              {doctor.Rating || "N/A"}
             </span>
           </div>
         </div>
 
         <h3 className="text-lg font-bold text-center text-gray-800 mb-1 line-clamp-1">
-          {doctor.fullName}
+          {doctor.FullName}
         </h3>
 
         <div className="mb-3 mt-1 h-8">
@@ -246,25 +246,25 @@ const DoctorList = () => {
         <div className="space-y-2 text-sm text-gray-600 mb-4 flex-1">
           <div className="flex items-center">
             <Phone className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
-            <span className="truncate">{doctor.contactInfo.phoneNumber}</span>
+            <span className="truncate">{doctor.PhoneNumber}</span>
           </div>
 
           <div className="flex items-center">
             <Mail className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
-            <span className="truncate">{doctor.contactInfo.email}</span>
+            <span className="truncate">{doctor.Email}</span>
           </div>
 
           <div className="flex items-start">
             <MapPin className="w-4 h-4 mr-2 text-blue-500 mt-1 flex-shrink-0" />
             <span className="text-xs line-clamp-2">
-              {doctor.contactInfo?.address || "Không có địa chỉ"}
+              {doctor.Address || "Không có địa chỉ"}
             </span>
           </div>
         </div>
 
         <div className="mt-auto">
           <button
-            onClick={() => navigate(`/EMO/booking/${doctor.id}`)}
+            onClick={() => navigate(`/EMO/booking/${doctor.Id}`)}
             className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center">
             <Calendar className="w-4 h-4 mr-2" />
             Book now
@@ -300,23 +300,21 @@ const DoctorList = () => {
                 setSelectedSpecialty("");
                 fetchDoctors();
               }}
-              className={`px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 ${
-                !selectedSpecialty
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}>
+              className={`px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 ${!selectedSpecialty
+                ? "bg-blue-100 text-blue-700"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}>
               Tất cả
             </button>
             {specialties.map((specialty) => (
               <button
                 key={specialty.id}
-                onClick={() => handleSpecialtySelect(specialty.id)}
-                className={`px-3 py-1 rounded-full text-sm flex-shrink-0 ${
-                  selectedSpecialty === specialty.id
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}>
-                {specialty.name}
+                onClick={() => handleSpecialtySelect(specialty.Id)}
+                className={`px-3 py-1 rounded-full text-sm flex-shrink-0 ${selectedSpecialty === specialty.Id
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}>
+                {specialty.Name}
               </button>
             ))}
           </div>
@@ -359,11 +357,10 @@ const DoctorList = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleFilterChange("rating")}
-              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
-                selectedFilter === "rating"
-                  ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}>
+              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${selectedFilter === "rating"
+                ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}>
               <div className="flex items-center gap-2">
                 <Star className="w-5 h-5" />
                 <span>Top Rated</span>
@@ -374,11 +371,10 @@ const DoctorList = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleFilterChange("specialties")}
-              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
-                selectedFilter === "specialties"
-                  ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}>
+              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${selectedFilter === "specialties"
+                ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}>
               <div className="flex items-center gap-2">
                 <Award className="w-5 h-5" />
                 <span>Specialty</span>
@@ -509,7 +505,7 @@ const DoctorList = () => {
             animate="animate"
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {doctors.map((doctor, index) => (
-              <DoctorCard key={doctor.id || index} doctor={doctor} />
+              <DoctorCard key={doctor.Id || index} doctor={doctor} />
             ))}
           </motion.div>
         )}
