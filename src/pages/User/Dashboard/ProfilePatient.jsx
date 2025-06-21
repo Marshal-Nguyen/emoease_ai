@@ -11,7 +11,6 @@ const EditProfileForm = () => {
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("physical");
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(null); // Default avatar
   const [formData, setFormData] = useState({
