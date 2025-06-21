@@ -2,17 +2,18 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
+import { FaUser, FaCamera, FaTrash } from 'react-icons/fa';
 
 const EditProfileForm = () => {
   const profileId = localStorage.getItem("profileId") || "123"; // Lấy profileId từ localStorage, fallback là "123"
   const userId = localStorage.getItem("userId") || "456"; // Lấy userId từ localStorage, fallback là "456"
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("physical");
   const [avatarLoading, setAvatarLoading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState("https://via.placeholder.com/150"); // Default avatar
-  const fileInputRef = useRef(null);
+  const [avatarUrl, setAvatarUrl] = useState(null); // Default avatar
   const [formData, setFormData] = useState({
     FullName: "",
     Gender: "",
@@ -51,6 +52,13 @@ const EditProfileForm = () => {
           PhoneNumber: patientProfileDto.PhoneNumber || "",
           recommendedActivities: patientProfileDto.recommendedActivities || [],
         });
+
+        // Fetch avatar
+        const avatarResponse = await axios.get(`http://localhost:3000/api/profile/${profileId}/image`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        setAvatarUrl(avatarResponse.data.data.publicUrl || null);
+
         setLoading(false);
       } catch (err) {
         setError("Error fetching patient data. Please try again.");
@@ -62,38 +70,67 @@ const EditProfileForm = () => {
     fetchPatientData();
   }, [profileId]);
 
-  // Handle uploading or updating avatar (giả lập vì không có API ảnh)
+  // Handle uploading or updating avatar
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    const validTypes = ["image/jpeg", "image/png"];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Please select a valid image file (JPEG, PNG)");
-      return;
-    }
 
     if (file.size > 5 * 1024 * 1024) {
       toast.error("Image size should be less than 5MB");
       return;
     }
 
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Token not found. Please log in again!");
+      return;
+    }
+
+    setAvatarLoading(true);
     try {
-      setAvatarLoading(true);
-      const fakeAvatarUrl = URL.createObjectURL(file); // Giả lập upload ảnh
-      setAvatarUrl(fakeAvatarUrl);
-      toast.success("Profile picture updated successfully!");
+      const previewUrl = URL.createObjectURL(file);
+      setAvatarUrl(previewUrl);
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const isUpdate = !!avatarUrl;
+      const response = await axios({
+        method: isUpdate ? "PUT" : "POST",
+        url: `http://localhost:3000/api/profile/${profileId}/${isUpdate ? "update" : "upload"}?token=${token}`,
+        data: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      toast.success(`Profile picture ${isUpdate ? "updated" : "uploaded"} successfully!`);
     } catch (err) {
-      console.error("Error updating avatar:", err);
-      toast.error("Failed to update profile picture. Please try again.");
+      toast.error(`Error ${avatarUrl ? "updating" : "uploading"} profile picture!`);
+      console.error("Error updating avatar:", err.response?.data || err.message || err);
     } finally {
       setAvatarLoading(false);
     }
   };
 
-  // Trigger file input click
-  const triggerFileInput = () => {
-    fileInputRef.current.click();
+  // Handle deleting avatar
+  const handleAvatarDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete the profile picture?")) return;
+
+    setAvatarLoading(true);
+    try {
+      await axios.delete(`http://localhost:3000/api/profile/${profileId}/delete`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      setAvatarUrl(null);
+      toast.success("Profile picture deleted successfully!");
+    } catch (err) {
+      toast.error("Error deleting profile picture!");
+      console.error("Error deleting avatar:", err.response?.data || err.message);
+    } finally {
+      setAvatarLoading(false);
+    }
   };
 
   // Handle form input changes
@@ -155,77 +192,43 @@ const EditProfileForm = () => {
           {/* Avatar Section */}
           <div className="bg-white shadow-md rounded-lg p-6">
             <div className="flex flex-col items-center">
-              <div className="relative">
-                <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-200 border-4 border-purple-200 shadow-lg">
+              <div className="relative w-40 h-40 mx-auto">
+                <div
+                  className="w-full h-full rounded-full bg-gray-200 border-4 border-purple-200 shadow-lg"
+                  onClick={() => fileInputRef.current.click()}
+                >
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
                       alt="Profile"
-                      className="w-full object-cover object-center transform hover:scale-105 transition-transform duration-300"
+                      className="w-full h-full object-cover object-center rounded-full cursor-pointer"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-20 w-20"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                  {avatarLoading && (
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-full">
-                      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-white"></div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 rounded-full cursor-pointer">
+                      <FaUser className="h-20 w-20" />
                     </div>
                   )}
                 </div>
                 <button
                   type="button"
-                  onClick={triggerFileInput}
-                  className="absolute bottom-2 right-2 bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700 focus:outline-none transform hover:scale-110 transition-transform duration-200"
+                  onClick={handleAvatarDelete}
+                  className="absolute bottom-0 right-18 translate-x-1/3 translate-y-1/3 z-50 bg-red-600 text-white p-2 rounded-full shadow-md hover:bg-red-700 transform hover:scale-110 transition duration-200"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
+                  <FaTrash className="h-4 w-4" />
                 </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleAvatarChange}
+                  accept="image/jpeg,image/png,image/gif"
+                  className="hidden"
+                />
               </div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleAvatarChange}
-                accept="image/jpeg, image/png, image/gif"
-                className="hidden"
-              />
               <p className="mt-4 text-sm text-gray-500 font-medium">
                 Click to {avatarUrl ? "change" : "upload"} profile picture
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                Supported formats: JPEG, PNG (max. 5MB)
+                Supported formats: JPEG, PNG, GIF (max. 5MB)
               </p>
             </div>
           </div>
@@ -272,7 +275,7 @@ const EditProfileForm = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email:
                 </label>
-                <p className="px-3 py-2  mt-1">
+                <p className="px-3 py-2 mt-1">
                   {formData.Email}
                 </p>
               </div>
@@ -323,7 +326,7 @@ const EditProfileForm = () => {
                   <option value="Ambiversion">Ambiversion</option>
                   <option value="Neuroticism">Neuroticism</option>
                   <option value="Conscientiousness">Conscientiousness</option>
-                  <option value="Agreeableness">Agreeableness</option>
+                  <option value="Agreeableness"> Agreeableness</option>
                   <option value="Openness">Openness</option>
                 </select>
               </div>
@@ -342,9 +345,7 @@ const EditProfileForm = () => {
               </div>
             </div>
           </div>
-
           <div className="flex justify-end space-x-4">
-
             <button
               type="submit"
               className="px-4 py-2 bg-gradient-to-r from-[#9284e0] to-[#5849b1] text-white rounded-md hover:bg-blue-700"
