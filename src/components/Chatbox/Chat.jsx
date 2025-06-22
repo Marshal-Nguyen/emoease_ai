@@ -11,7 +11,7 @@ const Chat = () => {
 
   const userRole = localStorage.getItem("userRole");
   const userId = localStorage.getItem("userId");
-  const [myId, setMyId] = useState(null);
+  const [myId, setMyId] = useState(localStorage.getItem("userId"));
 
   const realtimeChannelRef = useRef(null);
 
@@ -53,7 +53,7 @@ const Chat = () => {
       try {
         const res = await fetch(
           `http://localhost:3000/api/chat-users/${userRole}/${localStorage.getItem(
-            "id"
+            "profileId"
           )}`
         );
         const data = await res.json();
@@ -66,18 +66,38 @@ const Chat = () => {
     fetchChatUsers();
   }, [userRole]);
 
+  console.log("user", users);
+
   useEffect(() => {
+    // const fetchMyself = async () => {
+    //   const { data, error } = await supabase.auth.getUser();
+    //   console.log("data", data);
+
+    //   if (data?.user) {
+    //     setMyId(data.user.id);
+    //     localStorage.setItem("id", data.user.id);
+    //   } else {
+    //     console.error("Could not get current user:", error);
+    //   }
+    // };
+
     const fetchMyself = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (data?.user) {
-        setMyId(data.user.id);
-        localStorage.setItem("id", data.user.id);
-      } else {
-        console.error("Could not get current user:", error);
+      try {
+        const res = await fetch("http://localhost:3000/api/me", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await res.json();
+        console.log(data);
+        localStorage.setItem("id", data.Id);
+      } catch (error) {
+        console.log(error);
       }
     };
 
-    fetchMyself();
+    // fetchMyself();
   }, [userRole, userId]);
 
   useEffect(() => {
