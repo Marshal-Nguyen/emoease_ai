@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -64,8 +64,6 @@ export default function Booking() {
     setSelectedTimeSlot(slot);
   };
 
-  console.log("select time slot", selectedTimeSlot);
-
   // Xử lý khi thay đổi tháng
   const changeMonth = (step) => {
     let newMonth = currentMonthIndex + step;
@@ -88,6 +86,11 @@ export default function Booking() {
       })
     );
   };
+
+  const searchParams = new URLSearchParams(useLocation().search);
+  console.log(searchParams);
+  const paymentMethod = searchParams.get("paymentMethod");
+  console.log(paymentMethod);
   // Lấy lịch trống khi thay đổi ngày
   useEffect(() => {
     if (!selectedDate) return;
@@ -163,8 +166,6 @@ export default function Booking() {
       return;
     }
 
-    console.log("check select time", selectedTimeSlot);
-
     try {
       // Extract the start time from the selected time slot
       const startTime = selectedTimeSlot.startTime || selectedTimeSlot;
@@ -189,17 +190,12 @@ export default function Booking() {
         // returnUrl: "https://emo-rouge.vercel.app/payments/callback",
       };
 
-      // Make API call to create the booking
-      console.log("bookingData", JSON.stringify(bookingData, null, 2));
-
-      // fetch("http://localhost:3000/api/createBooking", {
-      //   method: "POST",
-      //   body: JSON.stringify(bookingData.bookingDto),
-      //   headers: {},
-      // });
-      const response = await axios.post(
-        `${API_SCHEDULING_SERVICE}/createBooking`,
-        bookingData.bookingDto,
+      const res = await axios.post(
+        `${API_SCHEDULING_SERVICE}/pay-booking`,
+        {
+          items: [bookingData.bookingDto],
+          amount: bookingData.bookingDto.price,
+        },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -208,9 +204,25 @@ export default function Booking() {
         }
       );
 
-      // if (response.data && response.data.paymentUrl) {
-      //   window.location.href = response.data.paymentUrl;
-      // }
+      if (res.data && res.data.order_url) {
+        window.location.href = res.data.order_url;
+      }
+
+      if (paymentMethod === "zalopay") {
+        const status = searchParams.get("status");
+        if (Number(status) === 1) {
+          await axios.post(
+            `${API_SCHEDULING_SERVICE}/createBooking`,
+            bookingData.bookingDto,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        }
+      }
     } catch (error) {
       console.error("Lỗi khi đặt lịch:", error);
       toast.error(
