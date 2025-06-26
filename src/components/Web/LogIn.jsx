@@ -114,11 +114,11 @@ const LogIn = () => {
     }
   };
 
-  const handleLoginWithGoogle = async () => {
+ const handleLoginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "http://localhost:5173/oauth/callback",
+        redirectTo: import.meta.env.VITE_OAUTH_REDIRECT_URL,
       },
     });
   };
