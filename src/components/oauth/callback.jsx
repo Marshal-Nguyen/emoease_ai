@@ -6,20 +6,18 @@ import { toast } from "react-toastify";
 import { useAuth } from "./AuthContext";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../../store/authSlice";
-
 const OAuthCallback = () => {
   const navigate = useNavigate();
   const { setIsLoggedIn } = useAuth();
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const handleOAuthCallback = async () => {
+    const fetchTokenAndCallBE = async () => {
       try {
-        // Bước 1: Đổi mã code từ Google thành session
-        const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+        const { data, error } = await supabase.auth.getSession();
 
         if (error || !data?.session) {
-          console.error("Lỗi khi đổi mã code:", error);
+          console.error("Supabase session error:", error);
           toast.error("Đăng nhập thất bại!");
           navigate("/EMO/learnAboutEmo");
           return;
@@ -27,45 +25,76 @@ const OAuthCallback = () => {
 
         const access_token = data.session.access_token;
 
-        // Bước 2: Gọi API backend xác thực và lấy thông tin người dùng
-        const res = await axios.post(
-          "http://localhost:3000/api/auth/google/callback",
-          { access_token },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
+        try {
+          const res = await axios.post(
+            "http://localhost:3000/api/auth/google/callback",
+            { access_token },
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          const { token, role, profileId, user_id } = res.data;
+          console.log("access_token:", access_token);
+          console.log("token:", token);
+          console.log("role:", role);
+          console.log("profileId:", profileId);
+          console.log("user_id:", user_id);
+          if (!token || !role || !profileId || !user_id) {
+            throw new Error("Missing required data from backend response");
           }
-        );
+          const tokenData = token.trim();
+          const roleData = role.trim();
+          const profileIdData = profileId.trim();
+          const userIdData = user_id.trim();
+          console.log("Trimmed values:", {
+            token: tokenData,
+            role: roleData,
+            profileId: profileIdData,
+            user_id: userIdData,
+          });
+          // Then dispatch to Redux
+          dispatch(
+            setCredentials({
+              token: access_token,
+              role,
+              profileId,
+              user_id,
+            })
+          );
 
-        const { token, role, profileId, user_id } = res.data;
+          // Verify the data was set correctly
+          const verifyData = {
+            storedToken: localStorage.getItem("token"),
+            storedRole: localStorage.getItem("userRole"),
+            storedProfileId: localStorage.getItem("profileId"),
+            storedUserId: localStorage.getItem("userId"),
+          };
 
-        if (!token || !role || !profileId || !user_id) {
-          throw new Error("Dữ liệu trả về từ backend không đầy đủ");
+          console.log("Verification of stored data:", verifyData);
+
+          if (!verifyData.storedToken || !verifyData.storedRole) {
+            throw new Error("Failed to persist authentication data");
+          }
+
+          setIsLoggedIn(true);
+          toast.success("Đăng nhập thành công!");
+          navigate("/EMO/learnAboutEmo");
+        } catch (error) {
+          console.error("Authentication error:", error);
+          toast.error(error.message);
+          navigate("/EMO/learnAboutEmo");
         }
-
-        // Bước 3: Lưu thông tin vào Redux
-        dispatch(
-          setCredentials({
-            token: access_token,
-            role,
-            profileId,
-            user_id,
-          })
-        );
-
-        // Bước 4: Cập nhật trạng thái đăng nhập
-        setIsLoggedIn(true);
-        toast.success("Đăng nhập thành công!");
-        navigate("/EMO/learnAboutEmo");
       } catch (err) {
-        console.error("Lỗi khi xử lý callback:", err);
-        toast.error("Lỗi khi đăng nhập bằng Google!");
+        console.error("Network error:", err);
+        toast.error("Lỗi kết nối, vui lòng thử lại sau!");
         navigate("/EMO/learnAboutEmo");
       }
     };
 
-    handleOAuthCallback();
+    fetchTokenAndCallBE();
   }, [navigate, dispatch, setIsLoggedIn]);
 
   return (
