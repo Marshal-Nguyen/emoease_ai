@@ -11,7 +11,7 @@ const Chat = () => {
 
   const userRole = localStorage.getItem("userRole");
   const userId = localStorage.getItem("userId");
-  const [myId, setMyId] = useState(null);
+  const [myId, setMyId] = useState(localStorage.getItem("userId"));
 
   const realtimeChannelRef = useRef(null);
 
@@ -53,7 +53,7 @@ const Chat = () => {
       try {
         const res = await fetch(
           `http://localhost:3000/api/chat-users/${userRole}/${localStorage.getItem(
-            "id"
+            "profileId"
           )}`
         );
         const data = await res.json();
@@ -65,20 +65,6 @@ const Chat = () => {
 
     fetchChatUsers();
   }, [userRole]);
-
-  useEffect(() => {
-    const fetchMyself = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (data?.user) {
-        setMyId(data.user.id);
-        localStorage.setItem("id", data.user.id);
-      } else {
-        console.error("Could not get current user:", error);
-      }
-    };
-
-    fetchMyself();
-  }, [userRole, userId]);
 
   useEffect(() => {
     if (!selectedUser || !myId) return;
@@ -125,9 +111,6 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  console.log("Sending message from", myId, "to", selectedUser?.Id);
-
-  console.log(users);
   return (
     <div className="flex h-screen bg-gray-100">
       <div className="w-1/4 bg-white border-r shadow-lg">
