@@ -66,40 +66,6 @@ const Chat = () => {
     fetchChatUsers();
   }, [userRole]);
 
-  console.log("user", users);
-
-  useEffect(() => {
-    // const fetchMyself = async () => {
-    //   const { data, error } = await supabase.auth.getUser();
-    //   console.log("data", data);
-
-    //   if (data?.user) {
-    //     setMyId(data.user.id);
-    //     localStorage.setItem("id", data.user.id);
-    //   } else {
-    //     console.error("Could not get current user:", error);
-    //   }
-    // };
-
-    const fetchMyself = async () => {
-      try {
-        const res = await fetch("http://localhost:3000/api/me", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "application/json",
-          },
-        });
-        const data = await res.json();
-        console.log(data);
-        localStorage.setItem("id", data.Id);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    // fetchMyself();
-  }, [userRole, userId]);
-
   useEffect(() => {
     if (!selectedUser || !myId) return;
 
@@ -145,9 +111,6 @@ const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  console.log("Sending message from", myId, "to", selectedUser?.Id);
-
-  console.log(users);
   return (
     <div className="flex h-screen bg-gray-100">
       <div className="w-1/4 bg-white border-r shadow-lg">

@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -24,8 +24,10 @@ export default function Booking() {
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isDateListOpen, setIsDateListOpen] = useState(true);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(
+    JSON.parse(localStorage.getItem("booking_timeSlot")) || null
+  );
 
   const [promoCode, setPromoCode] = useState("");
   const today = new Date();
@@ -41,6 +43,7 @@ export default function Booking() {
   const profileId = useSelector((state) => state.auth.profileId);
   const API_SCHEDULING_SERVICE = "http://localhost:3000/api";
   const API_PROFILE_SERVICE = "http://localhost:3000/api";
+
   // Hàm lấy số ngày trong tháng (cải tiến)
   const getDaysInMonth = (year, month) => {
     const firstDay = new Date(year, month, 1).getDay();
@@ -51,11 +54,11 @@ export default function Booking() {
       ...Array.from({ length: totalDays }, (_, i) => i + 1),
     ];
   };
+
   const daysInMonth = getDaysInMonth(currentYear, currentMonthIndex);
   // Xử lý khi chọn ngày
   const handleDateClick = (day) => {
     const newDate = new Date(currentYear, currentMonthIndex, day);
-    console.log(newDate);
     setSelectedDate(newDate);
     setSelectedTimeSlot(null); // Reset time slot khi chọn ngày mới
   };
@@ -63,8 +66,6 @@ export default function Booking() {
   const handleTimeSlotClick = (slot) => {
     setSelectedTimeSlot(slot);
   };
-
-  console.log("select time slot", selectedTimeSlot);
 
   // Xử lý khi thay đổi tháng
   const changeMonth = (step) => {
@@ -88,6 +89,7 @@ export default function Booking() {
       })
     );
   };
+
   // Lấy lịch trống khi thay đổi ngày
   useEffect(() => {
     if (!selectedDate) return;
@@ -105,7 +107,22 @@ export default function Booking() {
             },
           }
         );
-        setAvailableSlots(response.data.timeSlots || []);
+        // setAvailableSlots(response.data.timeSlots || []);
+        const now = new Date();
+        const isToday =
+          selectedDate.toDateString() === new Date().toDateString();
+
+        const filteredSlots = (response.data.timeSlots || []).filter((slot) => {
+          if (!isToday) return true;
+
+          const [hour, minute] = slot.startTime.split(":").map(Number);
+          const slotTime = new Date(selectedDate);
+          slotTime.setHours(hour, minute, 0, 0);
+
+          return slotTime > now;
+        });
+
+        setAvailableSlots(filteredSlots);
       } catch (error) {
         console.error("Lỗi lấy lịch trình:", error);
         setAvailableSlots([]);
@@ -114,6 +131,7 @@ export default function Booking() {
 
     fetchSchedule();
   }, [selectedDate, doctorId]);
+
   // Tính toán thời gian trong phút
   const calculateDurationInMinutes = (startTime, endTime) => {
     const [startHour, startMinute] = startTime.split(":").map(Number);
@@ -124,6 +142,9 @@ export default function Booking() {
 
     return endTotalMinutes - startTotalMinutes;
   };
+
+  console.log(selectedDate);
+
   // Lấy thông tin bác sĩ
   useEffect(() => {
     const fetchDoctorInfo = async () => {
@@ -148,58 +169,66 @@ export default function Booking() {
     fetchDoctorInfo();
   }, [doctorId]);
 
-  // Xử lý khi ấn nút tiếp tục đặt lịch
-  const handleBookingContinue = async () => {
-    // Check if user is logged in by verifying token existence in localStorage
-    const token = localStorage.getItem("token");
-    if (!token) {
-      // Show toast notification for unauthenticated user
-      toast.error("Please log in to book a consultation");
-      return;
-    }
-
+  const buildBookingDto = () => {
     if (!selectedTimeSlot) {
-      alert("Please select a time for the consultation");
-      return;
+      throw new Error("Không có thông tin time slot");
     }
 
-    console.log("check select time", selectedTimeSlot);
+    const startTime = selectedTimeSlot.startTime;
+    const duration = calculateDurationInMinutes(
+      selectedTimeSlot.startTime,
+      selectedTimeSlot.endTime
+    );
 
+    return {
+      doctorId,
+      patientId: profileId,
+      date: selectedDate.toLocaleDateString("en-CA"),
+      startTime,
+      duration,
+      price: 200000,
+      promoCode: promoCode.trim() || null,
+      giftCodeId: null,
+    };
+  };
+
+  //check valied time
+  // const isTimeSlotValid = () => {
+  //   if (!selectedDate || !selectedTimeSlot?.startTime) return false;
+
+  //   const [hour, minute] = selectedTimeSlot.startTime.split(":").map(Number);
+
+  //   const selectedDateTime = new Date(selectedDate);
+  //   selectedDateTime.setHours(hour);
+  //   selectedDateTime.setMinutes(minute);
+  //   selectedDateTime.setSeconds(0);
+  //   selectedDateTime.setMilliseconds(0);
+
+  //   const now = new Date();
+
+  //   return selectedDateTime > now;
+  // };
+
+  const handleBookingContinue = async () => {
+    if (!localStorage.getItem("token"))
+      return toast.error("Please log in to book a consultation");
+
+    if (!selectedTimeSlot)
+      return alert("Please select a time for the consultation");
+
+    // if (!isTimeSlotValid()) {
+    //   toast.error("Not allowed to choose time in the past");
+    //   return;
+    // }
+
+    const bookingDto = buildBookingDto();
+
+    console.log(bookingDto);
     try {
-      // Extract the start time from the selected time slot
-      const startTime = selectedTimeSlot.startTime || selectedTimeSlot;
-      const duration = calculateDurationInMinutes(
-        selectedTimeSlot.startTime,
-        selectedTimeSlot.endTime
-      );
-      // Create the booking data object according to the required format
-      const bookingData = {
-        bookingDto: {
-          doctorId: doctorId,
-          patientId: profileId, // Using the value from the image
-          date: selectedDate.toLocaleDateString("en-CA").split("T")[0], // Format: YYYY-MM-DD
-          startTime: startTime,
-          duration: duration, // Default to 60 if not available
-          price: 200000,
-          promoCode: promoCode.trim() || null,
-          giftCodeId: null, // As specified, set to null
-          // paymentMethod: "VNPay", // Using the payment method from the image
-        },
-        returnUrl: "/payments/callback",
-        // returnUrl: "https://emo-rouge.vercel.app/payments/callback",
-      };
-
-      // Make API call to create the booking
-      console.log("bookingData", JSON.stringify(bookingData, null, 2));
-
-      // fetch("http://localhost:3000/api/createBooking", {
-      //   method: "POST",
-      //   body: JSON.stringify(bookingData.bookingDto),
-      //   headers: {},
-      // });
-      const response = await axios.post(
-        `${API_SCHEDULING_SERVICE}/createBooking`,
-        bookingData.bookingDto,
+      const res = await axios.post(
+        `${API_SCHEDULING_SERVICE}/pay-booking`,
+        // ``,
+        { items: [bookingDto], amount: bookingDto.price },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -208,15 +237,12 @@ export default function Booking() {
         }
       );
 
-      // if (response.data && response.data.paymentUrl) {
-      //   window.location.href = response.data.paymentUrl;
-      // }
-    } catch (error) {
-      console.error("Lỗi khi đặt lịch:", error);
-      toast.error(
-        error.response?.data?.message ||
-          "Đã xảy ra lỗi khi đặt lịch. Vui lòng thử lại sau."
-      );
+      if (res.data?.order_url) {
+        localStorage.setItem("bookingDTO", JSON.stringify(bookingDto));
+        window.location.href = res.data.order_url;
+      }
+    } catch (err) {
+      toast.error("Đã xảy ra lỗi khi đặt lịch. Vui lòng thử lại sau.");
     }
   };
 
