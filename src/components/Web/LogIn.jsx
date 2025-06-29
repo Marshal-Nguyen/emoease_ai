@@ -66,6 +66,48 @@ const LogIn = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      // Nếu là manager
+      if (formData.email.toLowerCase().includes("manager")) {
+        const managerRes = await axios.post(
+          "https://oqoundglstrviiuyvanl.supabase.co/auth/v1/token?grant_type=password",
+          {
+            email: formData.email,
+            password: formData.password,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+            },
+          }
+        );
+
+        // Lấy access_token và user id từ response
+        const { access_token, user } = managerRes.data;
+        if (!access_token || !user?.id) {
+          throw new Error("Đăng nhập Manager thất bại!");
+        }
+
+        // Gọi setCredentials với thông tin Manager
+        dispatch(
+          setCredentials({
+            token: access_token,
+            role: "Manager",
+            profileId: "2c5908d8-8c75-46f3-87b5-78a5cd081d4f",
+            user_id: user.id,
+          })
+        );
+
+        setIsLoggedIn(true);
+        dispatch(closeLoginModal());
+        fetchAvatar(user.id);
+        toast.success("Đăng nhập thành công (Manager)!", {
+          position: "top-right",
+        });
+        return;
+      }
+
+      // Đăng nhập thông thường
       const response = await axios.post(
         `http://localhost:3000/api/auth/login`,
         formData,
@@ -118,7 +160,7 @@ const LogIn = () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "http://localhost:5173/oauth/callback",
+        redirectTo: import.meta.env.VITE_OAUTH_REDIRECT_URL,
       },
     });
   };

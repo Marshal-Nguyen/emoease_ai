@@ -14,7 +14,7 @@ AOS.init({
 });
 
 import Home from "./pages/User/Web/HomeUser";
-import Intro from "./pages/User/Web/Intro";
+// import Intro from "./pages/User/Web/Intro";
 import { ToastContainer, Zoom, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Booking from "./pages/User/Web/Booking";
@@ -63,7 +63,7 @@ import Counselor from "./pages/User/Web/Counselor";
 import Service from "./pages/User/Web/Service";
 import Blog from "./pages/User/Web/Blog";
 import TestEmotion from "./pages/User/Web/TestEmotion";
-
+import AddProductPage from "./components/manager/store/AddProductPage";
 import DashboardPartient from "./pages/User/Dashboard/DashboardPartient";
 import StatictisPatient from "./pages/User/Dashboard/StatictisPatient";
 import RoadMapPatient from "./pages/User/Dashboard/RoadMapPatient";
@@ -91,7 +91,7 @@ function App() {
       <Router>
         <Routes>
           {/* Các route chính */}
-          <Route path="/" element={<Intro />} />
+          <Route path="/" element={<Navigate to="/EMO" />} />
           <Route path="regist" element={<Regist />} />
           <Route path="/verify-email" element={<VerifyDoctorEmail />} />
           <Route path="/EMO" element={<Home />}>
@@ -107,6 +107,7 @@ function App() {
             <Route path="TestQuestionList" element={<TestQuestionList />} />
             <Route path="payment-success" element={<PaymentSuccess />} />
             <Route path="payment-failure" element={<PaymentFailure />} />
+            <Route path="addProduct" element={<AddProductPage />} />
           </Route>
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/payments/callback" element={<PaymentCallback />} />
