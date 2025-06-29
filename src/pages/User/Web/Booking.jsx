@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -24,8 +24,10 @@ export default function Booking() {
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isDateListOpen, setIsDateListOpen] = useState(true);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(
+    JSON.parse(localStorage.getItem("booking_timeSlot")) || null
+  );
 
   const [promoCode, setPromoCode] = useState("");
   const today = new Date();
@@ -41,6 +43,7 @@ export default function Booking() {
   const profileId = useSelector((state) => state.auth.profileId);
   const API_SCHEDULING_SERVICE = "http://localhost:3000/api";
   const API_PROFILE_SERVICE = "http://localhost:3000/api";
+
   // Hàm lấy số ngày trong tháng (cải tiến)
   const getDaysInMonth = (year, month) => {
     const firstDay = new Date(year, month, 1).getDay();
@@ -51,6 +54,7 @@ export default function Booking() {
       ...Array.from({ length: totalDays }, (_, i) => i + 1),
     ];
   };
+
   const daysInMonth = getDaysInMonth(currentYear, currentMonthIndex);
   // Xử lý khi chọn ngày
   const handleDateClick = (day) => {
@@ -62,6 +66,7 @@ export default function Booking() {
   const handleTimeSlotClick = (slot) => {
     setSelectedTimeSlot(slot);
   };
+
   // Xử lý khi thay đổi tháng
   const changeMonth = (step) => {
     let newMonth = currentMonthIndex + step;
@@ -84,6 +89,7 @@ export default function Booking() {
       })
     );
   };
+
   // Lấy lịch trống khi thay đổi ngày
   useEffect(() => {
     if (!selectedDate) return;
@@ -101,7 +107,22 @@ export default function Booking() {
             },
           }
         );
-        setAvailableSlots(response.data.timeSlots || []);
+        // setAvailableSlots(response.data.timeSlots || []);
+        const now = new Date();
+        const isToday =
+          selectedDate.toDateString() === new Date().toDateString();
+
+        const filteredSlots = (response.data.timeSlots || []).filter((slot) => {
+          if (!isToday) return true;
+
+          const [hour, minute] = slot.startTime.split(":").map(Number);
+          const slotTime = new Date(selectedDate);
+          slotTime.setHours(hour, minute, 0, 0);
+
+          return slotTime > now;
+        });
+
+        setAvailableSlots(filteredSlots);
       } catch (error) {
         console.error("Lỗi lấy lịch trình:", error);
         setAvailableSlots([]);
@@ -110,6 +131,7 @@ export default function Booking() {
 
     fetchSchedule();
   }, [selectedDate, doctorId]);
+
   // Tính toán thời gian trong phút
   const calculateDurationInMinutes = (startTime, endTime) => {
     const [startHour, startMinute] = startTime.split(":").map(Number);
@@ -120,6 +142,9 @@ export default function Booking() {
 
     return endTotalMinutes - startTotalMinutes;
   };
+
+  console.log(selectedDate);
+
   // Lấy thông tin bác sĩ
   useEffect(() => {
     const fetchDoctorInfo = async () => {
@@ -144,50 +169,66 @@ export default function Booking() {
     fetchDoctorInfo();
   }, [doctorId]);
 
-  // Xử lý khi ấn nút tiếp tục đặt lịch
-  const handleBookingContinue = async () => {
-    // Check if user is logged in by verifying token existence in localStorage
-    const token = localStorage.getItem("token");
-    if (!token) {
-      // Show toast notification for unauthenticated user
-      toast.error("Please log in to book a consultation");
-      return;
-    }
-
+  const buildBookingDto = () => {
     if (!selectedTimeSlot) {
-      alert("Please select a time for the consultation");
-      return;
+      throw new Error("Không có thông tin time slot");
     }
 
-    try {
-      // Extract the start time from the selected time slot
-      const startTime = selectedTimeSlot.startTime || selectedTimeSlot;
-      const duration = calculateDurationInMinutes(
-        selectedTimeSlot.startTime,
-        selectedTimeSlot.endTime
-      );
-      // Create the booking data object according to the required format
-      const bookingData = {
-        bookingDto: {
-          doctorId: doctorId,
-          patientId: profileId, // Using the value from the image
-          date: selectedDate.toLocaleDateString("en-CA").split("T")[0], // Format: YYYY-MM-DD
-          startTime: startTime,
-          duration: duration, // Default to 60 if not available
-          price: 200000,
-          promoCode: promoCode.trim() || null,
-          giftCodeId: null, // As specified, set to null
-          paymentMethod: "VNPay", // Using the payment method from the image
-        },
-        returnUrl: "/payments/callback",
-        // returnUrl: "https://emo-rouge.vercel.app/payments/callback",
-      };
+    const startTime = selectedTimeSlot.startTime;
+    const duration = calculateDurationInMinutes(
+      selectedTimeSlot.startTime,
+      selectedTimeSlot.endTime
+    );
 
-      // Make API call to create the booking
-      console.log("bookingData", JSON.stringify(bookingData, null, 2));
-      const response = await axios.post(
-        `${API_SCHEDULING_SERVICE}/bookings`,
-        bookingData,
+    return {
+      doctorId,
+      patientId: profileId,
+      date: selectedDate.toLocaleDateString("en-CA"),
+      startTime,
+      duration,
+      price: 200000,
+      promoCode: promoCode.trim() || null,
+      giftCodeId: null,
+    };
+  };
+
+  //check valied time
+  // const isTimeSlotValid = () => {
+  //   if (!selectedDate || !selectedTimeSlot?.startTime) return false;
+
+  //   const [hour, minute] = selectedTimeSlot.startTime.split(":").map(Number);
+
+  //   const selectedDateTime = new Date(selectedDate);
+  //   selectedDateTime.setHours(hour);
+  //   selectedDateTime.setMinutes(minute);
+  //   selectedDateTime.setSeconds(0);
+  //   selectedDateTime.setMilliseconds(0);
+
+  //   const now = new Date();
+
+  //   return selectedDateTime > now;
+  // };
+
+  const handleBookingContinue = async () => {
+    if (!localStorage.getItem("token"))
+      return toast.error("Please log in to book a consultation");
+
+    if (!selectedTimeSlot)
+      return alert("Please select a time for the consultation");
+
+    // if (!isTimeSlotValid()) {
+    //   toast.error("Not allowed to choose time in the past");
+    //   return;
+    // }
+
+    const bookingDto = buildBookingDto();
+
+    console.log(bookingDto);
+    try {
+      const res = await axios.post(
+        `${API_SCHEDULING_SERVICE}/pay-booking`,
+        // ``,
+        { items: [bookingDto], amount: bookingDto.price },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -196,15 +237,12 @@ export default function Booking() {
         }
       );
 
-      if (response.data && response.data.paymentUrl) {
-        window.location.href = response.data.paymentUrl;
+      if (res.data?.order_url) {
+        localStorage.setItem("bookingDTO", JSON.stringify(bookingDto));
+        window.location.href = res.data.order_url;
       }
-    } catch (error) {
-      console.error("Lỗi khi đặt lịch:", error);
-      toast.error(
-        error.response?.data?.message ||
-        "Đã xảy ra lỗi khi đặt lịch. Vui lòng thử lại sau."
-      );
+    } catch (err) {
+      toast.error("Đã xảy ra lỗi khi đặt lịch. Vui lòng thử lại sau.");
     }
   };
 
@@ -223,7 +261,8 @@ export default function Booking() {
           <p className="text-red-500 text-lg">{error}</p>
           <button
             onClick={() => navigate("/EMO/counselor")}
-            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+            className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+          >
             Quay lại trang danh sách bác sĩ
           </button>
         </div>
@@ -236,7 +275,8 @@ export default function Booking() {
         {/* Header với nút Back */}
         <button
           onClick={() => navigate("/EMO/counselor")}
-          className="flex items-center text-purple-700 hover:text-purple-900 mb-6 transition-colors duration-200">
+          className="flex items-center text-purple-700 hover:text-purple-900 mb-6 transition-colors duration-200"
+        >
           <ArrowLeft size={20} className="mr-2" />
           <span className="font-medium">Back to list of doctors</span>
         </button>
@@ -431,7 +471,8 @@ export default function Booking() {
               <div className="flex justify-between items-center mb-4">
                 <button
                   className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 transition-colors duration-200"
-                  onClick={() => changeMonth(-1)}>
+                  onClick={() => changeMonth(-1)}
+                >
                   <ArrowLeft size={18} className="text-purple-600" />
                 </button>
                 <h4 className="font-medium text-lg text-purple-800">
@@ -439,7 +480,8 @@ export default function Booking() {
                 </h4>
                 <button
                   className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 transition-colors duration-200"
-                  onClick={() => changeMonth(1)}>
+                  onClick={() => changeMonth(1)}
+                >
                   <ArrowLeft
                     size={18}
                     className="text-purple-600 transform rotate-180"
@@ -452,7 +494,8 @@ export default function Booking() {
                 {daysOfWeek.map((day, idx) => (
                   <span
                     key={idx}
-                    className="text-center font-medium text-purple-800 py-2">
+                    className="text-center font-medium text-purple-800 py-2"
+                  >
                     {day}
                   </span>
                 ))}
@@ -488,20 +531,24 @@ export default function Booking() {
                     <div
                       key={idx}
                       className={`flex justify-center items-center h-10 rounded-full
-                        ${isPastDate
-                          ? "text-gray-400 cursor-not-allowed"
-                          : "cursor-pointer hover:bg-purple-100 transition-colors duration-200"
+                        ${
+                          isPastDate
+                            ? "text-gray-400 cursor-not-allowed"
+                            : "cursor-pointer hover:bg-purple-100 transition-colors duration-200"
                         }
-                        ${isSelectedDate
-                          ? "bg-purple-600 text-white font-medium"
-                          : ""
+                        ${
+                          isSelectedDate
+                            ? "bg-purple-600 text-white font-medium"
+                            : ""
                         }
-                        ${isTodayDate && !isSelectedDate
-                          ? "border border-purple-500 font-medium"
-                          : ""
+                        ${
+                          isTodayDate && !isSelectedDate
+                            ? "border border-purple-500 font-medium"
+                            : ""
                         }
                       `}
-                      onClick={() => !isPastDate && handleDateClick(day)}>
+                      onClick={() => !isPastDate && handleDateClick(day)}
+                    >
                       {day}
                     </div>
                   );
@@ -521,17 +568,19 @@ export default function Booking() {
                       <button
                         key={i}
                         className={`p-3 border rounded-xl text-sm font-medium transition-all duration-200
-                          ${slot.status === "Available"
-                            ? selectedTimeSlot === slot
-                              ? "bg-purple-600 text-white border-purple-600 shadow-md"
-                              : "bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100"
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          ${
+                            slot.status === "Available"
+                              ? selectedTimeSlot === slot
+                                ? "bg-purple-600 text-white border-purple-600 shadow-md"
+                                : "bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100"
+                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
                           }`}
                         disabled={slot.status !== "Available"}
                         onClick={() =>
                           slot.status === "Available" &&
                           handleTimeSlotClick(slot)
-                        }>
+                        }
+                      >
                         {`${slot.startTime.slice(0, 5)} - ${slot.endTime.slice(
                           0,
                           5
@@ -579,12 +628,14 @@ export default function Booking() {
               </div>
               <button
                 className={`w-full py-4 rounded-xl mt-6 font-bold text-white shadow-md transition-all duration-300 
-                  ${selectedTimeSlot
-                    ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
-                    : "bg-gray-400"
+                  ${
+                    selectedTimeSlot
+                      ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
+                      : "bg-gray-400"
                   }`}
                 onClick={handleBookingContinue}
-                disabled={!selectedTimeSlot}>
+                disabled={!selectedTimeSlot}
+              >
                 {selectedTimeSlot ? "Continue booking" : "Please select a time"}
               </button>
             </div>
@@ -599,7 +650,8 @@ export default function Booking() {
           {/* {doctor.reviewsHighlights?.map((review, index) => ( */}
           <div
             // key={index}
-            className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+            className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+          >
             <div className="flex justify-between items-center mb-2">
               <p className="font-medium">Nguyen Van Giang</p>
               {/* <p className="font-medium">{review.name}</p> */}
