@@ -114,7 +114,7 @@ const LogIn = () => {
     }
   };
 
- const handleLoginWithGoogle = async () => {
+  const handleLoginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
