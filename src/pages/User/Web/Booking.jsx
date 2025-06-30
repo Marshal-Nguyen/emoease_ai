@@ -107,22 +107,22 @@ export default function Booking() {
             },
           }
         );
-        // setAvailableSlots(response.data.timeSlots || []);
-        const now = new Date();
-        const isToday =
-          selectedDate.toDateString() === new Date().toDateString();
+        setAvailableSlots(response.data.timeSlots || []);
+        // const now = new Date();
+        // const isToday =
+        //   selectedDate.toDateString() === new Date().toDateString();
 
-        const filteredSlots = (response.data.timeSlots || []).filter((slot) => {
-          if (!isToday) return true;
+        // const filteredSlots = (response.data.timeSlots || []).filter((slot) => {
+        //   if (!isToday) return true;
 
-          const [hour, minute] = slot.startTime.split(":").map(Number);
-          const slotTime = new Date(selectedDate);
-          slotTime.setHours(hour, minute, 0, 0);
+        //   const [hour, minute] = slot.startTime.split(":").map(Number);
+        //   const slotTime = new Date(selectedDate);
+        //   slotTime.setHours(hour, minute, 0, 0);
 
-          return slotTime > now;
-        });
+        //   return slotTime > now;
+        // });
 
-        setAvailableSlots(filteredSlots);
+        // setAvailableSlots(filteredSlots);
       } catch (error) {
         console.error("Lỗi lấy lịch trình:", error);
         setAvailableSlots([]);
@@ -223,12 +223,14 @@ export default function Booking() {
 
     const bookingDto = buildBookingDto();
 
-    console.log(bookingDto);
     try {
       const res = await axios.post(
-        `${API_SCHEDULING_SERVICE}/pay-booking`,
-        // ``,
-        { items: [bookingDto], amount: bookingDto.price },
+        `${API_SCHEDULING_SERVICE}/payment-zalo/pay-booking`,
+        {
+          items: [bookingDto],
+          amount: bookingDto.price,
+          patientProfileId: localStorage.getItem("profileId"),
+        },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

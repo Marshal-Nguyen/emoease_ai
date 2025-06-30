@@ -2,105 +2,50 @@ import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { toast } from "react-toastify";
+
 const PaymentSuccess = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
-  const calledRef = useRef(false);
-
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const tranID = searchParams.get("apptransid");
-  const amount = searchParams.get("amount");
-
-  const API_SCHEDULING_SERVICE = "http://localhost:3000/api";
+  const { state } = useLocation();
 
   // Định dạng số tiền sang VND
   const formatAmount = (amount) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(amount); // VNPay trả về số tiền nhân 100
+    }).format(amount);
   };
 
-  // Định dạng ngày giờ
-  const formatDateTime = (payDate) => {
-    if (!payDate) return "Không xác định";
-    const date = new Date(
-      `${payDate.slice(0, 4)}-${payDate.slice(4, 6)}-${payDate.slice(
-        6,
-        8
-      )}T${payDate.slice(8, 10)}:${payDate.slice(10, 12)}:${payDate.slice(
-        12,
-        14
-      )}`
-    );
-    return date.toLocaleString("vi-VN", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    });
-  };
+  function parseDateTime(datetimeString) {
+    const dateObj = new Date(datetimeString);
 
-  function parseAppTransId(apptransid) {
-    const [datePart, transactionId] = apptransid.split("_");
+    if (isNaN(dateObj.getTime())) {
+      return { date: null, time: null, error: "Invalid datetime string" };
+    }
 
-    const year = "20" + datePart.slice(0, 2);
-    const month = datePart.slice(2, 4);
-    const day = datePart.slice(4, 6);
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const year = dateObj.getFullYear();
+
+    const hours = String(dateObj.getHours()).padStart(2, "0");
+    const minutes = String(dateObj.getMinutes()).padStart(2, "0");
 
     const formattedDate = `${day}/${month}/${year}`;
+    const formattedTime = `${hours}:${minutes}`;
 
     return {
       date: formattedDate,
-      transactionID: transactionId,
+      time: formattedTime,
     };
   }
 
-  const { date, transactionID } = parseAppTransId(tranID);
+  const { date, time } = parseDateTime(state.payDate);
 
   // Animation cho check mark
   useEffect(() => {
     setTimeout(() => {
       setIsLoaded(true);
     }, 500);
-  }, []);
-
-  useEffect(() => {
-    const paymentMethod = searchParams.get("paymentMethod");
-    const status = Number(searchParams.get("status"));
-    const bookingDTO = JSON.parse(localStorage.getItem("bookingDTO"));
-
-    if (paymentMethod === "zalopay" && status === 1 && !calledRef.current) {
-      calledRef.current = true;
-      if (!bookingDTO) {
-        toast.error("Không tìm thấy thông tin ");
-        return;
-      }
-
-      const createBooking = async () => {
-        try {
-          console.log("check có gọi api");
-          await axios.post(
-            `${API_SCHEDULING_SERVICE}/createBooking`,
-            bookingDTO,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          toast.success("Đặt lịch thành công sau khi thanh toán ZaloPay");
-          localStorage.removeItem("bookingDTO");
-        } catch (err) {
-          console.log(err);
-          toast.error("Không thể tạo booking sau thanh toán ZaloPay.");
-        }
-      };
-
-      createBooking();
-    }
   }, []);
 
   return (
@@ -187,7 +132,9 @@ const PaymentSuccess = () => {
                         Amount:
                       </span>
                       <span className="font-bold text-purple-900">
-                        {amount ? formatAmount(amount) : "Không xác định"}
+                        {state.amount
+                          ? formatAmount(state.amount)
+                          : "Không xác định"}
                       </span>
                     </div>
 
@@ -196,14 +143,14 @@ const PaymentSuccess = () => {
                         Transaction ID:
                       </span>
                       <span className="font-mono text-purple-900 text-sm">
-                        {transactionID || "Không xác định"}
+                        {state?.transactionNo || "Không xác định"}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center pt-3">
                       <span className="text-purple-700 font-medium">Time:</span>
                       <span className="text-purple-900 text-sm">
-                        {date || "Không xác định"}
+                        {date + " - " + time || "Không xác định"}
                       </span>
                     </div>
                   </div>
