@@ -3,14 +3,13 @@ import axios from "axios";
 import { AiFillEye } from "react-icons/ai";
 import { FaMars, FaVenus, FaUsers } from "react-icons/fa";
 import { motion } from "framer-motion";
-import Loader from "../../../components/Web/Loader";
-import { useNavigate } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import { MdFilterList } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
-const BASE_API_URL = "https://anhtn.id.vn/profile-service/patients";
-const IMAGE_API_URL = "https://anhtn.id.vn/image-service/image/get";
-const SUBSCRIPTION_API_URL = "https://anhtn.id.vn/subscription-service/service-packages";
+const BASE_API_URL = "http://localhost:3000/api/patient-profiles";
+const SEARCH_API_URL = "http://localhost:3000/api/patient-profiles/search";
+const IMAGE_API_URL = "http://localhost:3000/api/profile";
 
 const PsychologistList = () => {
   const [customers, setCustomers] = useState([]);
@@ -19,8 +18,8 @@ const PsychologistList = () => {
   const [error, setError] = useState(null);
   const [pageIndex, setPageIndex] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [sortBy, setSortBy] = useState("fullname");
-  const [sortOrder, setSortOrder] = useState("asc");
+  const [sortBy, setSortBy] = useState("Fullname");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [searchQuery, setSearchQuery] = useState("");
   const [hasMoreData, setHasMoreData] = useState(true);
   const navigate = useNavigate();
@@ -28,51 +27,36 @@ const PsychologistList = () => {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(BASE_API_URL, {
-        params: {
-          PageIndex: pageIndex,
-          PageSize: pageSize,
-          Search: searchQuery,
-          SortBy: sortBy,
-          SortOrder: sortOrder,
-        },
+      const response = await axios.get(searchQuery ? SEARCH_API_URL : BASE_API_URL, {
+        params: searchQuery
+          ? { fullName: searchQuery, pageIndex, pageSize, sortBy, sortOrder }
+          : { pageIndex, pageSize, sortBy, sortOrder },
       });
 
       const customersWithImagesAndPackages = await Promise.all(
-        response.data.paginatedResult.data.map(async (customer) => {
-          // Fetch image
+        response.data.data.map(async (customer) => {
+          // Fetch profile image
           let profileImage;
           try {
-            const imageResponse = await axios.get(IMAGE_API_URL, {
-              params: { ownerType: "User", ownerId: customer.userId },
-            });
-            profileImage =
-              imageResponse.data.url ||
-              "https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100";
+            const imageResponse = await axios.get(`${IMAGE_API_URL}/${customer.Id}/image`);
+            profileImage = imageResponse.data.data.publicUrl ||
+              "https://via.placeholder.com/150?text=No+Image"; // Placeholder for no image
           } catch (imgError) {
             profileImage =
-              "https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100";
+              "https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100"; // Default for API failure
           }
 
-          // Fetch purchased package
+          // Simulate purchased package since subscription API is not provided
           let purchasedPackageName = null;
-          try {
-            const subscriptionResponse = await axios.get(SUBSCRIPTION_API_URL, {
-              params: {
-                PageIndex: 1,
-                PageSize: 10,
-                patientId: customer.id,
-              },
-            });
-            const packages = subscriptionResponse.data.servicePackages.data;
-            const purchasedPackage = packages.find((pkg) => pkg.isPurchased);
-            purchasedPackageName = purchasedPackage ? purchasedPackage.name : null;
-          } catch (subError) {
-            console.error(`Error fetching subscription for ${customer.id}:`, subError);
-          }
 
           return {
             ...customer,
+            id: customer.Id,
+            userId: customer.UserId,
+            fullName: customer.FullName,
+            gender: customer.Gender,
+            phoneNumber: customer.PhoneNumber,
+            personalityTraits: customer.PersonalityTraits,
             profileImage,
             purchasedPackageName,
           };
@@ -80,7 +64,10 @@ const PsychologistList = () => {
       );
 
       setCustomers(customersWithImagesAndPackages);
-      setHasMoreData(customersWithImagesAndPackages.length === pageSize);
+      setHasMoreData(
+        customersWithImagesAndPackages.length === pageSize &&
+        response.data.pageIndex < response.data.totalPages
+      );
     } catch (error) {
       setError("Failed to load customers. Please try again.");
       console.error("Error fetching data:", error);
@@ -92,17 +79,25 @@ const PsychologistList = () => {
 
   useEffect(() => {
     fetchCustomers();
-  }, [pageIndex, pageSize, sortBy, sortOrder, searchQuery]);
+  }, [pageIndex, pageSize, sortBy, sortOrder]);
 
-  if (initialLoad) return <Loader />;
+  const handleSearch = () => {
+    setPageIndex(1); // Reset to first page on new search
+    fetchCustomers();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  if (initialLoad) return <div>Loading...</div>;
   if (error)
-    return (
-      <p className="text-center text-red-500 text-xl font-semibold">{error}</p>
-    );
+    return <p className="text-center text-red-500 text-xl font-semibold">{error}</p>;
 
   return (
     <div className="container mx-auto p-6 mt-2 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-      {/* Header */}
       <motion.div
         className="flex items-center justify-center mb-2"
         initial={{ opacity: 0, y: -20 }}
@@ -115,14 +110,12 @@ const PsychologistList = () => {
         </h2>
       </motion.div>
 
-      {/* Filter and Table Wrapper */}
       <motion.div
         className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200"
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Filter and Search Controls */}
         <div className="p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-200">
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
             <div className="relative w-full sm:w-1/3">
@@ -130,12 +123,14 @@ const PsychologistList = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Search by name..."
                 className="w-full p-3 pl-10 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white text-sm shadow-sm transition-all duration-300 hover:shadow-md"
               />
               <FiSearch
-                className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400"
+                className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 cursor-pointer"
                 size={20}
+                onClick={handleSearch}
               />
             </div>
             <div className="flex gap-4 items-center">
@@ -154,7 +149,7 @@ const PsychologistList = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="p-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm transition-all duration-300 hover:shadow-md"
               >
-                <option value="fullname">Sort by Name</option>
+                <option value="Fullname">Sort by Name</option>
                 <option value="Gender">Sort by Gender</option>
               </select>
               <select
@@ -169,7 +164,6 @@ const PsychologistList = () => {
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
@@ -207,23 +201,27 @@ const PsychologistList = () => {
                     </td>
                     <td className="px-6 py-4 text-gray-800 font-semibold">{customer.fullName}</td>
                     <td className="px-6 py-4 flex items-center gap-2 text-gray-600">
-                      {customer.gender === "Male" ? (
+                      {customer.gender === "Male" || customer.gender === "male" ? (
                         <FaMars className="text-blue-600" size={18} />
-                      ) : (
+                      ) : customer.gender === "female" ? (
                         <FaVenus className="text-pink-600" size={18} />
+                      ) : (
+                        <span>-</span>
                       )}
-                      <span className="font-medium">{customer.gender}</span>
+                      <span className="font-medium">{customer.gender || "N/A"}</span>
                     </td>
                     <td className="px-6 py-4 text-gray-600 font-medium">
-                      {customer.contactInfo?.phoneNumber || "N/A"}
+                      {customer.phoneNumber || "N/A"}
                     </td>
                     <td
                       className={`px-6 py-4 italic ${customer.personalityTraits === "Introversion"
                         ? "text-blue-600"
-                        : "text-red-600"
+                        : customer.personalityTraits === "Extroversion"
+                          ? "text-red-600"
+                          : "text-gray-600"
                         }`}
                     >
-                      {customer.personalityTraits}
+                      {customer.personalityTraits || "N/A"}
                     </td>
                     <td className="px-6 py-4 text-gray-600 font-medium">
                       {customer.purchasedPackageName || "N/A"}
@@ -254,7 +252,6 @@ const PsychologistList = () => {
         </div>
       </motion.div>
 
-      {/* Pagination */}
       <div className="mt-8 flex justify-center gap-6">
         <motion.button
           onClick={() => setPageIndex((prev) => Math.max(1, prev - 1))}
