@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const ProfileDoctor = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // Set to false for static data
     const [error, setError] = useState(null);
     const [specialtiesList, setSpecialtiesList] = useState([]);
     const [formData, setFormData] = useState({
@@ -18,21 +17,60 @@ const ProfileDoctor = () => {
         bio: "",
     });
     const [avatarUrl, setAvatarUrl] = useState(null);
-    const [id, setId] = useState(null);
     const [avatarLoading, setAvatarLoading] = useState(false);
     const fileInputRef = useRef(null);
     const { userId } = useParams();
 
-    const fetchAvatar = async (doctorId) => {
-        try {
-            const avatarResponse = await axios.get(
-                `https://anhtn.id.vn/image-service/image/get?ownerType=User&ownerId=${doctorId}`
-            );
-            setAvatarUrl(avatarResponse.data.url);
-        } catch (err) {
-            console.log("No avatar found or error fetching avatar:", err);
-        }
-    };
+    // Hardcoded data for testing UI
+    useEffect(() => {
+        // Simulate fetching doctor data
+        const hardcodedDoctorData = {
+            doctorProfileDto: {
+                userId: "12345",
+                fullName: "Dr. John Doe",
+                gender: "Male",
+                contactInfo: {
+                    address: "123 Main St, New York, NY 10001",
+                    phoneNumber: "+1-555-123-4567",
+                    email: "johndoe@example.com",
+                },
+                specialties: [
+                    "8704cf2c-e7ec-4ece-a057-883653578ae6",
+                    "ddf4b47a-65d1-451f-a297-41606caacfe2",
+                ],
+                qualifications: "MD, PhD in Neurology",
+                yearsOfExperience: 15,
+                bio: "Experienced neurologist specializing in behavioral therapy and cognitive disorders.",
+            },
+        };
+
+        // Simulate fetching specialties
+        const hardcodedSpecialties = [
+            { id: "8704cf2c-e7ec-4ece-a057-883653578ae6", name: "Behavioral Therapy" },
+            { id: "ddf4b47a-65d1-451f-a297-41606caacfe2", name: "Neurology" },
+            { id: "3", name: "Cognitive Psychology" },
+            { id: "4", name: "Child Psychology" },
+            { id: "5", name: "Clinical Psychology" },
+        ];
+
+        // Set hardcoded data
+        setFormData({
+            fullName: hardcodedDoctorData.doctorProfileDto.fullName,
+            gender: hardcodedDoctorData.doctorProfileDto.gender,
+            contactInfo: {
+                address: hardcodedDoctorData.doctorProfileDto.contactInfo.address,
+                phoneNumber: hardcodedDoctorData.doctorProfileDto.contactInfo.phoneNumber,
+                email: hardcodedDoctorData.doctorProfileDto.contactInfo.email,
+            },
+            specialties: hardcodedDoctorData.doctorProfileDto.specialties,
+            qualifications: hardcodedDoctorData.doctorProfileDto.qualifications,
+            yearsOfExperience: hardcodedDoctorData.doctorProfileDto.yearsOfExperience,
+            bio: hardcodedDoctorData.doctorProfileDto.bio,
+        });
+        setSpecialtiesList(hardcodedSpecialties);
+        setAvatarUrl("https://via.placeholder.com/150"); // Hardcoded placeholder image
+        setLoading(false);
+    }, [userId]);
 
     const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
@@ -51,84 +89,20 @@ const ProfileDoctor = () => {
 
         try {
             setAvatarLoading(true);
-            const formDataImg = new FormData();
-            formDataImg.append("file", file);
-            formDataImg.append("ownerType", "User");
-            formDataImg.append("ownerId", id);
-
-            const endpoint = avatarUrl
-                ? "https://anhtn.id.vn/image-service/image/update"
-                : "https://anhtn.id.vn/image-service/image/upload";
-
-            const method = avatarUrl ? axios.put : axios.post;
-            await method(endpoint, formDataImg, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
-            await fetchAvatar(id);
-            toast.success("Profile picture updated successfully!");
+            // Simulate avatar upload (no actual API call)
+            setTimeout(() => {
+                setAvatarUrl(URL.createObjectURL(file)); // Preview the selected image
+                setAvatarLoading(false);
+                toast.success("Profile picture updated successfully!");
+            }, 1000);
         } catch (err) {
             console.error("Error updating avatar:", err);
             toast.error("Failed to update profile picture. Please try again.");
-        } finally {
             setAvatarLoading(false);
         }
     };
 
     const triggerFileInput = () => fileInputRef.current.click();
-
-    useEffect(() => {
-        const fetchDoctorData = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(
-                    `https://anhtn.id.vn/profile-service/doctors/${userId}`
-                );
-                const { doctorProfileDto } = response.data;
-                const doctorId = doctorProfileDto.userId;
-                setId(doctorId);
-                setFormData({
-                    fullName: doctorProfileDto.fullName,
-                    gender: doctorProfileDto.gender,
-                    contactInfo: {
-                        address: doctorProfileDto.contactInfo.address,
-                        phoneNumber: doctorProfileDto.contactInfo.phoneNumber,
-                        email: doctorProfileDto.contactInfo.email,
-                    },
-                    specialties: doctorProfileDto.specialties.map((s) => s.id),
-                    qualifications: doctorProfileDto.qualifications,
-                    yearsOfExperience: doctorProfileDto.yearsOfExperience,
-                    bio: doctorProfileDto.bio,
-                });
-                setLoading(false);
-                await fetchAvatar(doctorId);
-            } catch (err) {
-                setError("Error fetching doctor data. Please try again.");
-                setLoading(false);
-                console.error("Error fetching doctor data:", err);
-            }
-        };
-
-        const fetchSpecialties = async () => {
-            try {
-                const response = await axios.get(
-                    "https://anhtn.id.vn/profile-service/specialties?PageIndex=1&PageSize=10"
-                );
-                setSpecialtiesList(response.data.specialties);
-            } catch (err) {
-                console.error("Error fetching specialties:", err);
-                setSpecialtiesList([
-                    { id: "8704cf2c-e7ec-4ece-a057-883653578ae6", name: "Behavioral Therapy" },
-                    { id: "ddf4b47a-65d1-451f-a297-41606caacfe2", name: "Neurology" },
-                    { id: "3", name: "Cognitive Psychology" },
-                    { id: "4", name: "Child Psychology" },
-                    { id: "5", name: "Clinical Psychology" },
-                ]);
-            }
-        };
-
-        fetchDoctorData();
-        fetchSpecialties();
-    }, [userId]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -158,23 +132,11 @@ const ProfileDoctor = () => {
         e.preventDefault();
         try {
             setLoading(true);
-            const updatedProfile = {
-                doctorProfileUpdate: {
-                    fullName: formData.fullName,
-                    gender: formData.gender,
-                    contactInfo: formData.contactInfo,
-                    specialtyIds: formData.specialties,
-                    qualifications: formData.qualifications,
-                    yearsOfExperience: parseInt(formData.yearsOfExperience),
-                    bio: formData.bio,
-                },
-            };
-            await axios.put(
-                `https://anhtn.id.vn/profile-service/doctors/${userId}`,
-                updatedProfile
-            );
-            setLoading(false);
-            toast.success("Doctor profile updated successfully!");
+            // Simulate profile update (no actual API call)
+            setTimeout(() => {
+                setLoading(false);
+                toast.success("Doctor profile updated successfully!");
+            }, 1000);
         } catch (err) {
             toast.error("Error updating doctor profile");
             setLoading(false);
@@ -218,7 +180,8 @@ const ProfileDoctor = () => {
                                                 className="h-20 w-20"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
-                                                stroke="currentColor">
+                                                stroke="currentColor"
+                                            >
                                                 <path
                                                     strokeLinecap="round"
                                                     strokeLinejoin="round"
@@ -237,13 +200,15 @@ const ProfileDoctor = () => {
                                 <button
                                     type="button"
                                     onClick={triggerFileInput}
-                                    className="absolute bottom-2 right-2 bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700">
+                                    className="absolute bottom-2 right-2 bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700"
+                                >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         className="h-6 w-6"
                                         fill="none"
                                         viewBox="0 0 24 24"
-                                        stroke="currentColor">
+                                        stroke="currentColor"
+                                    >
                                         <path
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
@@ -274,78 +239,6 @@ const ProfileDoctor = () => {
                             </p>
                         </div>
                     </div>
-                    {/* <div className="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-300">
-                        <div className="flex flex-col items-center">
-                            <div className="relative">
-                                <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-100 border-4 border-indigo-200 shadow-md">
-                                    {avatarUrl ? (
-                                        <img
-                                            src={avatarUrl}
-                                            alt="Profile"
-                                            className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-300"
-                                        />
-                                    ) : (
-                                        <svg
-                                            className="w-20 h-20 text-gray-400 mx-auto mt-10"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                            />
-                                        </svg>
-                                    )}
-                                    {avatarLoading && (
-                                        <div className="absolute inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center rounded-full">
-                                            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-white"></div>
-                                        </div>
-                                    )}
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={triggerFileInput}
-                                    className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition-colors duration-200"
-                                >
-                                    <svg
-                                        className="w-5 h-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                                        />
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleAvatarChange}
-                                accept="image/jpeg, image/png"
-                                className="hidden"
-                            />
-                            <p className="mt-3 text-sm font-medium text-gray-600">
-                                {avatarUrl ? "Change" : "Upload"} Profile Picture
-                            </p>
-                            <p className="text-xs text-gray-400">JPEG, PNG (max 5MB)</p>
-                        </div>
-                    </div> */}
 
                     {/* Two-column Layout */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -428,7 +321,7 @@ const ProfileDoctor = () => {
                                             name="qualifications"
                                             value={formData.qualifications}
                                             onChange={handleInputChange}
-                                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-995 focus:border-indigo-500"
                                             placeholder="e.g., MD, PhD in Psychology"
                                             required
                                         />
@@ -504,7 +397,6 @@ const ProfileDoctor = () => {
                                     ))}
                                 </div>
                             </div>
-
 
                             {/* Contact Information */}
                             <div className="bg-white rounded-xl shadow-lg p-6">
