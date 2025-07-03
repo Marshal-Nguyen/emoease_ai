@@ -13,8 +13,10 @@ const PaymentFailure = () => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(amount / 100); // VNPay trả về số tiền nhân 100
+    }).format(amount);
   };
+
+  console.log(state);
 
   // Hàm lấy thông báo lỗi từ mã lỗi VNPay
   const getVNPayErrorMessage = (responseCode) => {
@@ -62,7 +64,8 @@ const PaymentFailure = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="w-full max-w-5xl bg-white rounded-xl shadow-lg overflow-hidden"
-        style={{ boxShadow: "0 8px 20px rgba(217, 88, 88, 0.1)" }}>
+        style={{ boxShadow: "0 8px 20px rgba(217, 88, 88, 0.1)" }}
+      >
         <div className="flex flex-row h-full">
           {/* Left side - Red gradient with error icon */}
           <div className="bg-gradient-to-br from-red-500 to-rose-600 w-1/4 flex flex-col justify-center items-center p-6 rounded-r-3xl">
@@ -75,13 +78,15 @@ const PaymentFailure = () => {
                 damping: 20,
                 delay: 0.2,
               }}
-              className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md mb-4">
+              className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-md mb-4"
+            >
               <svg
                 className="w-10 h-10 text-red-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg">
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <motion.path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -100,14 +105,16 @@ const PaymentFailure = () => {
               className="text-xl font-bold text-white text-center"
               style={{
                 fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-              }}>
+              }}
+            >
               Payment Failed
             </motion.h1>
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
-              className="text-xs text-red-100 mt-2 text-center italic">
+              className="text-xs text-red-100 mt-2 text-center italic"
+            >
               "We're here to help you resolve this issue"
             </motion.p>
           </div>
@@ -120,7 +127,8 @@ const PaymentFailure = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
-                className="w-1/2 pr-4">
+                className="w-1/2 pr-4"
+              >
                 <h2 className="text-red-800 font-medium text-lg mb-3">
                   Transaction Details
                 </h2>
@@ -169,7 +177,8 @@ const PaymentFailure = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1 }}
-                  className="mt-4 rounded-lg p-4 border border-red-100 bg-white">
+                  className="mt-4 rounded-lg p-4 border border-red-100 bg-white"
+                >
                   <h3 className="text-red-800 font-medium mb-2 text-sm">
                     What happened?
                   </h3>
@@ -185,7 +194,8 @@ const PaymentFailure = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.9 }}
-                className="w-1/2 pl-4 flex flex-col justify-between">
+                className="w-1/2 pl-4 flex flex-col justify-between"
+              >
                 <div>
                   <h2 className="text-red-800 font-medium text-lg mb-3">
                     We're here to help
@@ -205,7 +215,8 @@ const PaymentFailure = () => {
                         className="w-4 h-4 mr-2 text-rose-500"
                         fill="none"
                         stroke="currentColor"
-                        viewBox="0 0 24 24">
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -220,7 +231,8 @@ const PaymentFailure = () => {
                         className="w-4 h-4 mr-2 text-rose-500"
                         fill="none"
                         stroke="currentColor"
-                        viewBox="0 0 24 24">
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -241,7 +253,8 @@ const PaymentFailure = () => {
                     className="w-full py-2 rounded-lg bg-red-600 text-white font-medium transition-all duration-300 hover:bg-red-700 text-sm"
                     onClick={() => {
                       navigate("/EMO");
-                    }}>
+                    }}
+                  >
                     View Option
                   </motion.button>
 
@@ -251,7 +264,8 @@ const PaymentFailure = () => {
                     className="w-full py-2 rounded-lg bg-transparent border border-red-300 text-red-600 font-medium transition-all duration-300 hover:bg-red-50 text-sm"
                     onClick={() => {
                       navigate("/EMO");
-                    }}>
+                    }}
+                  >
                     Back to Home
                   </motion.button>
                 </div>
@@ -261,7 +275,8 @@ const PaymentFailure = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.2 }}
-                  className="mt-4 text-right text-xs text-red-400">
+                  className="mt-4 text-right text-xs text-red-400"
+                >
                   <p>
                     © 2025 EmoEase - Your story matters. We're here to listen.
                   </p>
