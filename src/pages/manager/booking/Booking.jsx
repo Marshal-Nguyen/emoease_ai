@@ -3,14 +3,11 @@ import axios from "axios";
 import { AiFillEye } from "react-icons/ai";
 import { FaCalendarAlt, FaUsers } from "react-icons/fa";
 import { motion } from "framer-motion";
-import Loader from "../../../components/Web/Loader";
 import { useNavigate } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import { MdFilterList } from "react-icons/md";
 
-const BASE_API_URL = "https://anhtn.id.vn/scheduling-service/bookings";
-const PATIENT_API_URL = "https://anhtn.id.vn/profile-service/patients/";
-const DOCTOR_API_URL = "https://anhtn.id.vn/profile-service/doctors/";
+const BASE_API_URL = "http://localhost:3000/api/bookings";
 
 const BookingList = () => {
     const [bookings, setBookings] = useState([]);
@@ -19,55 +16,51 @@ const BookingList = () => {
     const [error, setError] = useState(null);
     const [pageIndex, setPageIndex] = useState(1);
     const [pageSize, setPageSize] = useState(10);
-    const [sortBy, setSortBy] = useState("date");
+    const [sortBy, setSortBy] = useState("Date");
     const [sortOrder, setSortOrder] = useState("asc");
     const [searchQuery, setSearchQuery] = useState("");
     const [dateFilter, setDateFilter] = useState("");
-    const [statusFilter, setStatusFilter] = useState("Completed");
+    const [statusFilter, setStatusFilter] = useState("");
     const [hasMoreData, setHasMoreData] = useState(true);
-    const navigate = useNavigate();
+    const [inputValue, setInputValue] = useState(""); // New state for input
 
-    const fetchProfileName = async (url, id) => {
-        try {
-            const response = await axios.get(`${url}${id}`);
-            return response.data[Object.keys(response.data)[0]].fullName;
-        } catch (error) {
-            console.error(`Error fetching profile from ${url}:`, error);
-            return "N/A";
-        }
+    const navigate = useNavigate();
+    const handleSearch = () => {
+        setSearchQuery(inputValue); // Update searchQuery only on submit
     };
 
+    const handleKeyPress = (e) => {
+        if (e.key === "Enter") {
+            handleSearch();
+        }
+    };
     const fetchBookings = async () => {
         try {
             setLoading(true);
             const response = await axios.get(BASE_API_URL, {
                 params: {
-                    PageIndex: pageIndex,
-                    PageSize: pageSize,
-                    Search: searchQuery,
+                    pageIndex,
+                    pageSize,
                     SortBy: sortBy,
                     SortOrder: sortOrder,
-                    Date: dateFilter || undefined,
+                    Search: searchQuery || undefined,
                     Status: statusFilter || undefined,
+                    StartDate: dateFilter || undefined,
+                    EndDate: dateFilter || undefined,
+
                 },
             });
 
-            const bookingData = response.data.bookings.data;
+            // Lấy dữ liệu từ response
+            const bookingData = response.data.data || [];
+            const totalPages = response.data.totalPages || 1;
 
-            const enrichedBookings = await Promise.all(
-                bookingData.map(async (booking) => {
-                    const doctorName = await fetchProfileName(DOCTOR_API_URL, booking.doctorId);
-                    const patientName = await fetchProfileName(PATIENT_API_URL, booking.patientId);
-                    return {
-                        ...booking,
-                        doctorName,
-                        patientName
-                    };
-                })
-            );
+            if (!Array.isArray(bookingData)) {
+                throw new Error("Data from API is not in the correct format");
+            }
 
-            setBookings(enrichedBookings);
-            setHasMoreData(bookingData.length === pageSize);
+            setBookings(bookingData);
+            setHasMoreData(pageIndex < totalPages);
         } catch (error) {
             setError("Failed to load bookings. Please try again.");
             console.error("Error fetching data:", error);
@@ -81,7 +74,7 @@ const BookingList = () => {
         fetchBookings();
     }, [pageIndex, pageSize, sortBy, sortOrder, searchQuery, dateFilter, statusFilter]);
 
-    if (initialLoad) return <Loader />;
+    if (initialLoad) return <div>Loading...</div>;
     if (error)
         return (
             <p className="text-center text-red-500 text-xl font-semibold">{error}</p>
@@ -99,6 +92,8 @@ const BookingList = () => {
                 return "text-blue-600";
             case "Cancelled":
                 return "text-gray-600";
+            case "Confirmed":
+                return "text-purple-600";
             default:
                 return "text-gray-600";
         }
@@ -129,14 +124,16 @@ const BookingList = () => {
                         <div className="relative w-full sm:w-1/3">
                             <input
                                 type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                value={inputValue} // Use inputValue instead of searchQuery
+                                onChange={(e) => setInputValue(e.target.value)} // Update inputValue
+                                onKeyPress={handleKeyPress} // Handle Enter key
                                 placeholder="Search bookings..."
                                 className="w-full p-3 pl-10 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white text-sm shadow-sm"
                             />
                             <FiSearch
-                                className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400"
+                                className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 cursor-pointer"
                                 size={20}
+                                onClick={handleSearch} // Trigger search on icon click
                             />
                         </div>
                         <div className="flex gap-4 items-center">
@@ -153,10 +150,11 @@ const BookingList = () => {
                                 className="p-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm"
                             >
                                 <option value="">All Statuses</option>
-                                <option value="AwaitPayment">Awaiting Payment</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Awaiting Payment">Awaiting Payment</option>
                                 <option value="Completed">Completed</option>
-                                <option value="PaymentFailed">Payment Failed</option>
-                                <option value="AwaitMeeting">Awaiting Meeting</option>
+                                <option value="Payment Failed">Payment Failed</option>
+                                <option value="Awaiting Meeting">Awaiting Meeting</option>
                                 <option value="Cancelled">Cancelled</option>
                             </select>
                             <select
@@ -189,7 +187,7 @@ const BookingList = () => {
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Doctor</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Patient</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Schedule</th>
-                                <th className="px-6 py-4 text-left font-semibold text-sm">Price</th>
+                                <th className="px-6 py-4 text-left font-semibold text-sm">Price (VND)</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Status</th>
                                 <th className="px-6 py-4 text-center font-semibold text-sm">Actions</th>
                             </tr>
@@ -198,7 +196,7 @@ const BookingList = () => {
                             {bookings.length > 0 ? (
                                 bookings.map((booking, index) => (
                                     <motion.tr
-                                        key={booking.bookingCode}
+                                        key={booking.BookingCode}
                                         className="border-b border-gray-100 hover:bg-indigo-50 transition-all duration-200"
                                         whileHover={{ scale: 1.005 }}
                                         initial={{ opacity: 0 }}
@@ -209,34 +207,34 @@ const BookingList = () => {
                                             {(pageIndex - 1) * pageSize + index + 1}
                                         </td>
                                         <td className="px-6 py-4 text-gray-800 font-semibold">
-                                            {booking.bookingCode}
+                                            {booking.BookingCode}
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 font-medium">
-                                            {booking.doctorName}
+                                            {booking.doctorName || "N/A"}
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 font-medium">
-                                            {booking.patientName}
+                                            {booking.patientName || "N/A"}
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 font-medium">
                                             <div className="flex items-center gap-2">
                                                 <FaCalendarAlt className="text-indigo-600" size={18} />
                                                 <div>
-                                                    <div>{booking.date}</div>
-                                                    <div>{booking.startTime} ({booking.duration} mins)</div>
+                                                    <div>{booking.Date}</div>
+                                                    <div>{booking.StartTime} ({booking.Duration} mins)</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 font-medium">
-                                            {booking.price.toLocaleString()} VND
+                                            {booking.Price?.toLocaleString() || "N/A"}
                                         </td>
-                                        <td className={`px-6 py-4 font-medium ${getStatusColor(booking.status)}`}>
-                                            {booking.status}
+                                        <td className={`px-6 py-4 font-medium ${getStatusColor(booking.Status)}`}>
+                                            {booking.Status || "N/A"}
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <motion.button
                                                 className="p-2 bg-teal-600 text-white rounded-full hover:bg-teal-700 transition-colors shadow-lg"
                                                 title="View Detail"
-                                                onClick={() => navigate(`${booking.bookingCode}`)}
+                                                onClick={() => navigate(`${booking.Id}`)}
                                                 whileHover={{ scale: 1.15 }}
                                             >
                                                 <AiFillEye size={20} />

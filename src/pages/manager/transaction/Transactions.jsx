@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { AiFillEye } from "react-icons/ai";
 import { FaCalendarAlt, FaUsers } from "react-icons/fa";
+import { MdFilterList } from "react-icons/md";
 import { motion } from "framer-motion";
 import Loader from "../../../components/Web/Loader";
-import { useNavigate } from "react-router-dom";
-import { MdFilterList } from "react-icons/md";
-
-const BASE_API_URL = "https://anhtn.id.vn/payment-service/payments";
-const PATIENT_API_URL = "https://anhtn.id.vn/profile-service/patients";
 
 // Hàm định dạng ngày giờ
 const formatDateTime = (isoString) => {
@@ -20,6 +14,40 @@ const formatDateTime = (isoString) => {
     const minutes = String(date.getUTCMinutes()).padStart(2, "0");
     return `${month} ${day}, ${year}, ${hours}:${minutes}`;
 };
+
+// Dữ liệu cứng (mock data)
+const mockPayments = [
+    {
+        id: 1,
+        patientProfileId: 1,
+        fullName: "Nguyen Van A",
+        email: "nguyenvana@example.com",
+        createdAt: "2025-07-01T10:00:00Z",
+        totalAmount: 500000,
+        paymentType: "BuySubscription",
+        status: "Completed",
+    },
+    {
+        id: 2,
+        patientProfileId: 2,
+        fullName: "Tran Thi B",
+        email: "tranthib@example.com",
+        createdAt: "2025-07-02T12:30:00Z",
+        totalAmount: 750000,
+        paymentType: "Booking",
+        status: "Pending",
+    },
+    {
+        id: 3,
+        patientProfileId: 3,
+        fullName: "Le Van C",
+        email: "levanc@example.com",
+        createdAt: "2025-07-03T15:45:00Z",
+        totalAmount: 1000000,
+        paymentType: "UpgradeSubscription",
+        status: "Failed",
+    },
+];
 
 const PaymentList = () => {
     const [payments, setPayments] = useState([]);
@@ -33,49 +61,54 @@ const PaymentList = () => {
     const [statusFilter, setStatusFilter] = useState("Completed");
     const [paymentTypeFilter, setPaymentTypeFilter] = useState("");
     const [hasMoreData, setHasMoreData] = useState(true);
-    const navigate = useNavigate();
 
+    // Hàm giả lập gọi API với dữ liệu cứng
     const fetchPayments = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(BASE_API_URL, {
-                params: {
-                    PageIndex: pageIndex,
-                    PageSize: pageSize,
-                    SortOrder: sortOrder,
-                    CreatedAt: createAtFilter || undefined,
-                    Status: statusFilter || undefined,
-                    PaymentType: paymentTypeFilter || undefined,
-                },
+            // Sử dụng mock data thay vì gọi API
+            const paymentData = mockPayments;
+
+            // Giả lập phân trang
+            const start = (pageIndex - 1) * pageSize;
+            const end = start + pageSize;
+            const paginatedData = paymentData.slice(start, end);
+
+            // Giả lập lọc và sắp xếp
+            let filteredData = [...paginatedData];
+
+            // Lọc theo ngày tạo
+            if (createAtFilter) {
+                filteredData = filteredData.filter(
+                    (payment) =>
+                        new Date(payment.createdAt).toISOString().split("T")[0] ===
+                        createAtFilter
+                );
+            }
+
+            // Lọc theo trạng thái
+            if (statusFilter) {
+                filteredData = filteredData.filter(
+                    (payment) => payment.status === statusFilter
+                );
+            }
+
+            // Lọc theo loại thanh toán
+            if (paymentTypeFilter) {
+                filteredData = filteredData.filter(
+                    (payment) => payment.paymentType === paymentTypeFilter
+                );
+            }
+
+            // Sắp xếp
+            filteredData.sort((a, b) => {
+                const dateA = new Date(a.createdAt);
+                const dateB = new Date(b.createdAt);
+                return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
             });
 
-            const paymentData = response.data.payments.data;
-
-            // Gọi API để lấy thông tin patientProfile cho từng payment
-            const updatedPayments = await Promise.all(
-                paymentData.map(async (payment) => {
-                    if (payment.patientProfileId) { // Giả sử payment có trường patientProfileId
-                        try {
-                            const patientResponse = await axios.get(
-                                `${PATIENT_API_URL}/${payment.patientProfileId}`
-                            );
-                            const patientData = patientResponse.data.patientProfileDto;
-                            return {
-                                ...payment,
-                                fullName: patientData.fullName,
-                                email: patientData.contactInfo.email,
-                            };
-                        } catch (err) {
-                            console.error("Error fetching patient profile:", err);
-                            return { ...payment, fullName: "N/A", email: "N/A" };
-                        }
-                    }
-                    return { ...payment, fullName: "N/A", email: "N/A" };
-                })
-            );
-
-            setPayments(updatedPayments);
-            setHasMoreData(paymentData.length === pageSize);
+            setPayments(filteredData);
+            setHasMoreData(end < paymentData.length);
         } catch (error) {
             setError("Failed to load payments. Please try again.");
             console.error("Error fetching data:", error);
@@ -225,12 +258,11 @@ const PaymentList = () => {
                                         >
                                             {payment.status}
                                         </td>
-
                                     </motion.tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={9} className="px-6 py-4 text-center text-gray-500">
+                                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                                         No payments available
                                     </td>
                                 </tr>
