@@ -11,6 +11,7 @@ const BASE_API_URL = "http://localhost:3000/api/bookings";
 
 const BookingList = () => {
     const [bookings, setBookings] = useState([]);
+    const [filteredBookings, setFilteredBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [initialLoad, setInitialLoad] = useState(true);
     const [error, setError] = useState(null);
@@ -22,11 +23,12 @@ const BookingList = () => {
     const [dateFilter, setDateFilter] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const [hasMoreData, setHasMoreData] = useState(true);
-    const [inputValue, setInputValue] = useState(""); // New state for input
+    const [inputValue, setInputValue] = useState("");
 
     const navigate = useNavigate();
+
     const handleSearch = () => {
-        setSearchQuery(inputValue); // Update searchQuery only on submit
+        setSearchQuery(inputValue);
     };
 
     const handleKeyPress = (e) => {
@@ -34,6 +36,23 @@ const BookingList = () => {
             handleSearch();
         }
     };
+
+    // Client-side search filtering
+    useEffect(() => {
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase();
+            const filtered = bookings.filter(
+                (booking) =>
+                    (booking.BookingCode?.toLowerCase() || "").includes(lowerQuery) ||
+                    (booking.doctorName?.toLowerCase() || "").includes(lowerQuery) ||
+                    (booking.patientName?.toLowerCase() || "").includes(lowerQuery)
+            );
+            setFilteredBookings(filtered);
+        } else {
+            setFilteredBookings(bookings);
+        }
+    }, [searchQuery, bookings]);
+
     const fetchBookings = async () => {
         try {
             setLoading(true);
@@ -43,15 +62,12 @@ const BookingList = () => {
                     pageSize,
                     SortBy: sortBy,
                     SortOrder: sortOrder,
-                    Search: searchQuery || undefined,
                     Status: statusFilter || undefined,
                     StartDate: dateFilter || undefined,
                     EndDate: dateFilter || undefined,
-
                 },
             });
 
-            // Lấy dữ liệu từ response
             const bookingData = response.data.data || [];
             const totalPages = response.data.totalPages || 1;
 
@@ -60,6 +76,7 @@ const BookingList = () => {
             }
 
             setBookings(bookingData);
+            setFilteredBookings(bookingData);
             setHasMoreData(pageIndex < totalPages);
         } catch (error) {
             setError("Failed to load bookings. Please try again.");
@@ -72,7 +89,7 @@ const BookingList = () => {
 
     useEffect(() => {
         fetchBookings();
-    }, [pageIndex, pageSize, sortBy, sortOrder, searchQuery, dateFilter, statusFilter]);
+    }, [pageIndex, pageSize, sortBy, sortOrder, dateFilter, statusFilter]);
 
     if (initialLoad) return <div>Loading...</div>;
     if (error)
@@ -124,16 +141,16 @@ const BookingList = () => {
                         <div className="relative w-full sm:w-1/3">
                             <input
                                 type="text"
-                                value={inputValue} // Use inputValue instead of searchQuery
-                                onChange={(e) => setInputValue(e.target.value)} // Update inputValue
-                                onKeyPress={handleKeyPress} // Handle Enter key
-                                placeholder="Search bookings..."
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                placeholder="Search by Booking Code, Doctor, or Patient..."
                                 className="w-full p-3 pl-10 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white text-sm shadow-sm"
                             />
                             <FiSearch
                                 className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 cursor-pointer"
                                 size={20}
-                                onClick={handleSearch} // Trigger search on icon click
+                                onClick={handleSearch}
                             />
                         </div>
                         <div className="flex gap-4 items-center">
@@ -193,8 +210,8 @@ const BookingList = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {bookings.length > 0 ? (
-                                bookings.map((booking, index) => (
+                            {filteredBookings.length > 0 ? (
+                                filteredBookings.map((booking, index) => (
                                     <motion.tr
                                         key={booking.BookingCode}
                                         className="border-b border-gray-100 hover:bg-indigo-50 transition-all duration-200"

@@ -174,7 +174,6 @@ const PsychologistList = () => {
                 <th className="px-6 py-4 text-left font-semibold text-sm">Gender</th>
                 <th className="px-6 py-4 text-left font-semibold text-sm">Phone Number</th>
                 <th className="px-6 py-4 text-left font-semibold text-sm">Personality Traits</th>
-                <th className="px-6 py-4 text-left font-semibold text-sm">Purchased Package</th>
                 <th className="px-6 py-4 text-center font-semibold text-sm">Actions</th>
               </tr>
             </thead>
@@ -200,10 +199,10 @@ const PsychologistList = () => {
                       />
                     </td>
                     <td className="px-6 py-4 text-gray-800 font-semibold">{customer.fullName}</td>
-                    <td className="px-6 py-4 flex items-center gap-2 text-gray-600">
+                    <td className="px-6 py-7 flex items-center gap-2 text-gray-600">
                       {customer.gender === "Male" || customer.gender === "male" ? (
                         <FaMars className="text-blue-600" size={18} />
-                      ) : customer.gender === "female" ? (
+                      ) : customer.gender === "female" || customer.gender === "Female" ? (
                         <FaVenus className="text-pink-600" size={18} />
                       ) : (
                         <span>-</span>
@@ -223,9 +222,7 @@ const PsychologistList = () => {
                     >
                       {customer.personalityTraits || "N/A"}
                     </td>
-                    <td className="px-6 py-4 text-gray-600 font-medium">
-                      {customer.purchasedPackageName || "N/A"}
-                    </td>
+
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center gap-4">
                         <motion.button

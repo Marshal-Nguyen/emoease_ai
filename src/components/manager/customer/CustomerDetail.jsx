@@ -16,39 +16,52 @@ const CustomerDetail = () => {
     const [purchasedPackageName, setPurchasedPackageName] = useState(null);
 
     useEffect(() => {
-        const fetchCustomer = async () => {
-            try {
-                // Fetch patient profile
-                const response = await fetch(`https://anhtn.id.vn/profile-service/patients/${id}`);
-                if (!response.ok) throw new Error("Failed to fetch patient data");
-                const data = await response.json();
-                setCustomer(data.patientProfileDto);
-
-                // Fetch profile image
-                const imageResponse = await fetch(
-                    `https://anhtn.id.vn/image-service/image/get?ownerType=User&ownerId=${data.patientProfileDto.userId}`
-                );
-                setProfileImage(
-                    imageResponse.ok
-                        ? (await imageResponse.json()).url
-                        : "https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100"
-                );
-
-                // Fetch purchased package
-                const subscriptionResponse = await fetch(
-                    `https://anhtn.id.vn/subscription-service/service-packages?PageIndex=1&PageSize=10&patientId=${id}`
-                );
-                if (!subscriptionResponse.ok) throw new Error("Failed to fetch subscription data");
-                const subscriptionData = await subscriptionResponse.json();
-                const purchasedPackage = subscriptionData.servicePackages.data.find(pkg => pkg.isPurchased);
-                setPurchasedPackageName(purchasedPackage ? purchasedPackage.name : null);
-            } catch (error) {
-                setError(error.message);
-            } finally {
-                setLoading(false);
-            }
+        // Hardcoded data for testing
+        const hardcodedCustomer = {
+            fullName: "John Doe",
+            gender: "Male",
+            userId: "12345",
+            contactInfo: {
+                phoneNumber: "+1234567890",
+                email: "john.doe@example.com",
+                address: "123 Main St, Springfield, USA"
+            },
+            medicalHistory: {
+                diagnosedAt: "2023-01-15T00:00:00Z",
+                specificMentalDisorders: [
+                    { id: 1, name: "Anxiety", description: "Generalized anxiety disorder" },
+                    { id: 2, name: "Depression", description: "Mild depressive symptoms" }
+                ],
+                physicalSymptoms: [
+                    { id: 1, name: "Headache", description: "Frequent tension headaches" },
+                    { id: 2, name: "Fatigue", description: "Chronic tiredness" }
+                ],
+                allergies: "Peanuts, Pollen"
+            },
+            medicalRecords: [
+                {
+                    id: 1,
+                    notes: "Patient reported improved mood after therapy.",
+                    status: "Processing",
+                    createdAt: "2023-06-10T00:00:00Z",
+                    specificMentalDisorders: [
+                        { id: 1, name: "Anxiety", description: "Generalized anxiety disorder" }
+                    ]
+                },
+                {
+                    id: 2,
+                    notes: "Patient started new medication regimen.",
+                    status: "Completed",
+                    createdAt: "2023-07-20T00:00:00Z",
+                    specificMentalDisorders: []
+                }
+            ]
         };
-        fetchCustomer();
+
+        setCustomer(hardcodedCustomer);
+        setProfileImage("https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100");
+        setPurchasedPackageName("Premium Care Package");
+        setLoading(false);
     }, [id]);
 
     if (loading) return <Loader />;
