@@ -16,52 +16,77 @@ const CustomerDetail = () => {
     const [purchasedPackageName, setPurchasedPackageName] = useState(null);
 
     useEffect(() => {
-        // Hardcoded data for testing
-        const hardcodedCustomer = {
-            fullName: "John Doe",
-            gender: "Male",
-            userId: "12345",
-            contactInfo: {
-                phoneNumber: "+1234567890",
-                email: "john.doe@example.com",
-                address: "123 Main St, Springfield, USA"
-            },
-            medicalHistory: {
-                diagnosedAt: "2023-01-15T00:00:00Z",
-                specificMentalDisorders: [
-                    { id: 1, name: "Anxiety", description: "Generalized anxiety disorder" },
-                    { id: 2, name: "Depression", description: "Mild depressive symptoms" }
-                ],
-                physicalSymptoms: [
-                    { id: 1, name: "Headache", description: "Frequent tension headaches" },
-                    { id: 2, name: "Fatigue", description: "Chronic tiredness" }
-                ],
-                allergies: "Peanuts, Pollen"
-            },
-            medicalRecords: [
-                {
-                    id: 1,
-                    notes: "Patient reported improved mood after therapy.",
-                    status: "Processing",
-                    createdAt: "2023-06-10T00:00:00Z",
-                    specificMentalDisorders: [
-                        { id: 1, name: "Anxiety", description: "Generalized anxiety disorder" }
-                    ]
-                },
-                {
-                    id: 2,
-                    notes: "Patient started new medication regimen.",
-                    status: "Completed",
-                    createdAt: "2023-07-20T00:00:00Z",
-                    specificMentalDisorders: []
+        const fetchCustomerData = async () => {
+            try {
+                setLoading(true);
+                // Fetch patient profile
+                const profileResponse = await fetch(`http://localhost:3000/api/patient-profiles/${id}`);
+                if (!profileResponse.ok) {
+                    throw new Error("Failed to fetch patient profile");
                 }
-            ]
+                const profileData = await profileResponse.json();
+
+                // Fetch profile image
+                const imageResponse = await fetch(`http://localhost:3000/api/profile/${id}/image`);
+                if (!imageResponse.ok) {
+                    throw new Error("Failed to fetch profile image");
+                }
+                const imageData = await imageResponse.json();
+
+                // Map API data to the expected customer structure
+                const mappedCustomer = {
+                    fullName: profileData.FullName || "Unknown Name",
+                    gender: profileData.Gender || "Other",
+                    userId: profileData.UserId || "N/A",
+                    contactInfo: {
+                        phoneNumber: profileData.PhoneNumber || "N/A",
+                        email: profileData.Email || "N/A",
+                        address: profileData.Address || "N/A",
+                    },
+                    // Hardcode medical history and records since MedicalHistoryId is null
+                    medicalHistory: {
+                        diagnosedAt: profileData.CreatedAt || "2023-01-15T00:00:00Z", // Fallback
+                        specificMentalDisorders: [
+                            { id: 1, name: "Anxiety", description: "Generalized anxiety disorder" },
+                            { id: 2, name: "Depression", description: "Mild depressive symptoms" },
+                        ],
+                        physicalSymptoms: [
+                            { id: 1, name: "Headache", description: "Frequent tension headaches" },
+                            { id: 2, name: "Fatigue", description: "Chronic tiredness" },
+                        ],
+                        allergies: profileData.Allergies || "N/A",
+                    },
+                    medicalRecords: [
+                        {
+                            id: 1,
+                            notes: "Patient reported improved mood after therapy.",
+                            status: "Processing",
+                            createdAt: "2023-06-10T00:00:00Z",
+                            specificMentalDisorders: [
+                                { id: 1, name: "Anxiety", description: "Generalized anxiety disorder" },
+                            ],
+                        },
+                        {
+                            id: 2,
+                            notes: "Patient started new medication regimen.",
+                            status: "Completed",
+                            createdAt: "2023-07-20T00:00:00Z",
+                            specificMentalDisorders: [],
+                        },
+                    ],
+                };
+
+                setCustomer(mappedCustomer);
+                setProfileImage(imageData.data.publicUrl || "https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100"); // Fallback image
+                setPurchasedPackageName("Premium Care Package"); // Hardcoded as per original code
+                setLoading(false);
+            } catch (err) {
+                setError(err.message);
+                setLoading(false);
+            }
         };
 
-        setCustomer(hardcodedCustomer);
-        setProfileImage("https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100");
-        setPurchasedPackageName("Premium Care Package");
-        setLoading(false);
+        fetchCustomerData();
     }, [id]);
 
     if (loading) return <Loader />;
@@ -71,7 +96,7 @@ const CustomerDetail = () => {
     const genderStyles = {
         Male: { bg: "bg-blue-500", border: "border-blue-600", text: "text-blue-600", gradient: "from-blue-500 to-cyan-500" },
         Female: { bg: "bg-pink-500", border: "border-pink-600", text: "text-pink-600", gradient: "from-pink-500 to-purple-500" },
-        Other: { bg: "bg-purple-500", border: "border-purple-600", text: "text-purple-600", gradient: "from-purple-500 to-indigo-500" }
+        Other: { bg: "bg-purple-500", border: "border-purple-600", text: "text-purple-600", gradient: "from-purple-500 to-indigo-500" },
     };
     const genderStyle = genderStyles[customer.gender] || genderStyles.Other;
 
@@ -125,7 +150,7 @@ const CustomerDetail = () => {
                                 {[
                                     { icon: FaPhone, color: "text-purple-500", text: customer.contactInfo?.phoneNumber || "N/A" },
                                     { icon: FaEnvelope, color: "text-cyan-500", text: customer.contactInfo?.email || "N/A" },
-                                    { icon: FaMapMarkerAlt, color: "text-pink-500", text: customer.contactInfo?.address || "N/A" }
+                                    { icon: FaMapMarkerAlt, color: "text-pink-500", text: customer.contactInfo?.address || "N/A" },
                                 ].map((item, index) => (
                                     <motion.div
                                         key={index}
@@ -142,7 +167,8 @@ const CustomerDetail = () => {
                             <div className="mt-6 flex justify-center gap-4">
                                 <motion.button
                                     onClick={() => setActiveTab("profile")}
-                                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === "profile" ? "bg-purple-600 text-white shadow-md" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+                                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === "profile" ? "bg-purple-600 text-white shadow-md" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                        }`}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                 >
@@ -150,7 +176,8 @@ const CustomerDetail = () => {
                                 </motion.button>
                                 <motion.button
                                     onClick={() => setActiveTab("history")}
-                                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === "history" ? "bg-purple-600 text-white shadow-md" : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+                                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === "history" ? "bg-purple-600 text-white shadow-md" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                                        }`}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
                                 >
@@ -182,7 +209,7 @@ const CustomerDetail = () => {
                                                 <div className="bg-purple-50 p-4 rounded-lg">
                                                     <p className="font-semibold text-purple-700 mb-2">Mental Disorders:</p>
                                                     {customer.medicalHistory.specificMentalDisorders?.length > 0 ? (
-                                                        customer.medicalHistory.specificMentalDisorders.map(disorder => (
+                                                        customer.medicalHistory.specificMentalDisorders.map((disorder) => (
                                                             <motion.div
                                                                 key={disorder.id}
                                                                 className="flex items-start gap-2 mb-2"
@@ -191,7 +218,9 @@ const CustomerDetail = () => {
                                                                 transition={{ duration: 0.3 }}
                                                             >
                                                                 <FaBrain className="text-purple-500 mt-1" />
-                                                                <span className="text-gray-800"><strong>{disorder.name}:</strong> {disorder.description}</span>
+                                                                <span className="text-gray-800">
+                                                                    <strong>{disorder.name}:</strong> {disorder.description}
+                                                                </span>
                                                             </motion.div>
                                                         ))
                                                     ) : (
@@ -201,7 +230,7 @@ const CustomerDetail = () => {
                                                 <div className="bg-pink-50 p-4 rounded-lg">
                                                     <p className="font-semibold text-pink-700 mb-2">Physical Symptoms:</p>
                                                     {customer.medicalHistory.physicalSymptoms?.length > 0 ? (
-                                                        customer.medicalHistory.physicalSymptoms.map(symptom => (
+                                                        customer.medicalHistory.physicalSymptoms.map((symptom) => (
                                                             <motion.div
                                                                 key={symptom.id}
                                                                 className="flex items-start gap-2 mb-2"
@@ -210,7 +239,9 @@ const CustomerDetail = () => {
                                                                 transition={{ duration: 0.3 }}
                                                             >
                                                                 <FaHeartbeat className="text-pink-500 mt-1" />
-                                                                <span className="text-gray-800"><strong>{symptom.name}:</strong> {symptom.description}</span>
+                                                                <span className="text-gray-800">
+                                                                    <strong>{symptom.name}:</strong> {symptom.description}
+                                                                </span>
                                                             </motion.div>
                                                         ))
                                                     ) : (
@@ -219,7 +250,9 @@ const CustomerDetail = () => {
                                                 </div>
                                                 <p className="flex items-center gap-2 text-gray-800 bg-green-50 p-3 rounded-lg">
                                                     <FaAllergies className="text-green-500" />
-                                                    <span className="font-medium">Allergies: <span className="text-green-700">{customer.allergies || "N/A"}</span></span>
+                                                    <span className="font-medium">
+                                                        Allergies: <span className="text-green-700">{customer.medicalHistory.allergies || "N/A"}</span>
+                                                    </span>
                                                 </p>
                                             </div>
                                         </div>
@@ -237,7 +270,7 @@ const CustomerDetail = () => {
                                     </h3>
                                     <div className="space-y-6">
                                         {customer.medicalRecords?.length > 0 ? (
-                                            customer.medicalRecords.map(record => (
+                                            customer.medicalRecords.map((record) => (
                                                 <motion.div
                                                     key={record.id}
                                                     className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-xl border border-gray-100"
@@ -247,7 +280,9 @@ const CustomerDetail = () => {
                                                 >
                                                     <p className="flex items-center gap-2 text-gray-800 mb-2">
                                                         <FaNotesMedical className="text-cyan-500" />
-                                                        <span className="font-medium"><strong>Notes:</strong> {record.notes}</span>
+                                                        <span className="font-medium">
+                                                            <strong>Notes:</strong> {record.notes}
+                                                        </span>
                                                     </p>
                                                     <p className="flex items-center gap-2 text-gray-800 mb-2">
                                                         <FaHeartbeat className={`text-${record.status === "Processing" ? "yellow" : "green"}-500`} />
@@ -258,15 +293,19 @@ const CustomerDetail = () => {
                                                     </p>
                                                     <p className="flex items-center gap-2 text-gray-800">
                                                         <FaCalendarAlt className="text-purple-500" />
-                                                        <span className="font-medium">Created: {new Date(record.createdAt).toLocaleDateString()}</span>
+                                                        <span className="font-medium">
+                                                            Created: {new Date(record.createdAt).toLocaleDateString()}
+                                                        </span>
                                                     </p>
                                                     {record.specificMentalDisorders?.length > 0 && (
                                                         <div className="mt-4 bg-cyan-50 p-4 rounded-lg">
                                                             <p className="font-semibold text-cyan-700 mb-2">Disorders:</p>
-                                                            {record.specificMentalDisorders.map(disorder => (
+                                                            {record.specificMentalDisorders.map((disorder) => (
                                                                 <div key={disorder.id} className="flex items-start gap-2 mb-2">
                                                                     <FaBrain className="text-cyan-500 mt-1" />
-                                                                    <span className="text-gray-800"><strong>{disorder.name}:</strong> {disorder.description}</span>
+                                                                    <span className="text-gray-800">
+                                                                        <strong>{disorder.name}:</strong> {disorder.description}
+                                                                    </span>
                                                                 </div>
                                                             ))}
                                                         </div>

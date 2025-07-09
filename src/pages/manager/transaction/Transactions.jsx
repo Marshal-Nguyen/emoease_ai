@@ -15,40 +15,6 @@ const formatDateTime = (isoString) => {
     return `${month} ${day}, ${year}, ${hours}:${minutes}`;
 };
 
-// Dữ liệu cứng (mock data)
-const mockPayments = [
-    {
-        id: 1,
-        patientProfileId: 1,
-        fullName: "Nguyen Van A",
-        email: "nguyenvana@example.com",
-        createdAt: "2025-07-01T10:00:00Z",
-        totalAmount: 500000,
-        paymentType: "BuySubscription",
-        status: "Completed",
-    },
-    {
-        id: 2,
-        patientProfileId: 2,
-        fullName: "Tran Thi B",
-        email: "tranthib@example.com",
-        createdAt: "2025-07-02T12:30:00Z",
-        totalAmount: 750000,
-        paymentType: "Booking",
-        status: "Pending",
-    },
-    {
-        id: 3,
-        patientProfileId: 3,
-        fullName: "Le Van C",
-        email: "levanc@example.com",
-        createdAt: "2025-07-03T15:45:00Z",
-        totalAmount: 1000000,
-        paymentType: "UpgradeSubscription",
-        status: "Failed",
-    },
-];
-
 const PaymentList = () => {
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -58,57 +24,46 @@ const PaymentList = () => {
     const [pageSize, setPageSize] = useState(10);
     const [sortOrder, setSortOrder] = useState("desc");
     const [createAtFilter, setCreateAtFilter] = useState("");
-    const [statusFilter, setStatusFilter] = useState("Completed");
-    const [paymentTypeFilter, setPaymentTypeFilter] = useState("");
+    const [statusFilter, setStatusFilter] = useState("");
     const [hasMoreData, setHasMoreData] = useState(true);
+    const [totalPages, setTotalPages] = useState(1);
 
-    // Hàm giả lập gọi API với dữ liệu cứng
     const fetchPayments = async () => {
         try {
             setLoading(true);
-            // Sử dụng mock data thay vì gọi API
-            const paymentData = mockPayments;
+            const response = await fetch(
+                `http://localhost:3000/api/payment-zalo?pageIndex=${pageIndex}&pageSize=${pageSize}${sortOrder ? `&sortOrder=${sortOrder}` : ""
+                }${createAtFilter ? `&createdAt=${createAtFilter}` : ""
+                }${statusFilter ? `&status=${statusFilter}` : ""
+                }`
+            );
 
-            // Giả lập phân trang
-            const start = (pageIndex - 1) * pageSize;
-            const end = start + pageSize;
-            const paginatedData = paymentData.slice(start, end);
-
-            // Giả lập lọc và sắp xếp
-            let filteredData = [...paginatedData];
-
-            // Lọc theo ngày tạo
-            if (createAtFilter) {
-                filteredData = filteredData.filter(
-                    (payment) =>
-                        new Date(payment.createdAt).toISOString().split("T")[0] ===
-                        createAtFilter
-                );
+            if (!response.ok) {
+                throw new Error("Failed to fetch payments");
             }
 
-            // Lọc theo trạng thái
-            if (statusFilter) {
-                filteredData = filteredData.filter(
-                    (payment) => payment.status === statusFilter
-                );
+            const { success, data, totalPages } = await response.json();
+
+            if (!success) {
+                throw new Error("API returned unsuccessful response");
             }
 
-            // Lọc theo loại thanh toán
-            if (paymentTypeFilter) {
-                filteredData = filteredData.filter(
-                    (payment) => payment.paymentType === paymentTypeFilter
-                );
-            }
+            // Transform API data to match the expected format
+            const transformedData = data.map(payment => ({
+                id: payment.id,
+                patientProfileId: payment.bookingId, // Using bookingId as patientProfileId
+                fullName: payment.patientName,
+                bookingCode: payment.bookingCode,
+                email: "", // API doesn't provide email, so leaving empty
+                createdAt: payment.createdAt,
+                totalAmount: payment.amount,
+                paymentType: "Booking", // Assuming all payments are for bookings
+                status: payment.status
+            }));
 
-            // Sắp xếp
-            filteredData.sort((a, b) => {
-                const dateA = new Date(a.createdAt);
-                const dateB = new Date(b.createdAt);
-                return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
-            });
-
-            setPayments(filteredData);
-            setHasMoreData(end < paymentData.length);
+            setPayments(transformedData);
+            setTotalPages(totalPages);
+            setHasMoreData(pageIndex < totalPages);
         } catch (error) {
             setError("Failed to load payments. Please try again.");
             console.error("Error fetching data:", error);
@@ -120,7 +75,7 @@ const PaymentList = () => {
 
     useEffect(() => {
         fetchPayments();
-    }, [pageIndex, pageSize, sortOrder, createAtFilter, statusFilter, paymentTypeFilter]);
+    }, [pageIndex, pageSize, sortOrder, createAtFilter, statusFilter]);
 
     if (initialLoad) return <Loader />;
     if (error)
@@ -167,19 +122,9 @@ const PaymentList = () => {
                                 className="p-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm"
                             >
                                 <option value="">All Statuses</option>
-                                <option value="Completed">Completed</option>
+                                <option value="Success">Success</option>
                                 <option value="Pending">Pending</option>
                                 <option value="Failed">Failed</option>
-                            </select>
-                            <select
-                                value={paymentTypeFilter}
-                                onChange={(e) => setPaymentTypeFilter(e.target.value)}
-                                className="p-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm"
-                            >
-                                <option value="">All Types</option>
-                                <option value="BuySubscription">Buy Subscription</option>
-                                <option value="Booking">Booking</option>
-                                <option value="UpgradeSubscription">Upgrade Subscription</option>
                             </select>
                             <select
                                 value={pageSize}
@@ -209,7 +154,7 @@ const PaymentList = () => {
                             <tr>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">#</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Full Name</th>
-                                <th className="px-6 py-4 text-left font-semibold text-sm">Email</th>
+                                <th className="px-6 py-4 text-left font-semibold text-sm">Booking Code</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Date</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Amount</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Type</th>
@@ -234,7 +179,7 @@ const PaymentList = () => {
                                             {payment.fullName}
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 font-medium">
-                                            {payment.email}
+                                            {payment.bookingCode}
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 font-medium">
                                             <div className="flex items-center gap-2">
@@ -249,7 +194,7 @@ const PaymentList = () => {
                                             {payment.paymentType}
                                         </td>
                                         <td
-                                            className={`px-6 py-4 font-medium ${payment.status === "Completed"
+                                            className={`px-6 py-4 font-medium ${payment.status === "Success"
                                                 ? "text-green-600"
                                                 : payment.status === "Pending"
                                                     ? "text-orange-600"
@@ -283,13 +228,13 @@ const PaymentList = () => {
                     Previous
                 </motion.button>
                 <span className="py-2 text-gray-800 font-semibold text-lg">
-                    Page {pageIndex}
+                    Page {pageIndex} of {totalPages}
                 </span>
                 <motion.button
                     onClick={() => setPageIndex((prev) => prev + 1)}
-                    disabled={!hasMoreData}
+                    disabled={pageIndex >= totalPages}
                     className="px-5 py-2 bg-indigo-600 text-white rounded-xl disabled:bg-gray-300 disabled:text-gray-500 hover:bg-indigo-700 transition-colors shadow-lg font-semibold"
-                    whileHover={{ scale: !hasMoreData ? 1 : 1.05 }}
+                    whileHover={{ scale: pageIndex >= totalPages ? 1 : 1.05 }}
                 >
                     Next
                 </motion.button>

@@ -121,13 +121,13 @@ export default function Dashboard() {
 
                 // Fetch bookings data
                 try {
-                    const statuses = ["Completed", "AwaitMeeting", "Cancelled"];
+                    const statuses = ["Completed", "AwaitMeeting", "Cancelled", "Confirmed"];
                     const bookingsData = await Promise.all(
                         statuses.map(async status => {
                             try {
-                                const res = await fetch(`https://anhtn.id.vn/scheduling-service/bookings/count?StartDate=${dates.start}&EndDate=${dates.end}&BookingStatus=${status}`);
+                                const res = await fetch(`http://localhost:3000/api/bookings?StartDate=${dates.start}&EndDate=${dates.end}&Status=${status}`);
                                 const data = await res.json();
-                                return [status, data.totalBookings.toLocaleString()];
+                                return [status, data.totalCount.toLocaleString()];
                             } catch (err) {
                                 console.error(`Error fetching ${status} bookings:`, err.message);
                                 return [status, "N/A"];

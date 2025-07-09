@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import HistoryTestResult from "./HistoryTestResult";
 import HistoryBooking from "./HistoryBooking";
 
-const HistoryPatient = () => {
+const HistoryPatient = ({ userId }) => {
     const [activeTab, setActiveTab] = useState("Result");
 
     return (

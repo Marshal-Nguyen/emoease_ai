@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { toast } from "react-toastify";
+import { createClient } from "@supabase/supabase-js";
 
 const ProfileDoctor = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false); // Set to false for static data
+    const { userId } = useParams();
+    const fileInputRef = useRef(null);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [avatarUrl, setAvatarUrl] = useState(null);
+    const [avatarLoading, setAvatarLoading] = useState(false);
     const [specialtiesList, setSpecialtiesList] = useState([]);
     const [formData, setFormData] = useState({
         fullName: "",
@@ -16,69 +22,78 @@ const ProfileDoctor = () => {
         yearsOfExperience: 0,
         bio: "",
     });
-    const [avatarUrl, setAvatarUrl] = useState(null);
-    const [avatarLoading, setAvatarLoading] = useState(false);
-    const fileInputRef = useRef(null);
-    const { userId } = useParams();
 
-    // Hardcoded data for testing UI
+    const VITE_API_PROFILE_URL = "http://localhost:3000/api";
+    const supabase = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY
+    );
+
+    // Fetch data when component mounts
     useEffect(() => {
-        // Simulate fetching doctor data
-        const hardcodedDoctorData = {
-            doctorProfileDto: {
-                userId: "12345",
-                fullName: "Dr. John Doe",
-                gender: "Male",
-                contactInfo: {
-                    address: "123 Main St, New York, NY 10001",
-                    phoneNumber: "+1-555-123-4567",
-                    email: "johndoe@example.com",
-                },
-                specialties: [
-                    "8704cf2c-e7ec-4ece-a057-883653578ae6",
-                    "ddf4b47a-65d1-451f-a297-41606caacfe2",
-                ],
-                qualifications: "MD, PhD in Neurology",
-                yearsOfExperience: 15,
-                bio: "Experienced neurologist specializing in behavioral therapy and cognitive disorders.",
-            },
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+
+                // Fetch avatar
+                const avatarResponse = await axios.get(`${VITE_API_PROFILE_URL}/profile/${userId}/image`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+                setAvatarUrl(avatarResponse.data.data.publicUrl || null);
+
+                // Fetch doctor profile
+                const doctorResponse = await axios.get(`${VITE_API_PROFILE_URL}/doctor-profiles/${userId}`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
+                const doctorProfile = doctorResponse.data;
+                setFormData({
+                    fullName: doctorProfile.FullName || "",
+                    gender: doctorProfile.Gender || "",
+                    contactInfo: {
+                        address: doctorProfile.Address || "",
+                        phoneNumber: doctorProfile.PhoneNumber || "",
+                        email: doctorProfile.Email || "",
+                    },
+                    specialties: doctorProfile.specialties?.map((s) => s.Id) || [],
+                    qualifications: doctorProfile.Qualifications || "",
+                    yearsOfExperience: doctorProfile.YearsOfExperience || 0,
+                    bio: doctorProfile.Bio || "",
+                });
+
+                // Fetch specialties
+                const specialtiesResponse = await axios.get(`${VITE_API_PROFILE_URL}/specialties`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+                setSpecialtiesList(specialtiesResponse.data);
+            } catch (err) {
+                setError("Error fetching data. Please try again.");
+                console.error("Fetch error:", err);
+                // Fallback specialties
+                setSpecialtiesList([
+                    { Id: "4064c495-80af-4f54-8bd2-151cebf029a6", Name: "Addiction Therapy" },
+                    { Id: "cac4f120-834f-41f8-859d-dd1de7883609", Name: "Child Psychology" },
+                    { Id: "8704cf2c-e7ec-4ece-a057-883653578ae6", Name: "Behavioral Therapy" },
+                    { Id: "ddf4b47a-65d1-451f-a297-41606caacfe2", Name: "Neurology" },
+                    { Id: "e09aa07d-6313-4e21-919c-f17f3497b6ff", Name: "Clinical Psychology" },
+                ]);
+            } finally {
+                setLoading(false);
+            }
         };
 
-        // Simulate fetching specialties
-        const hardcodedSpecialties = [
-            { id: "8704cf2c-e7ec-4ece-a057-883653578ae6", name: "Behavioral Therapy" },
-            { id: "ddf4b47a-65d1-451f-a297-41606caacfe2", name: "Neurology" },
-            { id: "3", name: "Cognitive Psychology" },
-            { id: "4", name: "Child Psychology" },
-            { id: "5", name: "Clinical Psychology" },
-        ];
-
-        // Set hardcoded data
-        setFormData({
-            fullName: hardcodedDoctorData.doctorProfileDto.fullName,
-            gender: hardcodedDoctorData.doctorProfileDto.gender,
-            contactInfo: {
-                address: hardcodedDoctorData.doctorProfileDto.contactInfo.address,
-                phoneNumber: hardcodedDoctorData.doctorProfileDto.contactInfo.phoneNumber,
-                email: hardcodedDoctorData.doctorProfileDto.contactInfo.email,
-            },
-            specialties: hardcodedDoctorData.doctorProfileDto.specialties,
-            qualifications: hardcodedDoctorData.doctorProfileDto.qualifications,
-            yearsOfExperience: hardcodedDoctorData.doctorProfileDto.yearsOfExperience,
-            bio: hardcodedDoctorData.doctorProfileDto.bio,
-        });
-        setSpecialtiesList(hardcodedSpecialties);
-        setAvatarUrl("https://via.placeholder.com/150"); // Hardcoded placeholder image
-        setLoading(false);
+        fetchData();
     }, [userId]);
 
     const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const validTypes = ["image/jpeg", "image/png"];
+        const validTypes = ["image/jpeg", "image/png", "image/gif"];
         if (!validTypes.includes(file.type)) {
-            toast.error("Please select a valid image file (JPEG, PNG)");
+            toast.error("Please select a valid image file (JPEG, PNG, GIF)");
             return;
         }
 
@@ -87,22 +102,57 @@ const ProfileDoctor = () => {
             return;
         }
 
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("No token found. Please log in again!");
+            return;
+        }
+
         try {
             setAvatarLoading(true);
-            // Simulate avatar upload (no actual API call)
-            setTimeout(() => {
-                setAvatarUrl(URL.createObjectURL(file)); // Preview the selected image
-                setAvatarLoading(false);
-                toast.success("Profile picture updated successfully!");
-            }, 1000);
+            const previewUrl = URL.createObjectURL(file);
+            setAvatarUrl(previewUrl);
+
+            const formData = new FormData();
+            formData.append("image", file);
+
+            const isUpdate = !!avatarUrl;
+            await axios({
+                method: isUpdate ? "PUT" : "POST",
+                url: `${VITE_API_PROFILE_URL}/profile/${userId}/${isUpdate ? "update" : "upload"}?token=${token}`,
+                data: formData,
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+
+            toast.success(`Profile picture ${isUpdate ? "updated" : "uploaded"} successfully!`);
         } catch (err) {
-            console.error("Error updating avatar:", err);
-            toast.error("Failed to update profile picture. Please try again.");
+            toast.error(`Error ${avatarUrl ? "updating" : "uploading"} profile picture!`);
+            console.error("Avatar error:", err.response?.data || err.message);
+        } finally {
             setAvatarLoading(false);
         }
     };
 
-    const triggerFileInput = () => fileInputRef.current.click();
+    const handleAvatarDelete = async () => {
+        if (!window.confirm("Are you sure you want to delete the profile picture?")) return;
+
+        try {
+            setAvatarLoading(true);
+            await axios.delete(`${VITE_API_PROFILE_URL}/profile/${userId}/delete`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            });
+            setAvatarUrl(null);
+            toast.success("Profile picture deleted successfully!");
+        } catch (err) {
+            toast.error("Error deleting profile picture!");
+            console.error("Delete avatar error:", err.response?.data || err.message);
+        } finally {
+            setAvatarLoading(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -132,17 +182,32 @@ const ProfileDoctor = () => {
         e.preventDefault();
         try {
             setLoading(true);
-            // Simulate profile update (no actual API call)
-            setTimeout(() => {
-                setLoading(false);
-                toast.success("Doctor profile updated successfully!");
-            }, 1000);
+            const updatedProfile = {
+                FullName: formData.fullName,
+                Gender: formData.gender,
+                Address: formData.contactInfo.address,
+                PhoneNumber: formData.contactInfo.phoneNumber,
+                Email: formData.contactInfo.email,
+                Qualifications: formData.qualifications,
+                YearsOfExperience: parseInt(formData.yearsOfExperience),
+                Bio: formData.bio,
+                specialties: formData.specialties.map((id) => ({ Id: id })),
+            };
+
+            await axios.put(`${VITE_API_PROFILE_URL}/doctor-profiles/${userId}`, updatedProfile, {
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            });
+
+            toast.success("Doctor profile updated successfully!");
         } catch (err) {
-            toast.error("Error updating doctor profile");
+            toast.error("Error updating doctor profile!");
+            console.error("Update error:", err.response?.data || err.message);
+        } finally {
             setLoading(false);
-            console.error("Error updating profile:", err);
         }
     };
+
+    const triggerFileInput = () => fileInputRef.current.click();
 
     if (loading)
         return (
@@ -209,7 +274,7 @@ const ProfileDoctor = () => {
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
                                     >
-                                        <path
+                                        <  path
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
                                             strokeWidth={2}
@@ -223,12 +288,34 @@ const ProfileDoctor = () => {
                                         />
                                     </svg>
                                 </button>
+                                {/* {avatarUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={handleAvatarDelete}
+                                        className="absolute bottom-2 left-2 bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-6 w-6"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M6 18L18 6M6 6l12 12"
+                                            />
+                                        </svg>
+                                    </button>
+                                )} */}
                             </div>
                             <input
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={handleAvatarChange}
-                                accept="image/jpeg, image/png, image/gif"
+                                accept="image/jpeg,image/png,image/gif"
                                 className="hidden"
                             />
                             <p className="mt-4 text-sm text-gray-500 font-medium">
@@ -321,7 +408,7 @@ const ProfileDoctor = () => {
                                             name="qualifications"
                                             value={formData.qualifications}
                                             onChange={handleInputChange}
-                                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-995 focus:border-indigo-500"
+                                            className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                             placeholder="e.g., MD, PhD in Psychology"
                                             required
                                         />
@@ -378,20 +465,20 @@ const ProfileDoctor = () => {
                                 </h2>
                                 <div className="grid grid-cols-2 gap-3">
                                     {specialtiesList.map((specialty) => (
-                                        <div key={specialty.id} className="flex items-center my-1">
+                                        <div key={specialty.Id} className="flex items-center my-1">
                                             <input
                                                 type="checkbox"
-                                                id={`specialty-${specialty.id}`}
-                                                value={specialty.id}
-                                                checked={formData.specialties.includes(specialty.id)}
+                                                id={`specialty-${specialty.Id}`}
+                                                value={specialty.Id}
+                                                checked={formData.specialties.includes(specialty.Id)}
                                                 onChange={handleSpecialtyChange}
                                                 className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                                             />
                                             <label
-                                                htmlFor={`specialty-${specialty.id}`}
+                                                htmlFor={`specialty-${specialty.Id}`}
                                                 className="ml-2 text-sm text-gray-700"
                                             >
-                                                {specialty.name}
+                                                {specialty.Name}
                                             </label>
                                         </div>
                                     ))}
@@ -426,7 +513,7 @@ const ProfileDoctor = () => {
                                             value={formData.contactInfo.email}
                                             onChange={handleContactInfoChange}
                                             className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                            required
+                                        // required
                                         />
                                     </div>
                                     <div>
@@ -437,7 +524,7 @@ const ProfileDoctor = () => {
                                             value={formData.contactInfo.phoneNumber}
                                             onChange={handleContactInfoChange}
                                             className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                            required
+                                        // required
                                         />
                                     </div>
                                     <div>
@@ -448,7 +535,7 @@ const ProfileDoctor = () => {
                                             onChange={handleContactInfoChange}
                                             className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                             rows="3"
-                                            required
+                                        // required
                                         />
                                     </div>
                                 </div>
