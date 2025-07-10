@@ -18,7 +18,7 @@ const StatictisPatient = () => {
           </div>
         </div>
         <div className=" col-span-4 col-start-9 space-y-4">
-          <div className="mr-10">
+          <div>
             <MedicalProfile patientId={profileId} />
           </div>
           <div>
