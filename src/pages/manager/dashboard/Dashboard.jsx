@@ -161,15 +161,15 @@ export default function Dashboard() {
 
                 // Fetch daily revenue data
                 try {
-                    const res = await fetch(`https://anhtn.id.vn/payment-service/payments/daily-revenue?startTime=${dates.start}&endTime=${dates.end}`);
+                    const res = await fetch(`http://localhost:3000/api/payment-zalo/daily-total?StartDate=${dates.start}&EndDate=${dates.end}`);
                     const dailyRevenueData = await res.json();
                     const dailyRevenueMap = new Map(
-                        dailyRevenueData.revenues.map(item => [
+                        dailyRevenueData.data.map(item => [
                             item.date,
-                            { totalRevenue: item.totalRevenue, totalPayment: item.totalPayment },
+                            { totalRevenue: item.totalAmount, totalPayment: item.paymentCount },
                         ])
                     );
-
+                    console.log("Daily Revenue Data:", dailyRevenueMap);
                     const startDate = new Date(dates.start);
                     const endDate = new Date(dates.end);
                     const currentDate = new Date();

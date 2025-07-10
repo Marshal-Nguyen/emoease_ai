@@ -17,16 +17,27 @@ const DailyRevenueChart = ({ dailySales }) => (
                         tickFormatter={(value) => new Date(value).getDate()}
                     />
                     <YAxis
+                        yAxisId="left"
                         stroke={COLORS.textSecondary}
                         tick={{ fill: COLORS.textSecondary, fontSize: 12 }}
                         tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                        domain={[0, 300000]} // Scale for revenue
+                    />
+                    <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        stroke={COLORS.textSecondary}
+                        tick={{ fill: COLORS.textSecondary, fontSize: 12 }}
+                        tickFormatter={(value) => `${value}`} // Adjust scale for payment (e.g., raw values)
+                        domain={[0, 20]} // Example scale for payment
                     />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ color: COLORS.textPrimary }} />
                     <Area
                         type="monotone"
                         dataKey="revenue"
-                        stroke={COLORS.accent}
+                        yAxisId="left"
+                        stroke={COLORS.success}
                         fill={`url(#areaGradient)`}
                         fillOpacity={0.3}
                         animationDuration={1000}
@@ -36,6 +47,7 @@ const DailyRevenueChart = ({ dailySales }) => (
                     <Area
                         type="monotone"
                         dataKey="payment"
+                        yAxisId="right"
                         stroke={COLORS.warning}
                         fill={`url(#areaGradientPayment)`}
                         fillOpacity={0.3}
