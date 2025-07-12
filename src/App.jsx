@@ -87,6 +87,7 @@ import OAuthCallback from "./components/oauth/callback";
 import VerifyDoctorEmail from "./components/oauth/verifiEmail";
 import { DataProvider } from "./components/IntroComponents/DataContext";
 import Intro from "./pages/User/Web/Intro";
+import AIChatBoxWithEmo from "./pages/User/Web/AIChatBoxWithEmo";
 function App() {
   return (
     <>
@@ -119,6 +120,7 @@ function App() {
             <Route path="payment-failure" element={<PaymentFailure />} />
             <Route path="addProduct" element={<AddProductPage />} />
           </Route>
+          <Route path="/AIChatBoxWithEmo" element={<AIChatBoxWithEmo />} />
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/payments/callback" element={<PaymentCallback />} />
           <Route element={<PrivateRoute allowedRoles={["User"]} />}>

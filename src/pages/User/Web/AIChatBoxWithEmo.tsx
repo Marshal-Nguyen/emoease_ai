@@ -6,7 +6,7 @@ import MainLayout from "../../../components/Chat/MainLayout";
 import TypewriterMessage from "../../../components/Chat/TypewriterMessage";
 
 // API Base URL
-const BASE_URL = "https://api.emoease.vn/chatbox-service/api/AIChat";
+const BASE_URL = "http://localhost:3000/api";
 const TOKEN = localStorage.getItem("token"); // Thay bằng logic lấy token thực tế
 
 // Component hiển thị tin nhắn
@@ -172,8 +172,18 @@ const AIChatBoxWithEmo = () => {
         }
       );
       const data = await response.json();
-      setSessions(Array.isArray(data.data) ? data.data : []);
-      console.log("Fetched conversations AIChat:", data);
+      console.log("Fetched sessions data:", data); // Thêm log để kiểm tra
+      setSessions(
+        Array.isArray(data.data)
+          ? data.data.map((s) => ({
+              ...s,
+              id: s.Id,
+              name: s.Name,
+              createdAt: s.CreatedAt,
+              lastActive: s.LastActive,
+            }))
+          : []
+      );
     } catch (error) {
       console.error("Lỗi khi lấy danh sách phiên:", error);
     }
@@ -189,8 +199,15 @@ const AIChatBoxWithEmo = () => {
         }
       );
       const data = await response.json();
-      setMessages(Array.isArray(data.data) ? data.data : []);
-      // Đánh dấu tin nhắn đã đọc
+      const normalized = Array.isArray(data.data)
+        ? data.data.map((msg) => ({
+            senderIsEmo: msg.SenderIsEmo,
+            content: msg.Content,
+            createdDate: msg.CreatedDate,
+            ...msg,
+          }))
+        : [];
+      setMessages(normalized);
       await fetch(`${BASE_URL}/sessions/${sessionId}/messages/read`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${TOKEN}` },
@@ -211,9 +228,16 @@ const AIChatBoxWithEmo = () => {
         }
       );
       const data = await response.json();
-      setSessions((prev) => [...prev, data]);
-      setCurrentSessionId(data.id);
-      setSessionName(data.name);
+      // Chuẩn hóa key Name để đồng bộ với các session khác
+      const newSession = {
+        ...data,
+        Name: data.name,
+        CreatedDate: data.createdDate,
+        id: data.id,
+      };
+      setSessions((prev) => [...prev, newSession]);
+      setCurrentSessionId(newSession.id);
+      setSessionName(newSession.Name);
       setMessages(data.initialMessage ? [data.initialMessage] : []);
     } catch (error) {
       console.error("Lỗi khi tạo phiên:", error);
@@ -243,7 +267,6 @@ const AIChatBoxWithEmo = () => {
     if (!currentSessionId) return;
     try {
       setIsLoadingMessages(true);
-      // Hiển thị tin nhắn người dùng ngay lập tức
       setMessages((prev) => [
         ...prev,
         {
@@ -252,7 +275,6 @@ const AIChatBoxWithEmo = () => {
           createdDate: new Date().toISOString(),
         },
       ]);
-      // Gửi API
       const response = await fetch(`${BASE_URL}/messages`, {
         method: "POST",
         headers: {
@@ -265,9 +287,15 @@ const AIChatBoxWithEmo = () => {
         }),
       });
       const data = await response.json();
-      // Nếu API trả về mảng tin nhắn, hiển thị từng tin nhắn cách nhau 1s
+      // Chuẩn hóa key cho từng message
       if (Array.isArray(data)) {
-        setPendingMessages(data);
+        const normalized = data.map((msg) => ({
+          senderIsEmo: msg.SenderIsEmo,
+          content: msg.Content,
+          createdDate: msg.CreatedDate,
+          ...msg,
+        }));
+        setPendingMessages(normalized);
       } else {
         setPendingMessages([]);
       }

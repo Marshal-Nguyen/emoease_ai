@@ -38,7 +38,7 @@ const ConversationSidebar = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const filteredConversations = sessions.filter((conv) =>
-    conv.name.toLowerCase().includes(searchQuery.toLowerCase())
+    (conv?.name?.toLowerCase() ?? "").includes(searchQuery.toLowerCase())
   );
 
   const SidebarContent = (
@@ -112,7 +112,7 @@ const ConversationSidebar = ({
                 <div className="flex-shrink-0">
                   <div className="w-11 h-11 rounded-full flex items-center justify-center shadow border-2 border-white">
                     <img
-                      src={getAvatarForSession(conversation.id)}
+                      src={getAvatarForSession(conversation.Id)}
                       alt="Avatar"
                       className="rounded-full w-10 h-10 object-cover"
                     />
@@ -132,14 +132,14 @@ const ConversationSidebar = ({
                       💬
                     </motion.span>
                     <h3 className="font-semibold text-[#6B728E] text-base truncate flex-1">
-                      {conversation.name}
+                      {conversation.Name}
                     </h3>
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-xs text-gray-400/80 italic">
-                      {conversation.createdDate ? (
+                      {conversation.CreatedDate ? (
                         <span className="bg-[#F3E8FF] text-[#8B5CF6] px-2 py-0.5 rounded-full shadow-sm font-mono">
-                          {new Date(conversation.createdDate).toLocaleString(
+                          {new Date(conversation.CreatedDate).toLocaleString(
                             "vi-VN",
                             {
                               day: "2-digit",
@@ -157,7 +157,7 @@ const ConversationSidebar = ({
                       )}
                     </span>
                     <motion.button
-                      className="opacity-0 group-hover:opacity-100 transition-opacity rounded-full p-1 hover:bg-pink-200/40"
+                      className="opacity-100 transition-opacity rounded-full p-1 hover:bg-pink-200/40"
                       whileHover={{ scale: 1.2 }}
                       onClick={(e) => {
                         e.stopPropagation();
