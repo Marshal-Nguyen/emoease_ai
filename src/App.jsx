@@ -85,12 +85,22 @@ import PatientBooking from "./pages/doctor/Dashboard/PatientBooking";
 import Shopping from "./pages/User/Dashboard/Shopping";
 import OAuthCallback from "./components/oauth/callback";
 import VerifyDoctorEmail from "./components/oauth/verifiEmail";
+import { DataProvider } from "./components/IntroComponents/DataContext";
+import Intro from "./pages/User/Web/Intro";
 function App() {
   return (
     <>
       <Router>
         <Routes>
           {/* Các route chính */}
+          <Route
+            path="/daily-habits"
+            element={
+              <DataProvider>
+                <Intro />
+              </DataProvider>
+            }
+          />
           <Route path="/" element={<Navigate to="/EMO" />} />
           <Route path="regist" element={<Regist />} />
           <Route path="/verify-email" element={<VerifyDoctorEmail />} />

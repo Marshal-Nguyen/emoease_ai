@@ -3,7 +3,10 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin-top: 10px;
+  margin-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  z-index: 10;
 }
 
 .title {
@@ -16,30 +19,52 @@
 .subtitle {
   font-size: 1rem;
   color: #5c5c5c;
-  margin-top: px;
   font-style: italic;
 }
 
-.googlePlay,
-.appStore {
+.googlePlayButton {
+  max-width: 192px;
+  height: 52px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: #5a3d91;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
+  justify-content: center;
+}
+
+.feedback {
+  margin-top: 20px;
+  font-size: 1rem;
+  color: #5c5c5c;
+  font-style: italic;
+  text-align: center;
+}
+
+.feedback a {
+  color: #492580;
   text-decoration: none;
-  font-weight: bold;
-  transition: background 0.3s ease-in-out;
+  transition: color 0.3s ease-in-out;
 }
 
-.googlePlay:hover,
-.appStore:hover {
-  background: #4a2878;
+.feedback a:hover {
+  color: #8566b1;
 }
 
-.googlePlay img,
-.appStore img {
-  width: 20px;
+@media (max-width: 768px) {
+  .title {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  .googlePlayButton {
+    max-width: 192px;
+    height: 52px;
+  }
+
+  .feedback {
+    font-size: 0.9rem;
+  }
 }

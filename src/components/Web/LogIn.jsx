@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaUser, FaSignOutAlt } from "react-icons/fa";
 import styles from "../../styles/Web/LogIn.module.css";
-import { auth, provider, signInWithPopup } from "../../util/firebase/firebase";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -143,13 +142,33 @@ const LogIn = () => {
         })
       );
 
-      // Lưu localStorage (nếu muốn)
       localStorage.setItem("refresh_token", refresh_token);
 
       setIsLoggedIn(true);
       dispatch(closeLoginModal());
       fetchAvatar(user_id);
       toast.success("Đăng nhập thành công!", { position: "top-right" });
+
+      // --- Thêm logic kiểm tra IsProfileCompleted ---
+      try {
+        const patientRes = await axios.get(
+          `http://localhost:3000/api/patient-profiles/${profileId}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const patientData = patientRes.data;
+        if (patientData && patientData.IsProfileCompleted === false) {
+          navigate("/daily-habits");
+        }
+      } catch (err) {
+        console.error("Error fetching patient profile:", err);
+        // Có thể xử lý lỗi hoặc bỏ qua
+      }
+      // --- End logic ---
     } catch (error) {
       console.error("Auth success handling error:", error);
       toast.error("Có lỗi xảy ra trong quá trình xử lý đăng nhập!");
@@ -189,7 +208,7 @@ const LogIn = () => {
   // Xử lý đăng xuất
   const handleLogout = async () => {
     try {
-      await auth.signOut();
+      await supabase.auth.signOut();
       localStorage.removeItem("refresh_token");
       dispatch(clearCredentials());
       setIsLoggedIn(false);
@@ -382,7 +401,7 @@ const LogIn = () => {
                             offset="1"></stop>
                         </linearGradient>
                         <path
-                          d="M23.7352295,9.5H12v5h6.4862061C17.4775391,17.121582,14.9771729,19,12,19 c-3.8659668,0-7-3.1340332-7-7c0-3.8660278,3.1340332-7,7-7c1.4018555,0,2.6939087,0.4306641,3.7885132,1.140686 c0.1675415,0.1088867,0.3403931,0.2111206,0.4978027,0.333374l3.637146-3.4699707L19.8414307,2.940979 C17.7369385,1.1170654,15.00354,0,12,0C5.3725586,0,0,5.3725586,0,12c0,6.6273804,5.3725586,12,12,12 c6.1176758,0,11.1554565-4.5812378,11.8960571-10.4981689C23.9585571,13.0101929,24,12.508667,24,12 C24,11.1421509,23.906311,10.3068237,23.7352295,9.5z"
+                          d="M23.7352295,9.5H12v5h6.4862061C17.4775391,17.121582,14.9771729,19,12,19 c-3.8659668,0-7-3.1340332-7-7c0-3.8660278,3.1340332-7,7-7c1.4018555,0,2.6939087,0.4306641,3.7885132,1.140686 c0.1675415,0.1088867,0.3403931,0.2111206,0.4978027,0.333374l3.637146-3.4699707L19.8414307,2.940979 C17.7369385,1.1170654,15.00354,0,12,0C5.3725586,0,0,5.3725586,0,12c0,6.6273804,5.3725586,12,12,12 c6.1176758,0,11.1554565-4.5812378,11.8960571-10.4981689C23.9585571,13.0101929,24,12.508667,24,12 c0-0.8578491-0.093689-1.6931763-0.2647705-2.5H12v5h6.4862061c-0.5247192,1.3637695-1.4589844,2.5177612-2.6481934,3.319458 l4.0594482,3.204834C22.0493774,19.135437,23.5219727,16.4903564,23.8960571,13.5018311z"
                           fill="url(#LxT-gk5MfRc1Gl_4XsNKba_xoyhGXWmHnqX_gr1)"></path>
                         <path
                           opacity=".1"

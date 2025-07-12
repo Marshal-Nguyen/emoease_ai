@@ -1,484 +1,701 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import * as XLSX from "xlsx";
+import { motion } from "framer-motion";
+import { Search, Eye } from "lucide-react";
 
-const Shop = () => {
-  // All products data
-  const allProducts = [
-    // First page
-    {
-      id: 1,
-      name: "Nước hoa Lavender Dreams",
-      creator: "PerfumeArt",
-      image:
-        "https://product.hstatic.net/200000468851/product/kr-lavender-30ml_46b14ad336404f46956baa22ecc9c45d.png",
-      color: "bg-purple-100",
-      price: 350000,
-      description:
-        "Hương thơm oải hương nhẹ nhàng giúp thư giãn và cải thiện giấc ngủ. Được chiết xuất từ 100% tinh dầu tự nhiên.",
-      inStock: true,
-    },
-    {
-      id: 2,
-      name: "Bộ nến thơm Harmony",
-      creator: "CandleStudio",
-      image:
-        "https://product.hstatic.net/200000455999/product/lemon___lavender_mockup_55598558943d43c8a28690681fa82f58_grande.jpg",
-      color: "bg-orange-100",
-      price: 420000,
-      description:
-        "Bộ 3 nến thơm với các mùi hương khác nhau giúp tạo không gian thư giãn lý tưởng. Thời gian cháy lên đến 40 giờ.",
-      inStock: true,
-    },
-    {
-      id: 3,
-      name: "Gối ôm Memory Foam Premium",
-      creator: "ComfortDesign",
-      image:
-        "https://inoacliving.vn/wp-content/uploads/2022/04/img-goi-om-nhat-ban-hachiko-5.jpg",
-      color: "bg-gray-100",
-      price: 850000,
-      description:
-        "Gối ôm cao cấp với chất liệu memory foam, giúp nâng đỡ cơ thể và mang lại giấc ngủ thoải mái.",
-      inStock: true,
-    },
-    {
-      id: 4,
-      name: "Tinh dầu Eucalyptus",
-      creator: "NaturalEssence",
-      image: "https://cf.shopee.vn/file/609ad085429f09ed9e08e6793cb0c66c",
-      color: "bg-green-100",
-      price: 280000,
-      description:
-        "Tinh dầu bạch đàn nguyên chất giúp thông mũi, làm sạch không khí và tạo cảm giác thư thái.",
-      inStock: true,
-    },
-    {
-      id: 5,
-      name: "Đèn xông tinh dầu Ceramic",
-      creator: "LightAroma",
-      image:
-        "https://idangcap.vn/wp-content/uploads/2019/12/den-xong-bat-trang.jpg",
-      color: "bg-yellow-100",
-      price: 520000,
-      description:
-        "Đèn xông tinh dầu bằng gốm sứ cao cấp, tích hợp đèn LED 7 màu tạo không gian thư giãn tối ưu.",
-      inStock: true,
-    },
-    {
-      id: 6,
-      name: "Nến thơm Vanilla Comfort",
-      creator: "WarmGlow",
-      image:
-        "https://file.hstatic.net/200000666175/article/huong-dan-su-dung-nen-thom-dung-cach-cho-nguoi-bat-dau_ee0c287c03144f02abac1aa1287cee5f.jpg",
-      color: "bg-amber-100",
-      price: 380000,
-      description:
-        "Nến thơm vanilla giúp tạo cảm giác ấm áp, thoải mái. Thời gian cháy lên đến 50 giờ.",
-      inStock: true,
-    },
-    {
-      id: 7,
-      name: "Gối massage cổ Electric",
-      creator: "RelaxTech",
-      image:
-        "https://boba.vn/static/san-pham/thiet-bi-y-te/thiet-bi-massage/goi-massage/goi-massage-vong-co-chu-u-da-nang-j154/o1cn01psyt.jpg",
-      color: "bg-blue-100",
-      price: 950000,
-      description:
-        "Gối massage cổ với nhiều chế độ rung khác nhau, giúp giảm đau mỏi vai gáy hiệu quả.",
-      inStock: false,
-    },
-    {
-      id: 8,
-      name: "Bộ sưu tập nước hoa Serenity",
-      creator: "LuxScent",
-      image: "https://dailycomma.com.vn/wp-content/uploads/2023/03/st.jpeg",
-      color: "bg-rose-100",
-      price: 1200000,
-      description:
-        "Bộ sưu tập 5 loại nước hoa mini với các hương thơm nhẹ nhàng, phù hợp cho mọi dịp.",
-      inStock: true,
-    },
-    // Second page
-    {
-      id: 9,
-      name: "Mặt nạ trị liệu Collagen",
-      creator: "BeautyRelax",
-      image:
-        "https://kenh14cdn.com/203336854389633024/2024/1/15/photo-1-1705320936493432188860.jpg",
-      color: "bg-pink-100",
-      price: 320000,
-      description:
-        "Mặt nạ chứa collagen tự nhiên, giúp phục hồi da mệt mỏi và làm mờ nếp nhăn.",
-      inStock: true,
-    },
-    {
-      id: 10,
-      name: "Máy tạo ẩm siêu âm",
-      creator: "PureAir",
-      image:
-        "https://cdn8.web4s.vn/media/news/334146377_154203667443006_8093310783065486695_n.jpg",
-      color: "bg-blue-100",
-      price: 890000,
-      description:
-        "Máy tạo ẩm không gian với công nghệ siêu âm, hoạt động êm ái và tiết kiệm điện.",
-      inStock: true,
-    },
-    {
-      id: 11,
-      name: "Bình lọc nước thủy tinh",
-      creator: "ClearLife",
-      image: "https://cf.shopee.vn/file/ffa987cc32a244bd8bab5b9ef2cb57d0",
-      color: "bg-cyan-100",
-      price: 450000,
-      description:
-        "Bình lọc nước bằng thủy tinh cao cấp với lõi lọc than hoạt tính và khoáng đá.",
-      inStock: true,
-    },
-    {
-      id: 12,
-      name: "Đèn đọc sách thông minh",
-      creator: "SmartLighting",
-      image: "https://cf.shopee.vn/file/5ad0bac25453c26973d4d136ad457e36",
-      color: "bg-purple-100",
-      price: 750000,
-      description:
-        "Đèn đọc sách thông minh với 5 chế độ ánh sáng, bảo vệ mắt tối ưu.",
-      inStock: true,
-    },
-    {
-      id: 13,
-      name: "Set chăm sóc tóc Organic",
-      creator: "NatureHair",
-      image:
-        "https://annshop.vn/wp-content/uploads/post-app-3520-z4923325035864-be9d1c1b30e2402430ce6b61dbe1b7b0.jpg",
-      color: "bg-green-100",
-      price: 650000,
-      description:
-        "Bộ sản phẩm chăm sóc tóc từ nguyên liệu hữu cơ, không hóa chất độc hại.",
-      inStock: true,
-    },
-    {
-      id: 14,
-      name: "Nến thơm hình học",
-      creator: "GeoCandle",
-      image:
-        "https://down-vn.img.susercontent.com/file/sg-11134201-7qve8-lfar8u1q5t865c",
-      color: "bg-amber-100",
-      price: 390000,
-      description:
-        "Bộ nến thơm với thiết kế hình học độc đáo, trang trí không gian sống thêm phần nghệ thuật.",
-      inStock: true,
-    },
-    {
-      id: 15,
-      name: "Tinh dầu hoa hồng",
-      creator: "RoseEssence",
-      image: "https://cf.shopee.vn/file/609ad085429f09ed9e08e6793cb0c66c",
-      color: "bg-red-100",
-      price: 310000,
-      description:
-        "Tinh dầu hoa hồng nguyên chất, giúp cân bằng cảm xúc và làm dịu da.",
-      inStock: true,
-    },
-    {
-      id: 16,
-      name: "Đèn ngủ treo tường",
-      creator: "DreamLight",
-      image:
-        "https://noithatmanhhe.vn/media/33033/den-ngu-treo-tuong-mau-3.jpg",
-      color: "bg-yellow-100",
-      price: 580000,
-      description:
-        "Đèn ngủ treo tường với ánh sáng dịu nhẹ, lý tưởng cho phòng ngủ và không gian thư giãn.",
-      inStock: false,
-    },
-  ];
+const AffiliatePage = () => {
+  const [products, setProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // State for pagination
+  // Add pagination state
   const [currentPage, setCurrentPage] = useState(0);
-  const productsPerPage = 8;
-  const totalPages = Math.ceil(allProducts.length / productsPerPage);
+  const productsPerPage = 6; // Changed from 8 to 6
+  const totalPages = Math.ceil(products.length / productsPerPage);
 
-  // Calculate current products to display
-  const currentProducts = allProducts.slice(
-    currentPage * productsPerPage,
-    (currentPage + 1) * productsPerPage
-  );
+  // Add these new states at the top of your component
+  const [filters, setFilters] = useState({
+    category: "all",
+    priceRange: "all",
+    sortBy: "priceAsc", // Changed from "default" to "priceAsc"
+  });
 
-  // Navigation functions
-  const nextPage = () => {
-    setCurrentPage((prev) => (prev + 1) % totalPages);
+  // Replace PRICE_RANGES constant with:
+  const PRICE_RANGE = {
+    min: 0,
+    max: 10000000,
+    step: 100000,
   };
 
-  const prevPage = () => {
-    setCurrentPage((prev) => (prev - 1 + totalPages) % totalPages);
-  };
+  // Add new states
+  const [minPrice, setMinPrice] = useState(PRICE_RANGE.min);
+  const [maxPrice, setMaxPrice] = useState(PRICE_RANGE.max);
 
-  // Product detail modal state
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-
-  // Open product detail modal
-  const openProductDetail = (product) => {
-    setSelectedProduct(product);
-    setQuantity(1);
-  };
-
-  // Close product detail modal
-  const closeProductDetail = () => {
-    setSelectedProduct(null);
-  };
-
-  // Handle quantity change
-  const handleQuantityChange = (e) => {
-    const value = parseInt(e.target.value);
-    if (value > 0) {
-      setQuantity(value);
-    }
-  };
-
-  // Format price
+  // Add price formatter function
   const formatPrice = (price) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
+      maximumFractionDigits: 0,
     }).format(price);
   };
 
+  const SORT_OPTIONS = [
+    { value: "priceAsc", label: "Giá tăng dần" },
+    { value: "priceDesc", label: "Giá giảm dần" },
+    { value: "nameAsc", label: "Tên A-Z" },
+    { value: "nameDesc", label: "Tên Z-A" },
+  ];
+
+  // Add this debounce function
+  const useDebounce = (value, delay) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setDebouncedValue(value);
+      }, delay);
+
+      return () => {
+        clearTimeout(handler);
+      };
+    }, [value, delay]);
+
+    return debouncedValue;
+  };
+
+  // Update the filtering logic
+  const getFilteredProducts = () => {
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+    return products
+      .filter((product) => {
+        const matchesSearch =
+          debouncedSearchTerm === "" ||
+          product.name
+            ?.toLowerCase()
+            .includes(debouncedSearchTerm.toLowerCase()) ||
+          product.description
+            ?.toLowerCase()
+            .includes(debouncedSearchTerm.toLowerCase());
+
+        const matchesCategory =
+          filters.category === "all" || product.category === filters.category;
+
+        const price = Number(product.price) || 0;
+        const matchesPrice = price >= minPrice && price <= maxPrice;
+
+        return matchesSearch && matchesCategory && matchesPrice;
+      })
+      .sort((a, b) => {
+        switch (filters.sortBy) {
+          case "priceAsc":
+            return (Number(a.price) || 0) - (Number(b.price) || 0);
+          case "priceDesc":
+            return (Number(b.price) || 0) - (Number(a.price) || 0);
+          case "nameAsc":
+            return (a.name || "").localeCompare(b.name || "");
+          case "nameDesc":
+            return (b.name || "").localeCompare(a.name || "");
+          default:
+            return (Number(a.price) || 0) - (Number(b.price) || 0); // Default to price ascending
+        }
+      });
+  };
+
+  const filteredProducts = getFilteredProducts();
+  // const filteredProducts = useMemo(
+  //   () => getFilteredProducts(),
+  //   [searchTerm, filters, minPrice, maxPrice, products]
+  // );
+  useEffect(() => {
+    const loadExcelData = async () => {
+      try {
+        const response = await fetch("/Emo_Affiliate.xlsx");
+        const arrayBuffer = await response.arrayBuffer();
+        const data = new Uint8Array(arrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        const formattedProducts = jsonData.map((row, index) => ({
+          id: row["No"] || index + 1,
+          category: row["Category"] || row["Loại sản phẩm"] || "Khác",
+          name: row["Name"] || row["Sản phẩm"] || "Sản phẩm không tên",
+          description: row["Description"] || row["Mô tả"] || "",
+          usage: row["Usage"] || row["Công dụng"] || "",
+          instructions: row["Instructions"] || row["Hướng dẫn sử dụng"] || "",
+          image: row["Image"] || row["Hình ảnh"] || "",
+          notes: row["Notes"] || row["Lưu ý khi sử dụng"] || "",
+          price: row["Price"] || row["Giá"] || 0,
+          affiliateLink: row["Link"] || "#",
+        }));
+        setProducts(formattedProducts);
+      } catch (error) {
+        console.error("Lỗi khi tải file Excel:", error);
+        // Mock data với style giống như hình
+        setProducts([
+          {
+            id: 1,
+            category: "Nước hoa",
+            name: "Nước hoa Lavender Dreams",
+            description: "Thiết kế bởi PerfumeArt",
+            usage: "Xịt lên cổ tay và cổ",
+            price: 450000,
+            affiliateLink: "#",
+
+            image:
+              "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400&h=400&fit=crop",
+          },
+          {
+            id: 2,
+            category: "Nến thơm",
+            name: "Bộ nến thơm Harmony",
+            description: "Thiết kế bởi CandleStudio",
+            usage: "Thắp nến trong 2-3 giờ",
+            price: 420000,
+            affiliateLink: "#",
+
+            image:
+              "https://images.unsplash.com/photo-1602874801545-3b60ac4d9952?w=400&h=400&fit=crop",
+          },
+          {
+            id: 3,
+            category: "Gối ngủ",
+            name: "Gối ôm Memory Foam Premium",
+            description: "Thiết kế bởi ComfortDesign",
+            usage: "Sử dụng khi ngủ",
+            price: 380000,
+            affiliateLink: "#",
+
+            image:
+              "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=400&h=400&fit=crop",
+          },
+          {
+            id: 4,
+            category: "Tinh dầu",
+            name: "Tinh dầu Eucalyptus",
+            description: "Thiết kế bởi NaturalEssence",
+            usage: "Nhỏ vào máy khuếch tán",
+            price: 320000,
+            affiliateLink: "#",
+
+            image:
+              "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=400&h=400&fit=crop",
+          },
+        ]);
+      }
+    };
+
+    loadExcelData();
+  }, []);
+
+  const categories = [
+    "all",
+    ...new Set(products.map((product) => product.category).filter(Boolean)),
+  ];
+
+  // Thêm constant cho chiều cao cố định
+  const CARD_HEIGHTS = {
+    image: "h-[240px]",
+    title: "h-[56px]",
+    description: "h-[48px]",
+    price: "h-[48px]",
+  };
+
+  // Add this new function to get page numbers array
+  const getPageNumbers = () => {
+    const totalPageCount = Math.ceil(filteredProducts.length / productsPerPage);
+    const maxVisiblePages = 5; // Number of page buttons to show
+
+    if (totalPageCount <= maxVisiblePages) {
+      return Array.from({ length: totalPageCount }, (_, i) => i);
+    }
+
+    let startPage = Math.max(0, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPageCount - 1, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    }
+
+    return Array.from(
+      { length: endPage - startPage + 1 },
+      (_, i) => startPage + i
+    );
+  };
+
+  // Replace the Navigation Arrows section with this new Pagination component
+  // Add useEffect to reset page when filters change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [filters, searchTerm]);
+
+  // Update pagination calculation
+  const paginatedProducts = filteredProducts.slice(
+    currentPage * productsPerPage,
+    (currentPage + 1) * productsPerPage
+  );
+
+  // First, add a new state for dropdown
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   return (
-    <div className="bg-white text-white w-full min-h-screen">
-      {/* Header */}
-      <header
-        className="pt-12 bg-gradient-to-r from-[#4A2580] to-[#804ac2]
- pb-8 px-6 text-center">
-        <h2 className="text-xl opacity-80 mb-2 text-[#ffffff]">
-          Welcome to EmoRelax
-        </h2>
-        <h1 className="text-5xl font-bold mb-4 text-[#ffffff]">
-          Explore a Relaxing Space
-        </h1>
-        <p className="mb-8 opacity-80 max-w-3xl mx-auto text-[#ffffff]">
-          We carefully select premium products to help you relax and regain
-          mental balance in your daily life.
-        </p>
-        <div className="flex gap-4 justify-center">
-          <button className="border border-[#ffffff] py-2 px-6 rounded-full font-medium text-white">
-            Discover more
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-white to-pink-50">
+      {/* Header Section with Hero */}
 
-      {/* Products Grid */}
-      <div className="px-4 py-8">
-        {/* Page indicator */}
-        <div className="mb-4 text-center text-[#4A2580]">
-          Trang {currentPage + 1} / {totalPages}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {currentProducts.map((product) => (
-            <div
-              key={product.id}
-              className="relative group overflow-hidden rounded-lg cursor-pointer"
-              onClick={() => openProductDetail(product)}>
-              <div
-                className={`aspect-square ${product.color} flex items-center justify-center overflow-hidden`}>
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              <div className="flex items-center mt-3 gap-4">
-                <div className="w-8 h-8 bg-[#000] rounded-full flex items-center justify-center text-white text-xs mr-2">
-                  SR
-                </div>
-                <div>
-                  <div className="flex items-center">
-                    <span className="font-medium text-[#4a2878] ">
-                      {product.name}
-                    </span>
-                    <span className="ml-1 text-orange-500">•</span>
-                  </div>
-                  <div className="text-sm opacity-70 text-[#000]">
-                    Thiết kế bởi {product.creator}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className=" mx-auto lg:px-0 py-6">
+        <header className="pt-12 w-full bg-gradient-to-r from-[#4A2580] to-[#804ac2] pb-8 px-6 text-center">
+          <h1 className="text-xl opacity-80 mb-2 text-[#ffffff]">
+            Welcome to EmoRelax
+          </h1>
+          <h2 className="text-5xl font-bold mb-4 text-[#ffffff]">
+            Explore a Relaxing Space
+          </h2>
+          <p className="mb-8 opacity-80 max-w-3xl mx-auto text-[#ffffff]">
+            We carefully select premium products to help you relax and regain
+            mental balance in your daily life.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button className=" bg-[#ffffff] px-3 py-2 rounded-md text-[#4A2580] tracking-wider shadow-xl animate-bounce hover:animate-none">
+              <svg
+                className="w-5 h-5"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3"
+                  strokeLinecap="round"></path>
+              </svg>
+            </button>
+          </div>
+        </header>
       </div>
 
-      {/* Navigation Arrows */}
-      <div className="fixed top-1/2 -translate-y-1/2 w-full flex justify-between px-4 z-10 pointer-events-none">
-        <button
-          onClick={prevPage}
-          className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg pointer-events-auto hover:bg-gray-100 transition-colors">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <button
-          onClick={nextPage}
-          className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center shadow-lg pointer-events-auto hover:bg-gray-100 transition-colors">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Product Detail Modal */}
-      {selectedProduct && (
-        <div className="fixed inset-0 bg-[#ffffff4b] bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto text-black">
-            <div className="relative">
-              {/* Close button */}
-              <button
-                onClick={closeProductDetail}
-                className="absolute top-4 right-4 bg-white rounded-full p-1 shadow-md z-10">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-
-              <div className="flex flex-col md:flex-row">
-                {/* Product image */}
-                <div className={`w-full md:w-1/2 ${selectedProduct.color} p-6`}>
-                  <img
-                    src={selectedProduct.image}
-                    alt={selectedProduct.name}
-                    className="w-full h-full object-contain rounded-lg"
+      {/* Main content with sidebar layout */}
+      <div className=" mx-auto px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar Filters - Always visible */}
+          <div className="lg:w-1/4">
+            <div className="bg-white rounded-2xl shadow-sm p-6 sticky top-24">
+              <div className="space-y-6">
+                {/* Search Input */}
+                <div className="relative">
+                  <label htmlFor="search-input" className="sr-only">
+                    Tìm kiếm sản phẩm
+                  </label>
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="search-input"
+                    type="text"
+                    placeholder="Tìm kiếm sản phẩm..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl
+                            focus:outline-none focus:border-purple-500 transition-colors"
                   />
                 </div>
 
-                {/* Product info */}
-                <div className="w-full md:w-1/2 p-6">
-                  <h2 className="text-2xl font-bold text-[#4a2878] mb-2">
-                    {selectedProduct.name}
-                  </h2>
-                  <p className="text-gray-600 mb-4">
-                    Thiết kế bởi {selectedProduct.creator}
-                  </p>
-                  <div className="text-xl font-bold text-[#4a2878] mb-4">
-                    {formatPrice(selectedProduct.price)}
+                {/* Categories */}
+                <div>
+                  <h3 className="font-medium mb-3">Danh mục:</h3>
+                  <div className="flex flex-col gap-2">
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() =>
+                          setFilters((prev) => ({ ...prev, category }))
+                        }
+                        className={`px-4 py-2 rounded-xl text-sm font-medium text-left transition-all
+                        ${
+                          filters.category === category
+                            ? "bg-purple-600 text-white"
+                            : "bg-purple-50 text-gray-600 hover:bg-purple-100"
+                        }`}>
+                        {category === "all" ? "Tất cả" : category}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Price Ranges */}
+                <div className="space-y-4">
+                  <h3 className="font-medium mb-3">Khoảng giá:</h3>
+                  <div className="px-2">
+                    {/* Min price slider */}
+                    <input
+                      type="range"
+                      min={PRICE_RANGE.min}
+                      max={PRICE_RANGE.max}
+                      step={PRICE_RANGE.step}
+                      value={minPrice}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        setMinPrice(
+                          Math.min(value, maxPrice - PRICE_RANGE.step)
+                        );
+                      }}
+                      className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer
+               [&::-webkit-slider-thumb]:appearance-none
+               [&::-webkit-slider-thumb]:w-4
+               [&::-webkit-slider-thumb]:h-4
+               [&::-webkit-slider-thumb]:bg-purple-600
+               [&::-webkit-slider-thumb]:rounded-full
+               [&::-webkit-slider-thumb]:cursor-pointer
+               [&::-webkit-slider-thumb]:hover:bg-purple-700"
+                    />
+
+                    {/* Max price slider */}
+                    <input
+                      type="range"
+                      min={PRICE_RANGE.min}
+                      max={PRICE_RANGE.max}
+                      step={PRICE_RANGE.step}
+                      value={maxPrice}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        setMaxPrice(
+                          Math.max(value, minPrice + PRICE_RANGE.step)
+                        );
+                      }}
+                      className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer
+               [&::-webkit-slider-thumb]:appearance-none
+               [&::-webkit-slider-thumb]:w-4
+               [&::-webkit-slider-thumb]:h-4
+               [&::-webkit-slider-thumb]:bg-purple-600
+               [&::-webkit-slider-thumb]:rounded-full
+               [&::-webkit-slider-thumb]:cursor-pointer
+               [&::-webkit-slider-thumb]:hover:bg-purple-700"
+                    />
                   </div>
 
-                  <div className="mb-6">
-                    <h3 className="font-medium mb-2">Mô tả sản phẩm:</h3>
-                    <p className="text-gray-700">
-                      {selectedProduct.description}
-                    </p>
+                  {/* Price range display */}
+                  <div className="flex justify-between items-center">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-gray-500">Từ:</span>
+                      <span className="font-medium text-purple-600">
+                        {formatPrice(minPrice)}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 text-right">
+                      <span className="text-sm text-gray-500">Đến:</span>
+                      <span className="font-medium text-purple-600">
+                        {formatPrice(maxPrice)}
+                      </span>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="mb-6">
-                    <h3 className="font-medium mb-2">Tình trạng:</h3>
-                    <p
-                      className={
-                        selectedProduct.inStock
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }>
-                      {selectedProduct.inStock ? "Còn hàng" : "Hết hàng"}
-                    </p>
-                  </div>
+                {/* Sort Options Dropdown */}
+                <div className="relative">
+                  <h3 className="font-medium mb-3">Sắp xếp theo:</h3>
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="w-full px-4 py-2 rounded-xl text-sm font-medium text-left
+              bg-purple-50 text-gray-600 hover:bg-purple-100 
+              transition-all flex justify-between items-center">
+                    <span>
+                      {SORT_OPTIONS.find(
+                        (option) => option.value === filters.sortBy
+                      )?.label || "Mặc định"}
+                    </span>
+                    <svg
+                      className={`w-5 h-5 transition-transform duration-200 ${
+                        isDropdownOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
 
-                  {selectedProduct.inStock && (
-                    <>
-                      <div className="mb-6">
-                        <h3 className="font-medium mb-2">Số lượng:</h3>
-                        <div className="flex items-center">
-                          <button
-                            onClick={() =>
-                              setQuantity(Math.max(1, quantity - 1))
-                            }
-                            className="w-8 h-8 bg-gray-200 flex items-center justify-center rounded-l">
-                            -
-                          </button>
-                          <input
-                            type="number"
-                            min="1"
-                            value={quantity}
-                            onChange={handleQuantityChange}
-                            className="w-12 h-8 text-center border-t border-b"
-                          />
-                          <button
-                            onClick={() => setQuantity(quantity + 1)}
-                            className="w-8 h-8 bg-gray-200 flex items-center justify-center rounded-r">
-                            +
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <button className="bg-[#4A2580] text-white py-3 px-6 rounded-lg font-medium hover:bg-[#3a1c68] transition-colors">
-                          Thêm vào giỏ hàng
+                  {/* Dropdown Menu */}
+                  {isDropdownOpen && (
+                    <div
+                      className="absolute z-10 w-full mt-2 bg-white border border-gray-100 
+                  rounded-xl shadow-lg overflow-hidden">
+                      {SORT_OPTIONS.map(({ value, label }) => (
+                        <button
+                          key={value}
+                          onClick={() => {
+                            setFilters((prev) => ({ ...prev, sortBy: value }));
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`w-full px-4 py-2 text-sm text-left hover:bg-purple-50 
+                    transition-colors ${
+                      filters.sortBy === value
+                        ? "bg-purple-100 text-purple-700 font-medium"
+                        : "text-gray-700"
+                    }`}>
+                          {label}
                         </button>
-                        <button className="bg-[#804ac2] text-white py-3 px-6 rounded-lg font-medium hover:bg-[#6b3eac] transition-colors">
-                          Mua ngay
-                        </button>
-                      </div>
-
-                      <div className="mt-6 pt-6 border-t border-gray-200">
-                        <h3 className="font-medium mb-2">
-                          Phương thức thanh toán:
-                        </h3>
-                        <div className="flex gap-2 flex-wrap">
-                          <div className="border border-gray-300 rounded-md px-4 py-2 text-sm">
-                            Thẻ tín dụng
-                          </div>
-                          <div className="border border-gray-300 rounded-md px-4 py-2 text-sm">
-                            Chuyển khoản
-                          </div>
-                          <div className="border border-gray-300 rounded-md px-4 py-2 text-sm">
-                            Thanh toán khi nhận hàng
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {!selectedProduct.inStock && (
-                    <button className="bg-gray-400 text-white py-3 px-6 rounded-lg font-medium w-full cursor-not-allowed">
-                      Sản phẩm đã hết hàng
-                    </button>
+                      ))}
+                    </div>
                   )}
                 </div>
+
+                {/* Reset Filters */}
+                <button
+                  onClick={() => {
+                    setFilters({
+                      category: "all",
+                      sortBy: "default",
+                    });
+                    setMinPrice(PRICE_RANGE.min);
+                    setMaxPrice(PRICE_RANGE.max);
+                    setSearchTerm("");
+                  }}
+                  className="w-full px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700
+           border-2 border-purple-600 hover:border-purple-700 rounded-xl transition-colors">
+                  Đặt lại bộ lọc
+                </button>
               </div>
             </div>
           </div>
+
+          {/* Main Content */}
+          <div className="lg:w-3/4">
+            {/* Results count */}
+            <div className="mb-6 flex justify-between items-center">
+              <p className="text-gray-600">
+                Hiển thị {filteredProducts.length} sản phẩm
+              </p>
+            </div>
+
+            {/* Product Grid */}
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}>
+              {paginatedProducts.length > 0 ? (
+                paginatedProducts.map((product, index) => (
+                  <motion.div
+                    key={product.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ y: -5 }}
+                    className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all 
+                duration-300 overflow-hidden cursor-pointer group w-full"
+                    onClick={() =>
+                      window.open(product.affiliateLink, "_blank")
+                    }>
+                    {/* Product Image - Fixed Height */}
+                    <div
+                      className={`relative ${CARD_HEIGHTS.image} overflow-hidden`}>
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          loading="lazy"
+                          className="w-full h-full object-cover transform group-hover:scale-110 
+                   transition-transform duration-500"
+                        />
+                      ) : (
+                        <div
+                          className="w-full h-full bg-gradient-to-br from-purple-100 to-pink-100 
+                     flex items-center justify-center">
+                          <Eye className="w-12 h-12 text-purple-400" />
+                        </div>
+                      )}
+
+                      {/* Category Badge */}
+                      <span
+                        className="absolute top-3 left-3 px-3 py-1 bg-white/90 
+                    backdrop-blur-sm rounded-full text-sm font-medium 
+                    text-purple-600">
+                        {product.category || "Chưa phân loại"}
+                      </span>
+                    </div>
+
+                    {/* Product Info Container - Fixed Layout */}
+                    <div className="p-5 space-y-3">
+                      {/* Title - Fixed Height */}
+                      <div className={`${CARD_HEIGHTS.title}`}>
+                        <h3
+                          className="font-semibold text-gray-900 text-lg 
+                    group-hover:text-purple-600 transition-colors 
+                    line-clamp-2">
+                          {product.name || "Sản phẩm chưa có tên"}
+                        </h3>
+                      </div>
+
+                      {/* Description - Fixed Height */}
+                      <div className={`${CARD_HEIGHTS.description}`}>
+                        <p
+                          className="text-sm text-gray-600 line-clamp-2 
+                   group-hover:text-gray-900 transition-colors">
+                          {product.description || "Chưa có mô tả chi tiết"}
+                        </p>
+                      </div>
+
+                      {/* Price and Action - Fixed Height */}
+                      <div
+                        className={`${CARD_HEIGHTS.price} flex items-center justify-between`}>
+                        <span
+                          className="text-lg font-bold text-purple-600 
+                      group-hover:text-purple-700 transition-colors">
+                          {formatPrice(product.price)}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))
+              ) : (
+                // Enhanced Empty State
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="col-span-full text-center py-16">
+                  <div className="bg-white rounded-2xl p-12 shadow-sm">
+                    <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                      Không tìm thấy sản phẩm
+                    </h3>
+                    <p className="text-gray-600">
+                      Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+            {filteredProducts.length > 0 && (
+              <div className="mt-8 flex justify-center items-center gap-2">
+                {/* First page */}
+                <button
+                  onClick={() => setCurrentPage(0)}
+                  disabled={currentPage === 0}
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center
+                ${
+                  currentPage === 0
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-purple-600 hover:bg-purple-50"
+                }`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414z"
+                      clipRule="evenodd"
+                    />
+                    <path
+                      fillRule="evenodd"
+                      d="M9.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+
+                {/* Previous page */}
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(0, prev - 1))
+                  }
+                  disabled={currentPage === 0}
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center
+                ${
+                  currentPage === 0
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-purple-600 hover:bg-purple-50"
+                }`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M12.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L8.414 10l4.293 4.293a1 1 0 010 1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+
+                {/* Page numbers */}
+                {getPageNumbers().map((pageNum) => (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center font-medium
+                  ${
+                    currentPage === pageNum
+                      ? "bg-purple-600 text-white"
+                      : "text-gray-600 hover:bg-purple-50"
+                  }`}>
+                    {pageNum + 1}
+                  </button>
+                ))}
+
+                {/* Next page */}
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))
+                  }
+                  disabled={currentPage === totalPages - 1}
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center
+                ${
+                  currentPage === totalPages - 1
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-purple-600 hover:bg-purple-50"
+                }`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M7.293 15.707a1 1 0 001.414 0l5-5a1 1 0 000-1.414l-5-5a1 1 0 00-1.414 1.414L11.586 10l-4.293 4.293a1 1 0 000 1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+
+                {/* Last page */}
+                <button
+                  onClick={() => setCurrentPage(totalPages - 1)}
+                  disabled={currentPage === totalPages - 1}
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center
+                ${
+                  currentPage === totalPages - 1
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-purple-600 hover:bg-purple-50"
+                }`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 15.707a1 1 0 001.414 0l5-5a1 1 0 000-1.414l-5-5a1 1 0 00-1.414 1.414L8.586 10 4.293 14.293a1 1 0 000 1.414z"
+                      clipRule="evenodd"
+                    />
+                    <path
+                      fillRule="evenodd"
+                      d="M10.293 15.707a1 1 0 001.414 0l5-5a1 1 0 000-1.414l-5-5a1 1 0 00-1.414 1.414L14.586 10l-4.293 4.293a1 1 0 000 1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+        {/* Pagination */}
+      </div>
     </div>
   );
 };
 
-export default Shop;
+export default AffiliatePage;

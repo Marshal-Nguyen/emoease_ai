@@ -55,6 +55,29 @@ const OAuthCallback = () => {
 
         setIsLoggedIn(true);
         toast.success("Đăng nhập thành công!");
+
+        // --- Thêm logic kiểm tra IsProfileCompleted ---
+        try {
+          const patientRes = await axios.get(
+            `http://localhost:3000/api/patient-profiles/${profileId}`,
+            {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          const patientData = patientRes.data;
+          if (patientData && patientData.IsProfileCompleted === false) {
+            navigate("/daily-habits");
+            return;
+          }
+        } catch (err) {
+          console.error("Error fetching patient profile:", err);
+          // Có thể xử lý lỗi hoặc bỏ qua
+        }
+        // --- End logic ---
+
         navigate("/EMO/learnAboutEmo");
       } catch (err) {
         console.error("Lỗi xác thực:", err);
