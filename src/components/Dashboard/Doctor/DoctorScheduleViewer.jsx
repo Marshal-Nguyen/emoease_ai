@@ -36,7 +36,7 @@ export default function DoctorScheduleViewer({ doctorId }) {
   const [scheduleForm, setScheduleForm] = useState({
     daysOfWeek: [1, 2, 3, 4, 5], // Mặc định từ T2 đến T6
     slotsPerDay: 8,
-    slotDuration: 30,
+    slotDuration: 60,
     month: today.getMonth() + 1, // Tháng hiện tại (1-12)
     year: today.getFullYear(),
   });

@@ -10,7 +10,10 @@ import { AuthProvider } from "./components/oauth/AuthContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
-    <LoadScript googleMapsApiKey="AIzaSyAyBjAXybQ98p7VJfnLICb7o1tBKWpOgV0">
+    <LoadScript
+      googleMapsApiKey="AIzaSyAyBjAXybQ98p7VJfnLICb7o1tBKWpOgV0"
+      loadingElement={<></>}
+    >
       <StrictMode>
         <AuthProvider>
           <App />

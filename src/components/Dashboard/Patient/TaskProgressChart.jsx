@@ -16,16 +16,17 @@ const TaskProgressChart = () => {
   const [error, setError] = useState(null);
 
   const profileId = useSelector((state) => state.auth.profileId);
-  const API_SCHEDULING = import.meta.env.VITE_API_SCHEDULE_URL;
+  // const API_SCHEDULING = import.meta.env.VITE_API_SCHEDULE_URL;
+  const API_SCHEDULING = "http://localhost:3000/api";
   // Fetch data from API
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // First API call to get schedule info
-        const schedulesResponse = await axios.get(
-          `${API_SCHEDULING}/schedules?PageIndex=1&PageSize=10&SortBy=startDate&SortOrder=asc&PatientId=${profileId}`,
+        const response = await axios.get(
+          `${API_SCHEDULING}/bookings?PageIndex=1&PageSize=10&SortOrder=asc&PatientId=${profileId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -34,39 +35,23 @@ const TaskProgressChart = () => {
           }
         );
 
-        if (schedulesResponse.data.schedules.data.length === 0) {
-          setError("No schedules found");
+        const bookings = response.data.data;
+
+        if (!bookings || bookings.length === 0) {
+          setError("No bookings found");
           setLoading(false);
           return;
         }
 
-        // Second API call to get sessions data
-        const sessionsResponse = await axios.get(
-          `${API_SCHEDULING}/schedule/get-total-sessions?ScheduleId=${
-            schedulesResponse.data.schedules.data[0].id
-          }&StartDate=${schedulesResponse.data.schedules.data[0].startDate.substring(
-            0,
-            10
-          )}&EndDate=${schedulesResponse.data.schedules.data[0].endDate.substring(
-            0,
-            10
-          )}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const sessions = bookings.map((booking, index) => ({
+          sessionId: booking.Id,
+          order: booking.Date,
+          percentage: Math.floor(Math.random() * 101),
+        }));
 
-        // Process sessions data
-        const sessions = sessionsResponse.data.sessions;
-        console.log("sessions", sessions);
-        // Split sessions into two weeks
         const week1Sessions = sessions.slice(0, 7);
         const week2Sessions = sessions.slice(7, 14);
 
-        // Transform data for chart display
         const processedData = {
           "Week 1": {
             bars: week1Sessions.map((session) => {
@@ -104,13 +89,13 @@ const TaskProgressChart = () => {
             metrics: [
               {
                 label: "Completed",
-                value: getCompletionCount(week1Sessions),
-                percentage: getCompletionPercentage(week1Sessions),
+                value: getCompletionCount(week2Sessions),
+                percentage: getCompletionPercentage(week2Sessions),
               },
-              { label: "Total Sessions", value: week1Sessions.length },
+              { label: "Total Sessions", value: week2Sessions.length },
               {
                 label: "Average Progress",
-                value: `${getAveragePercentage(week1Sessions)}%`,
+                value: `${getAveragePercentage(week2Sessions)}%`,
               },
             ],
           },
@@ -222,19 +207,22 @@ const TaskProgressChart = () => {
         <div className="relative inline-block">
           <button
             className="flex items-center bg-gray-100 border-none rounded-lg px-4 py-2 text-sm text-gray-800"
-            onClick={toggleDropdown}>
+            onClick={toggleDropdown}
+          >
             {selectedWeek}
             <svg
               className="w-4 h-4 ml-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg">
+              xmlns="http://www.w3.org/2000/svg"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
-                d="M19 9l-7 7-7-7"></path>
+                d="M19 9l-7 7-7-7"
+              ></path>
             </svg>
           </button>
 
@@ -244,7 +232,8 @@ const TaskProgressChart = () => {
                 <div
                   key={week}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                  onClick={() => selectWeek(week)}>
+                  onClick={() => selectWeek(week)}
+                >
                   {week}
                 </div>
               ))}
@@ -271,7 +260,8 @@ const TaskProgressChart = () => {
               {percentageScaleLabels.map((_, index) => (
                 <div
                   key={index}
-                  className="w-full border-t border-gray-200 h-0"></div>
+                  className="w-full border-t border-gray-200 h-0"
+                ></div>
               ))}
             </div>
 
@@ -281,11 +271,13 @@ const TaskProgressChart = () => {
                 key={index}
                 className="flex flex-col items-center w-5 z-10"
                 onMouseEnter={() => handleMouseEnter(item, index)}
-                onMouseLeave={handleMouseLeave}>
+                onMouseLeave={handleMouseLeave}
+              >
                 <div className="w-full h-56 bg-purple-100 rounded-2xl relative overflow-hidden">
                   <div
                     className="absolute bottom-0 w-full bg-purple-700 rounded-2xl transition-all duration-1000 ease-out"
-                    style={{ height: `${item.percentage}%` }}></div>
+                    style={{ height: `${item.percentage}%` }}
+                  ></div>
                 </div>
                 <div className="mt-2 text-xs text-gray-500">{item.day}</div>
                 <div className="text-xs text-gray-400">{item.fullDate}</div>
@@ -299,7 +291,8 @@ const TaskProgressChart = () => {
                 style={{
                   bottom: `${hoverInfo.item.percentage + 5}%`,
                   left: `${hoverInfo.index * 40}px`,
-                }}>
+                }}
+              >
                 <div className="font-bold">{hoverInfo.item.day}</div>
                 <div>{hoverInfo.item.fullDate}</div>
                 <div>Hoàn thành: {hoverInfo.item.percentage}%</div>

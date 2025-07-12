@@ -8,7 +8,7 @@ const DashboardPartient = () => {
       <div className="row-span-5 w-full p-5">
         <Navigation />
       </div>
-      <div className="col-span-5 row-span-5 w-full pr-5">
+      <div className="col-span-5 row-span-5 w-full pr-5 mt-6">
         <Outlet />
       </div>
     </div>

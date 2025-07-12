@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { AiFillEye } from "react-icons/ai";
 import { FaCalendarAlt, FaUsers } from "react-icons/fa";
+import { MdFilterList } from "react-icons/md";
 import { motion } from "framer-motion";
 import Loader from "../../../components/Web/Loader";
-import { useNavigate } from "react-router-dom";
-import { MdFilterList } from "react-icons/md";
-
-const BASE_API_URL = "https://anhtn.id.vn/payment-service/payments";
-const PATIENT_API_URL = "https://anhtn.id.vn/profile-service/patients";
 
 // Hàm định dạng ngày giờ
 const formatDateTime = (isoString) => {
@@ -30,52 +24,46 @@ const PaymentList = () => {
     const [pageSize, setPageSize] = useState(10);
     const [sortOrder, setSortOrder] = useState("desc");
     const [createAtFilter, setCreateAtFilter] = useState("");
-    const [statusFilter, setStatusFilter] = useState("Completed");
-    const [paymentTypeFilter, setPaymentTypeFilter] = useState("");
+    const [statusFilter, setStatusFilter] = useState("");
     const [hasMoreData, setHasMoreData] = useState(true);
-    const navigate = useNavigate();
+    const [totalPages, setTotalPages] = useState(1);
 
     const fetchPayments = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(BASE_API_URL, {
-                params: {
-                    PageIndex: pageIndex,
-                    PageSize: pageSize,
-                    SortOrder: sortOrder,
-                    CreatedAt: createAtFilter || undefined,
-                    Status: statusFilter || undefined,
-                    PaymentType: paymentTypeFilter || undefined,
-                },
-            });
-
-            const paymentData = response.data.payments.data;
-
-            // Gọi API để lấy thông tin patientProfile cho từng payment
-            const updatedPayments = await Promise.all(
-                paymentData.map(async (payment) => {
-                    if (payment.patientProfileId) { // Giả sử payment có trường patientProfileId
-                        try {
-                            const patientResponse = await axios.get(
-                                `${PATIENT_API_URL}/${payment.patientProfileId}`
-                            );
-                            const patientData = patientResponse.data.patientProfileDto;
-                            return {
-                                ...payment,
-                                fullName: patientData.fullName,
-                                email: patientData.contactInfo.email,
-                            };
-                        } catch (err) {
-                            console.error("Error fetching patient profile:", err);
-                            return { ...payment, fullName: "N/A", email: "N/A" };
-                        }
-                    }
-                    return { ...payment, fullName: "N/A", email: "N/A" };
-                })
+            const response = await fetch(
+                `http://localhost:3000/api/payment-zalo?pageIndex=${pageIndex}&pageSize=${pageSize}${sortOrder ? `&sortOrder=${sortOrder}` : ""
+                }${createAtFilter ? `&createdAt=${createAtFilter}` : ""
+                }${statusFilter ? `&status=${statusFilter}` : ""
+                }`
             );
 
-            setPayments(updatedPayments);
-            setHasMoreData(paymentData.length === pageSize);
+            if (!response.ok) {
+                throw new Error("Failed to fetch payments");
+            }
+
+            const { success, data, totalPages } = await response.json();
+
+            if (!success) {
+                throw new Error("API returned unsuccessful response");
+            }
+
+            // Transform API data to match the expected format
+            const transformedData = data.map(payment => ({
+                id: payment.id,
+                patientProfileId: payment.bookingId, // Using bookingId as patientProfileId
+                fullName: payment.patientName,
+                bookingCode: payment.bookingCode,
+                email: "", // API doesn't provide email, so leaving empty
+                createdAt: payment.createdAt,
+                totalAmount: payment.amount,
+                paymentType: "Booking", // Assuming all payments are for bookings
+                status: payment.status
+            }));
+
+            setPayments(transformedData);
+            setTotalPages(totalPages);
+            setHasMoreData(pageIndex < totalPages);
         } catch (error) {
             setError("Failed to load payments. Please try again.");
             console.error("Error fetching data:", error);
@@ -87,7 +75,7 @@ const PaymentList = () => {
 
     useEffect(() => {
         fetchPayments();
-    }, [pageIndex, pageSize, sortOrder, createAtFilter, statusFilter, paymentTypeFilter]);
+    }, [pageIndex, pageSize, sortOrder, createAtFilter, statusFilter]);
 
     if (initialLoad) return <Loader />;
     if (error)
@@ -134,19 +122,9 @@ const PaymentList = () => {
                                 className="p-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm"
                             >
                                 <option value="">All Statuses</option>
-                                <option value="Completed">Completed</option>
+                                <option value="Success">Success</option>
                                 <option value="Pending">Pending</option>
                                 <option value="Failed">Failed</option>
-                            </select>
-                            <select
-                                value={paymentTypeFilter}
-                                onChange={(e) => setPaymentTypeFilter(e.target.value)}
-                                className="p-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm"
-                            >
-                                <option value="">All Types</option>
-                                <option value="BuySubscription">Buy Subscription</option>
-                                <option value="Booking">Booking</option>
-                                <option value="UpgradeSubscription">Upgrade Subscription</option>
                             </select>
                             <select
                                 value={pageSize}
@@ -176,7 +154,7 @@ const PaymentList = () => {
                             <tr>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">#</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Full Name</th>
-                                <th className="px-6 py-4 text-left font-semibold text-sm">Email</th>
+                                <th className="px-6 py-4 text-left font-semibold text-sm">Booking Code</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Date</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Amount</th>
                                 <th className="px-6 py-4 text-left font-semibold text-sm">Type</th>
@@ -201,7 +179,7 @@ const PaymentList = () => {
                                             {payment.fullName}
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 font-medium">
-                                            {payment.email}
+                                            {payment.bookingCode}
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 font-medium">
                                             <div className="flex items-center gap-2">
@@ -216,7 +194,7 @@ const PaymentList = () => {
                                             {payment.paymentType}
                                         </td>
                                         <td
-                                            className={`px-6 py-4 font-medium ${payment.status === "Completed"
+                                            className={`px-6 py-4 font-medium ${payment.status === "Success"
                                                 ? "text-green-600"
                                                 : payment.status === "Pending"
                                                     ? "text-orange-600"
@@ -225,12 +203,11 @@ const PaymentList = () => {
                                         >
                                             {payment.status}
                                         </td>
-
                                     </motion.tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={9} className="px-6 py-4 text-center text-gray-500">
+                                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                                         No payments available
                                     </td>
                                 </tr>
@@ -251,13 +228,13 @@ const PaymentList = () => {
                     Previous
                 </motion.button>
                 <span className="py-2 text-gray-800 font-semibold text-lg">
-                    Page {pageIndex}
+                    Page {pageIndex} of {totalPages}
                 </span>
                 <motion.button
                     onClick={() => setPageIndex((prev) => prev + 1)}
-                    disabled={!hasMoreData}
+                    disabled={pageIndex >= totalPages}
                     className="px-5 py-2 bg-indigo-600 text-white rounded-xl disabled:bg-gray-300 disabled:text-gray-500 hover:bg-indigo-700 transition-colors shadow-lg font-semibold"
-                    whileHover={{ scale: !hasMoreData ? 1 : 1.05 }}
+                    whileHover={{ scale: pageIndex >= totalPages ? 1 : 1.05 }}
                 >
                     Next
                 </motion.button>

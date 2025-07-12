@@ -4,94 +4,63 @@ import axios from "axios";
 
 const PaymentCallback = () => {
   const [loading, setLoading] = useState(true);
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const tranID = searchParams.get("apptransid");
+
+  console.log(tranID);
 
   useEffect(() => {
-    const processPaymentResult = async () => {
+    const processZaloPayCallback = async () => {
+      if (!tranID) {
+        navigate("/EMO/payment-failure", {
+          state: { error: "Không tìm thấy mã giao dịch" },
+        });
+        return;
+      }
+
       try {
-        // Lấy query parameters từ URL
-        const queryParams = new URLSearchParams(location.search);
-
-        // Lấy tất cả các tham số từ URL
-        const paymentData = {
-          amount: queryParams.get("vnp_Amount"),
-          bankCode: queryParams.get("vnp_BankCode"),
-          bankTranNo: queryParams.get("vnp_BankTranNo"),
-          cardType: queryParams.get("vnp_CardType"),
-          orderInfo: queryParams.get("vnp_OrderInfo"),
-          payDate: queryParams.get("vnp_PayDate"),
-          responseCode: queryParams.get("vnp_ResponseCode"),
-          tmnCode: queryParams.get("vnp_TmnCode"),
-          transactionNo: queryParams.get("vnp_TransactionNo"),
-          transactionStatus: queryParams.get("vnp_TransactionStatus"),
-          txnRef: queryParams.get("vnp_TxnRef"),
-          secureHash: queryParams.get("vnp_SecureHash"),
-        };
-
-        // Gửi request tới backend với toàn bộ query params
-        await axios.get(
-          `https://anhtn.id.vn/payment-service/payments/callback?${queryParams.toString()}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+        const { data } = await axios.get(
+          `http://localhost:3000/api/payment-zalo/check-payment-status/${tranID}`
         );
 
-        // Kiểm tra kết quả thanh toán
-        if (
-          paymentData.responseCode === "00" &&
-          paymentData.transactionStatus === "00"
-        ) {
-          // Chuyển hướng đến trang thành công với dữ liệu cần thiết
+        if (data.success && data.status === "Success") {
           navigate("/EMO/payment-success", {
             state: {
-              transactionNo: paymentData.transactionNo,
-              amount: paymentData.amount,
-              payDate: paymentData.payDate,
+              transactionNo: tranID,
+              amount: data.amount,
+              payDate: data.timestamp,
+              bookingId: data.bookingId,
             },
           });
         } else {
-          // Chuyển hướng đến trang thất bại với thông tin lỗi
           navigate("/EMO/payment-failure", {
             state: {
-              responseCode: paymentData.responseCode,
-              message: getVNPayErrorMessage(paymentData.responseCode),
+              message: "Thanh toán chưa hoàn tất hoặc thất bại",
+              status: data.status,
             },
           });
         }
-      } catch (error) {
-        console.error("Error processing payment callback:", error);
+      } catch (err) {
+        console.error("Lỗi khi kiểm tra giao dịch:", err);
         navigate("/EMO/payment-failure", {
-          state: { error: "Đã xảy ra lỗi khi xử lý kết quả thanh toán" },
+          state: { error: "Không thể kiểm tra trạng thái giao dịch" },
         });
       } finally {
         setLoading(false);
       }
     };
 
-    processPaymentResult();
+    processZaloPayCallback();
   }, [location.search, navigate]);
 
-  // Hàm lấy thông báo lỗi từ mã lỗi VNPay
-  const getVNPayErrorMessage = (responseCode) => {
-    const errorMessages = {
-      24: "Transaction canceled by customer",
-      51: "Insufficient account balance",
-      65: "Transaction limit exceeded for the day",
-      75: "Payment bank under maintenance",
-      99: "Unknown error",
-      "02": "Transaction failed",
-    };
-    return errorMessages[responseCode] || "Transaction failed";
-  };
+  console.log(loading);
 
   return (
     <div className="payment-callback-container">
       {loading && (
-        <div className="loading">Đang xử lý kết quả thanh toán...</div>
+        <div className="loading">Đang kiểm tra trạng thái thanh toán...</div>
       )}
     </div>
   );

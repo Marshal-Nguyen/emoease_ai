@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { toast } from "react-toastify";
+import { createClient } from "@supabase/supabase-js";
 
 const ProfileDoctor = () => {
     const navigate = useNavigate();
+    const { userId } = useParams();
+    const fileInputRef = useRef(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [avatarUrl, setAvatarUrl] = useState(null);
+    const [avatarLoading, setAvatarLoading] = useState(false);
     const [specialtiesList, setSpecialtiesList] = useState([]);
     const [formData, setFormData] = useState({
         fullName: "",
@@ -17,30 +22,78 @@ const ProfileDoctor = () => {
         yearsOfExperience: 0,
         bio: "",
     });
-    const [avatarUrl, setAvatarUrl] = useState(null);
-    const [id, setId] = useState(null);
-    const [avatarLoading, setAvatarLoading] = useState(false);
-    const fileInputRef = useRef(null);
-    const { userId } = useParams();
 
-    const fetchAvatar = async (doctorId) => {
-        try {
-            const avatarResponse = await axios.get(
-                `https://anhtn.id.vn/image-service/image/get?ownerType=User&ownerId=${doctorId}`
-            );
-            setAvatarUrl(avatarResponse.data.url);
-        } catch (err) {
-            console.log("No avatar found or error fetching avatar:", err);
-        }
-    };
+    const VITE_API_PROFILE_URL = "http://localhost:3000/api";
+    const supabase = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY
+    );
+
+    // Fetch data when component mounts
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+
+                // Fetch avatar
+                const avatarResponse = await axios.get(`${VITE_API_PROFILE_URL}/profile/${userId}/image`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+                setAvatarUrl(avatarResponse.data.data.publicUrl || null);
+
+                // Fetch doctor profile
+                const doctorResponse = await axios.get(`${VITE_API_PROFILE_URL}/doctor-profiles/${userId}`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                });
+                const doctorProfile = doctorResponse.data;
+                setFormData({
+                    fullName: doctorProfile.FullName || "",
+                    gender: doctorProfile.Gender || "",
+                    contactInfo: {
+                        address: doctorProfile.Address || "",
+                        phoneNumber: doctorProfile.PhoneNumber || "",
+                        email: doctorProfile.Email || "",
+                    },
+                    specialties: doctorProfile.specialties?.map((s) => s.Id) || [],
+                    qualifications: doctorProfile.Qualifications || "",
+                    yearsOfExperience: doctorProfile.YearsOfExperience || 0,
+                    bio: doctorProfile.Bio || "",
+                });
+
+                // Fetch specialties
+                const specialtiesResponse = await axios.get(`${VITE_API_PROFILE_URL}/specialties`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                });
+                setSpecialtiesList(specialtiesResponse.data);
+            } catch (err) {
+                setError("Error fetching data. Please try again.");
+                console.error("Fetch error:", err);
+                // Fallback specialties
+                setSpecialtiesList([
+                    { Id: "4064c495-80af-4f54-8bd2-151cebf029a6", Name: "Addiction Therapy" },
+                    { Id: "cac4f120-834f-41f8-859d-dd1de7883609", Name: "Child Psychology" },
+                    { Id: "8704cf2c-e7ec-4ece-a057-883653578ae6", Name: "Behavioral Therapy" },
+                    { Id: "ddf4b47a-65d1-451f-a297-41606caacfe2", Name: "Neurology" },
+                    { Id: "e09aa07d-6313-4e21-919c-f17f3497b6ff", Name: "Clinical Psychology" },
+                ]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [userId]);
 
     const handleAvatarChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const validTypes = ["image/jpeg", "image/png"];
+        const validTypes = ["image/jpeg", "image/png", "image/gif"];
         if (!validTypes.includes(file.type)) {
-            toast.error("Please select a valid image file (JPEG, PNG)");
+            toast.error("Please select a valid image file (JPEG, PNG, GIF)");
             return;
         }
 
@@ -49,86 +102,57 @@ const ProfileDoctor = () => {
             return;
         }
 
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("No token found. Please log in again!");
+            return;
+        }
+
         try {
             setAvatarLoading(true);
-            const formDataImg = new FormData();
-            formDataImg.append("file", file);
-            formDataImg.append("ownerType", "User");
-            formDataImg.append("ownerId", id);
+            const previewUrl = URL.createObjectURL(file);
+            setAvatarUrl(previewUrl);
 
-            const endpoint = avatarUrl
-                ? "https://anhtn.id.vn/image-service/image/update"
-                : "https://anhtn.id.vn/image-service/image/upload";
+            const formData = new FormData();
+            formData.append("image", file);
 
-            const method = avatarUrl ? axios.put : axios.post;
-            await method(endpoint, formDataImg, {
-                headers: { "Content-Type": "multipart/form-data" },
+            const isUpdate = !!avatarUrl;
+            await axios({
+                method: isUpdate ? "PUT" : "POST",
+                url: `${VITE_API_PROFILE_URL}/profile/${userId}/${isUpdate ? "update" : "upload"}?token=${token}`,
+                data: formData,
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data",
+                },
             });
-            await fetchAvatar(id);
-            toast.success("Profile picture updated successfully!");
+
+            toast.success(`Profile picture ${isUpdate ? "updated" : "uploaded"} successfully!`);
         } catch (err) {
-            console.error("Error updating avatar:", err);
-            toast.error("Failed to update profile picture. Please try again.");
+            toast.error(`Error ${avatarUrl ? "updating" : "uploading"} profile picture!`);
+            console.error("Avatar error:", err.response?.data || err.message);
         } finally {
             setAvatarLoading(false);
         }
     };
 
-    const triggerFileInput = () => fileInputRef.current.click();
+    const handleAvatarDelete = async () => {
+        if (!window.confirm("Are you sure you want to delete the profile picture?")) return;
 
-    useEffect(() => {
-        const fetchDoctorData = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(
-                    `https://anhtn.id.vn/profile-service/doctors/${userId}`
-                );
-                const { doctorProfileDto } = response.data;
-                const doctorId = doctorProfileDto.userId;
-                setId(doctorId);
-                setFormData({
-                    fullName: doctorProfileDto.fullName,
-                    gender: doctorProfileDto.gender,
-                    contactInfo: {
-                        address: doctorProfileDto.contactInfo.address,
-                        phoneNumber: doctorProfileDto.contactInfo.phoneNumber,
-                        email: doctorProfileDto.contactInfo.email,
-                    },
-                    specialties: doctorProfileDto.specialties.map((s) => s.id),
-                    qualifications: doctorProfileDto.qualifications,
-                    yearsOfExperience: doctorProfileDto.yearsOfExperience,
-                    bio: doctorProfileDto.bio,
-                });
-                setLoading(false);
-                await fetchAvatar(doctorId);
-            } catch (err) {
-                setError("Error fetching doctor data. Please try again.");
-                setLoading(false);
-                console.error("Error fetching doctor data:", err);
-            }
-        };
-
-        const fetchSpecialties = async () => {
-            try {
-                const response = await axios.get(
-                    "https://anhtn.id.vn/profile-service/specialties?PageIndex=1&PageSize=10"
-                );
-                setSpecialtiesList(response.data.specialties);
-            } catch (err) {
-                console.error("Error fetching specialties:", err);
-                setSpecialtiesList([
-                    { id: "8704cf2c-e7ec-4ece-a057-883653578ae6", name: "Behavioral Therapy" },
-                    { id: "ddf4b47a-65d1-451f-a297-41606caacfe2", name: "Neurology" },
-                    { id: "3", name: "Cognitive Psychology" },
-                    { id: "4", name: "Child Psychology" },
-                    { id: "5", name: "Clinical Psychology" },
-                ]);
-            }
-        };
-
-        fetchDoctorData();
-        fetchSpecialties();
-    }, [userId]);
+        try {
+            setAvatarLoading(true);
+            await axios.delete(`${VITE_API_PROFILE_URL}/profile/${userId}/delete`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            });
+            setAvatarUrl(null);
+            toast.success("Profile picture deleted successfully!");
+        } catch (err) {
+            toast.error("Error deleting profile picture!");
+            console.error("Delete avatar error:", err.response?.data || err.message);
+        } finally {
+            setAvatarLoading(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -159,28 +183,31 @@ const ProfileDoctor = () => {
         try {
             setLoading(true);
             const updatedProfile = {
-                doctorProfileUpdate: {
-                    fullName: formData.fullName,
-                    gender: formData.gender,
-                    contactInfo: formData.contactInfo,
-                    specialtyIds: formData.specialties,
-                    qualifications: formData.qualifications,
-                    yearsOfExperience: parseInt(formData.yearsOfExperience),
-                    bio: formData.bio,
-                },
+                FullName: formData.fullName,
+                Gender: formData.gender,
+                Address: formData.contactInfo.address,
+                PhoneNumber: formData.contactInfo.phoneNumber,
+                Email: formData.contactInfo.email,
+                Qualifications: formData.qualifications,
+                YearsOfExperience: parseInt(formData.yearsOfExperience),
+                Bio: formData.bio,
+                specialties: formData.specialties.map((id) => ({ Id: id })),
             };
-            await axios.put(
-                `https://anhtn.id.vn/profile-service/doctors/${userId}`,
-                updatedProfile
-            );
-            setLoading(false);
+
+            await axios.put(`${VITE_API_PROFILE_URL}/doctor-profiles/${userId}`, updatedProfile, {
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            });
+
             toast.success("Doctor profile updated successfully!");
         } catch (err) {
-            toast.error("Error updating doctor profile");
+            toast.error("Error updating doctor profile!");
+            console.error("Update error:", err.response?.data || err.message);
+        } finally {
             setLoading(false);
-            console.error("Error updating profile:", err);
         }
     };
+
+    const triggerFileInput = () => fileInputRef.current.click();
 
     if (loading)
         return (
@@ -218,7 +245,8 @@ const ProfileDoctor = () => {
                                                 className="h-20 w-20"
                                                 fill="none"
                                                 viewBox="0 0 24 24"
-                                                stroke="currentColor">
+                                                stroke="currentColor"
+                                            >
                                                 <path
                                                     strokeLinecap="round"
                                                     strokeLinejoin="round"
@@ -237,14 +265,16 @@ const ProfileDoctor = () => {
                                 <button
                                     type="button"
                                     onClick={triggerFileInput}
-                                    className="absolute bottom-2 right-2 bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700">
+                                    className="absolute bottom-2 right-2 bg-purple-600 text-white p-3 rounded-full shadow-lg hover:bg-purple-700"
+                                >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         className="h-6 w-6"
                                         fill="none"
                                         viewBox="0 0 24 24"
-                                        stroke="currentColor">
-                                        <path
+                                        stroke="currentColor"
+                                    >
+                                        <  path
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
                                             strokeWidth={2}
@@ -258,12 +288,34 @@ const ProfileDoctor = () => {
                                         />
                                     </svg>
                                 </button>
+                                {/* {avatarUrl && (
+                                    <button
+                                        type="button"
+                                        onClick={handleAvatarDelete}
+                                        className="absolute bottom-2 left-2 bg-red-600 text-white p-3 rounded-full shadow-lg hover:bg-red-700"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-6 w-6"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M6 18L18 6M6 6l12 12"
+                                            />
+                                        </svg>
+                                    </button>
+                                )} */}
                             </div>
                             <input
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={handleAvatarChange}
-                                accept="image/jpeg, image/png, image/gif"
+                                accept="image/jpeg,image/png,image/gif"
                                 className="hidden"
                             />
                             <p className="mt-4 text-sm text-gray-500 font-medium">
@@ -274,78 +326,6 @@ const ProfileDoctor = () => {
                             </p>
                         </div>
                     </div>
-                    {/* <div className="bg-white rounded-xl shadow-lg p-6 transform hover:scale-105 transition-transform duration-300">
-                        <div className="flex flex-col items-center">
-                            <div className="relative">
-                                <div className="w-40 h-40 rounded-full overflow-hidden bg-gray-100 border-4 border-indigo-200 shadow-md">
-                                    {avatarUrl ? (
-                                        <img
-                                            src={avatarUrl}
-                                            alt="Profile"
-                                            className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-300"
-                                        />
-                                    ) : (
-                                        <svg
-                                            className="w-20 h-20 text-gray-400 mx-auto mt-10"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth="2"
-                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                            />
-                                        </svg>
-                                    )}
-                                    {avatarLoading && (
-                                        <div className="absolute inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center rounded-full">
-                                            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-white"></div>
-                                        </div>
-                                    )}
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={triggerFileInput}
-                                    className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full hover:bg-indigo-700 transition-colors duration-200"
-                                >
-                                    <svg
-                                        className="w-5 h-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                                        />
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleAvatarChange}
-                                accept="image/jpeg, image/png"
-                                className="hidden"
-                            />
-                            <p className="mt-3 text-sm font-medium text-gray-600">
-                                {avatarUrl ? "Change" : "Upload"} Profile Picture
-                            </p>
-                            <p className="text-xs text-gray-400">JPEG, PNG (max 5MB)</p>
-                        </div>
-                    </div> */}
 
                     {/* Two-column Layout */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -485,26 +465,25 @@ const ProfileDoctor = () => {
                                 </h2>
                                 <div className="grid grid-cols-2 gap-3">
                                     {specialtiesList.map((specialty) => (
-                                        <div key={specialty.id} className="flex items-center my-1">
+                                        <div key={specialty.Id} className="flex items-center my-1">
                                             <input
                                                 type="checkbox"
-                                                id={`specialty-${specialty.id}`}
-                                                value={specialty.id}
-                                                checked={formData.specialties.includes(specialty.id)}
+                                                id={`specialty-${specialty.Id}`}
+                                                value={specialty.Id}
+                                                checked={formData.specialties.includes(specialty.Id)}
                                                 onChange={handleSpecialtyChange}
                                                 className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                                             />
                                             <label
-                                                htmlFor={`specialty-${specialty.id}`}
+                                                htmlFor={`specialty-${specialty.Id}`}
                                                 className="ml-2 text-sm text-gray-700"
                                             >
-                                                {specialty.name}
+                                                {specialty.Name}
                                             </label>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-
 
                             {/* Contact Information */}
                             <div className="bg-white rounded-xl shadow-lg p-6">
@@ -534,7 +513,7 @@ const ProfileDoctor = () => {
                                             value={formData.contactInfo.email}
                                             onChange={handleContactInfoChange}
                                             className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                            required
+                                        // required
                                         />
                                     </div>
                                     <div>
@@ -545,7 +524,7 @@ const ProfileDoctor = () => {
                                             value={formData.contactInfo.phoneNumber}
                                             onChange={handleContactInfoChange}
                                             className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                            required
+                                        // required
                                         />
                                     </div>
                                     <div>
@@ -556,7 +535,7 @@ const ProfileDoctor = () => {
                                             onChange={handleContactInfoChange}
                                             className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                             rows="3"
-                                            required
+                                        // required
                                         />
                                     </div>
                                 </div>

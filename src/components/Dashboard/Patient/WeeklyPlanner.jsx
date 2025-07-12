@@ -20,10 +20,10 @@ const WeeklyPlanner = () => {
 
   // API endpoints và keys
   const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API_SCHEDULE_URL; // Thay bằng URL của bạn
-  const SCHEDULES_ENDPOINT = `${VITE_API_SCHEDULE_URL}/schedules`;
+  const SCHEDULES_ENDPOINT = import.meta.env.VITE_API;
   const ACTIVITIES_ENDPOINT = `${VITE_API_SCHEDULE_URL}/schedule-activities`;
-  const OPENAI_API_KEY = import.meta.env.VITE_API_GPT_KEY; // Thay bằng key của bạn
-  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_API_GM_KEY; // Thay bằng key của bạn
+  // const OPENAI_API_KEY = import.meta.env.VITE_API_GPT_KEY; // Thay bằng key của bạn
+  // const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_API_GM_KEY; // Thay bằng key của bạn
 
   // Cấu hình bản đồ
   const mapContainerStyle = {
@@ -45,7 +45,7 @@ const WeeklyPlanner = () => {
       try {
         console.log("Fetching sessions data...");
         const scheduleResponse = await axios.get(
-          `${SCHEDULES_ENDPOINT}?PageIndex=1&PageSize=10&SortBy=startDate&SortOrder=asc&PatientId=${profileId}`,
+          `${SCHEDULES_ENDPOINT}/bookings?PageIndex=1&PageSize=10&SortBy=startDate&SortOrder=asc&PatientId=${profileId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -546,7 +546,8 @@ const WeeklyPlanner = () => {
                     ? "border-purple-500"
                     : "border-gray-200"
                 }`}
-                onClick={() => setSelectedDate(date)}>
+                onClick={() => setSelectedDate(date)}
+              >
                 <span className="text-xs font-medium">
                   {formatDayName(date)}
                 </span>
@@ -573,7 +574,8 @@ const WeeklyPlanner = () => {
           </div>
           <button
             className="text-purple-600 border border-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50"
-            onClick={() => setSelectedDate(new Date())}>
+            onClick={() => setSelectedDate(new Date())}
+          >
             Today
           </button>
         </div>
@@ -595,7 +597,8 @@ const WeeklyPlanner = () => {
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div
             className="bg-purple-600 h-2.5 rounded-full"
-            style={{ width: `${calculateProgress()}%` }}></div>
+            style={{ width: `${calculateProgress()}%` }}
+          ></div>
         </div>
       </div>
       {/* Activities list */}
@@ -621,12 +624,14 @@ const WeeklyPlanner = () => {
             .map((activity) => (
               <div
                 key={activity.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+                className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
+              >
                 <div className="flex items-center px-8 py-3">
                   <div className="mr-4">
                     <label
                       className="relative text-[#FF91AF] flex items-center justify-center gap-2"
-                      htmlFor={`heart-${activity.id}`}>
+                      htmlFor={`heart-${activity.id}`}
+                    >
                       <input
                         className="peer appearance-none"
                         id={`heart-${activity.id}`}
@@ -643,12 +648,14 @@ const WeeklyPlanner = () => {
                         fill="transparent"
                         height="20"
                         width="20"
-                        xmlns="http://www.w3.org/2000/svg">
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
                         <path
                           d="M28.048 74.752c-.74 0-3.428.03-3.674-.175-3.975-3.298-10.07-11.632-12.946-15.92C7.694 53.09 5.626 48.133 3.38 42.035 1.937 38.12 1.116 35.298.93 31.012c-.132-3.034-.706-7.866 0-10.847C2.705 12.67 8.24 7.044 15.801 7.044c1.7 0 3.087-.295 4.55.875 4.579 3.663 5.515 8.992 7.172 14.171.142.443 3.268 6.531 2.1 7.698-.362.363-1.161-10.623-1.05-12.071.26-3.37 1.654-5.522 3.15-8.398 3.226-6.205 7.617-7.873 14.52-7.873 2.861 0 5.343-.274 8.049 1.224 16.654 9.22 14.572 23.568 5.773 37.966-1.793 2.934-3.269 6.477-5.598 9.097-1.73 1.947-4.085 3.36-5.774 5.424-2.096 2.562-3.286 5.29-5.598 7.698-4.797 4.997-9.56 10.065-14.522 14.872-1.64 1.588-10.194 6.916-10.672 7.873-.609 1.217 2.76-.195 4.024-.7"
                           strokeWidth="6"
                           pathLength="1000"
-                          stroke="#FF91AF"></path>
+                          stroke="#FF91AF"
+                        ></path>
                       </svg>
                     </label>
                   </div>
@@ -668,7 +675,8 @@ const WeeklyPlanner = () => {
                               : activity.status === "Missed"
                               ? "bg-red-100 text-red-800"
                               : "bg-yellow-100 text-yellow-800"
-                          }`}>
+                          }`}
+                        >
                           {activity.status === "Completed"
                             ? "Completed"
                             : activity.status === "Missed"
@@ -685,7 +693,8 @@ const WeeklyPlanner = () => {
                 <div className="border-t border-gray-200 px-4 py-3 bg-gray-50">
                   <button
                     className="text-purple-600 text-sm font-medium"
-                    onClick={() => showTaskDetails(activity)}>
+                    onClick={() => showTaskDetails(activity)}
+                  >
                     Xem chi tiết
                   </button>
                 </div>
@@ -710,13 +719,15 @@ const WeeklyPlanner = () => {
                 </div>
                 <button
                   onClick={closeTaskDetail}
-                  className="absolute right-6 top-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-500 transition-all duration-200">
+                  className="absolute right-6 top-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-500 transition-all duration-200"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
-                    stroke="currentColor">
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -750,13 +761,15 @@ const WeeklyPlanner = () => {
                     {selectedTask.benefits.map((benefit, index) => (
                       <li
                         key={index}
-                        className="flex items-start gap-3 bg-green-50 rounded-lg p-4">
+                        className="flex items-start gap-3 bg-green-50 rounded-lg p-4"
+                      >
                         <div className="rounded-full bg-green-100 p-1 mt-0.5">
                           <svg
                             className="w-4 h-4 text-green-600"
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 20 20"
-                            fill="currentColor">
+                            fill="currentColor"
+                          >
                             <path
                               fillRule="evenodd"
                               d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -782,7 +795,8 @@ const WeeklyPlanner = () => {
                           className="w-6 h-6 text-pink-500"
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 20 20"
-                          fill="currentColor">
+                          fill="currentColor"
+                        >
                           <path
                             fillRule="evenodd"
                             d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -895,7 +909,8 @@ const WeeklyPlanner = () => {
                         {suggestions.map((suggestion, index) => (
                           <div
                             key={index}
-                            className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+                            className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow duration-300"
+                          >
                             <div className="p-5">
                               <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                                 <div className="flex-1">
@@ -938,7 +953,8 @@ const WeeklyPlanner = () => {
                                   stroke="currentColor"
                                   strokeWidth="2"
                                   strokeLinecap="round"
-                                  strokeLinejoin="round">
+                                  strokeLinejoin="round"
+                                >
                                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                                   <circle cx="12" cy="10" r="3"></circle>
                                 </svg>
@@ -955,12 +971,14 @@ const WeeklyPlanner = () => {
                                       `https://www.google.com/maps/dir/?api=1&destination=${suggestion.lat},${suggestion.lng}`,
                                       "_blank"
                                     )
-                                  }>
+                                  }
+                                >
                                   <svg
                                     className="w-4 h-4 mr-2"
                                     viewBox="0 0 24 24"
                                     fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
                                     <path
                                       d="M9 20L3 12L9 4"
                                       stroke="currentColor"
@@ -987,12 +1005,14 @@ const WeeklyPlanner = () => {
                                       )}`,
                                       "_blank"
                                     )
-                                  }>
+                                  }
+                                >
                                   <svg
                                     className="w-4 h-4 mr-2"
                                     viewBox="0 0 24 24"
                                     fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
                                     <path
                                       d="M10 6H6C4.89543 6 4 6.89543 4 8V18C4 19.1046 4.89543 20 6 20H16C17.1046 20 18 19.1046 18 18V14M14 4H20M20 4V10M20 4L10 14"
                                       stroke="currentColor"
@@ -1016,7 +1036,8 @@ const WeeklyPlanner = () => {
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
-                        stroke="currentColor">
+                        stroke="currentColor"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -1043,7 +1064,8 @@ const WeeklyPlanner = () => {
                   className="w-4 h-4 mr-1"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
-                  fill="currentColor">
+                  fill="currentColor"
+                >
                   <path
                     fillRule="evenodd"
                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
@@ -1055,7 +1077,8 @@ const WeeklyPlanner = () => {
               <div className="flex space-x-3">
                 <button
                   onClick={closeTaskDetail}
-                  className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                  className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                >
                   Close
                 </button>
                 <button className="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">

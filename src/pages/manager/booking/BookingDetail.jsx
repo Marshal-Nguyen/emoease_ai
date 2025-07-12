@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ClockIcon, CurrencyDollarIcon, UserIcon, BriefcaseIcon, HeartIcon, PhoneIcon, StarIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { AiOutlineUser, AiOutlinePhone, AiOutlineStar } from "react-icons/ai";
-import { FaBriefcase, FaUserCircle, FaClipboardList } from "react-icons/fa";
-import { FaHeart, FaPhone, FaHeartbeat } from "react-icons/fa";
-import { GiMedicines } from "react-icons/gi";
-import { MdPsychology } from "react-icons/md"
+import { ClockIcon, CurrencyDollarIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { AiOutlineUser, AiOutlinePhone, AiOutlineStar } from 'react-icons/ai';
+import { FaBriefcase, FaUserCircle, FaClipboardList } from 'react-icons/fa';
+import { FaHeart, FaPhone, FaHeartbeat } from 'react-icons/fa';
+import { GiMedicines } from 'react-icons/gi';
+import { MdPsychology } from 'react-icons/md';
+
 const BookingDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -21,38 +22,33 @@ const BookingDetail = () => {
     useEffect(() => {
         const fetchBookingDetails = async () => {
             try {
-                // Fetch booking details
                 const bookingResponse = await axios.get(
-                    `https://anhtn.id.vn/scheduling-service/bookings/${id}`
+                    `http://localhost:3000/api/bookings?Id=${id}`
                 );
-                const bookingData = bookingResponse.data.booking;
+                const bookingData = bookingResponse.data.data[0];
                 setBooking(bookingData);
 
-                // Fetch doctor details
                 const doctorResponse = await axios.get(
-                    `https://anhtn.id.vn/profile-service/doctors/${bookingData.doctorId}`
+                    `http://localhost:3000/api/doctor-profiles/${bookingData.DoctorId}`
                 );
-                const doctorData = doctorResponse.data.doctorProfileDto;
+                const doctorData = doctorResponse.data;
                 setDoctor(doctorData);
 
-                // Fetch patient details
                 const patientResponse = await axios.get(
-                    `https://anhtn.id.vn/profile-service/patients/${bookingData.patientId}`
+                    `http://localhost:3000/api/patient-profiles/${bookingData.PatientId}`
                 );
-                const patientData = patientResponse.data.patientProfileDto;
+                const patientData = patientResponse.data;
                 setPatient(patientData);
 
-                // Fetch doctor image
                 const doctorImageResponse = await axios.get(
-                    `https://anhtn.id.vn/image-service/image/get?ownerType=User&ownerId=${doctorData.userId}`
+                    `http://localhost:3000/api/profile/${bookingData.DoctorId}/image`
                 );
-                setDoctorImage(doctorImageResponse.data.url);
+                setDoctorImage(doctorImageResponse.data.data.publicUrl);
 
-                // Fetch patient image
                 const patientImageResponse = await axios.get(
-                    `https://anhtn.id.vn/image-service/image/get?ownerType=User&ownerId=${patientData.userId}`
+                    `http://localhost:3000/api/profile/${bookingData.PatientId}/image`
                 );
-                setPatientImage(patientImageResponse.data.url);
+                setPatientImage(patientImageResponse.data.data.publicUrl);
 
                 setLoading(false);
             } catch (err) {
@@ -65,102 +61,179 @@ const BookingDetail = () => {
     }, [id]);
 
     if (loading) return (
-        <div className="flex justify-center items-center h-screen">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-600"></div>
+        <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-indigo-600"></div>
         </div>
     );
     if (error) return (
-        <div className="text-center py-10 text-red-600 font-semibold animate-pulse">{error}</div>
+        <div className="text-center py-12 text-rose-500 font-medium text-lg bg-gray-50 min-h-screen">
+            {error}
+        </div>
     );
 
     return (
-        <div className="container mx-auto bg-white px-4 py-8 animate-fade-in">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-                <h1 className="text-4xl font-bold text-purple-700">Booking Details</h1>
-                <button
-                    onClick={() => navigate('/manager/booking')}
-                    className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                    <ArrowLeftIcon className="h-5 w-5 mr-2" />
-                    Back to Bookings
-                </button>
-            </div>
-
-            {/* Layout 3 cột */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Cột 1: Thông tin bác sĩ */}
-                {doctor && (
-                    <div className="bg-white rounded-xl shadow-2xl p-6 border-t-4 border-blue-500">
-                        <h2 className="text-2xl font-semibold mb-4 text-blue-700 flex items-center">
-                            <FaBriefcase className="h-6 w-6 mr-2 text-blue-600" /> Doctor Information
-                        </h2>
-                        {doctorImage && (
-                            <div className="flex justify-center mb-6">
-                                <img src={doctorImage} alt="Doctor Profile" className="w-24 h-24 rounded-full object-cover" />
-                            </div>
-                        )}
-                        <div className="space-y-4">
-                            <InfoItem label="Name" value={doctor.fullName} icon={<AiOutlineUser className="h-5 w-5 text-blue-500" />} />
-                            <InfoItem label="Gender" value={doctor.gender} icon={<FaUserCircle className="h-5 w-5 text-purple-500" />} />
-                            <InfoItem label="Contact" value={doctor.contactInfo.phoneNumber} icon={<AiOutlinePhone className="h-5 w-5 text-blue-500" />} />
-                            <InfoItem label="Specialties" value={doctor.specialties.map(s => s.name).join(', ')} icon={<FaClipboardList className="h-5 w-5 text-green-500" />} />
-                            <InfoItem label="Experience" value={`${doctor.yearsOfExperience} years`} />
-                            <InfoItem label="Rating" value={`${doctor.rating}/5`} icon={<AiOutlineStar className="h-5 w-5 text-yellow-500" />} />
-                        </div>
-                    </div>
-                )}
-
-                {/* Cột 2: Thông tin đặt lịch */}
-                <div className="bg-white rounded-xl shadow-2xl p-6 border-t-4 border-purple-500">
-                    <h2 className="text-2xl font-semibold mb-4 text-purple-700 flex items-center">
-                        <ClockIcon className="h-6 w-6 mr-2 text-purple-600" /> Booking Information
-                    </h2>
-                    <div className="space-y-4">
-                        <InfoItem label="Booking Code" value={booking.bookingCode} />
-                        <div className="flex items-center gap-4">
-                            <InfoItem label="Date" value={booking.date} />
-                            <InfoItem label="Time" value={`${booking.startTime} (${booking.duration} mins)`} icon={<ClockIcon className="h-5 w-5 text-purple-500" />} />
-                        </div>
-                        <InfoItem label="Price" value={`${booking.price.toLocaleString()} VND`} icon={<CurrencyDollarIcon className="h-5 w-5 text-green-600" />} />
-                        <InfoItem label="Status" value={booking.status} className={`font-semibold ${booking.status === 'Confirmed' ? 'text-green-600' : 'text-orange-600'}`} />
-                    </div>
+        <div className=" bg-gradient-to-br from-gray-50 to-gray-100 pt-12 pb-2 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-10">
+                    <h1 className="text-3xl font-extrabold text-blue-400 tracking-tight sm:text-4xl">
+                        Booking Details
+                    </h1>
+                    <button
+                        onClick={() => navigate('/manager/booking')}
+                        className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 transition-all duration-300 ease-in-out shadow-md hover:shadow-lg"
+                    >
+                        <ArrowLeftIcon className="h-5 w-5 mr-2" />
+                        Back to Bookings
+                    </button>
                 </div>
 
-                {/* Cột 3: Thông tin bệnh nhân */}
-                {patient && (
-                    <div className="bg-white rounded-xl shadow-2xl p-6 border-t-4 border-pink-500">
-                        <h2 className="text-2xl font-semibold mb-4 text-pink-700 flex items-center">
-                            <FaHeart className="h-6 w-6 mr-2 text-pink-600" /> Patient Information
-                        </h2>
-                        {patientImage && (
-                            <div className="flex justify-center mb-6">
-                                <img src={patientImage} alt="Patient Profile" className="w-24 h-24 rounded-full object-cover" />
+                {/* Layout 3 cột */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Cột 1: Thông tin bác sĩ */}
+                    {doctor && (
+                        <div className="bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl border-l-4 border-indigo-500">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                                <FaBriefcase className="h-5 w-5 mr-2 text-indigo-600" />
+                                Doctor Information
+                            </h2>
+                            {doctorImage && (
+                                <div className="flex justify-center mb-6">
+                                    <img
+                                        src={doctorImage}
+                                        alt="Doctor Profile"
+                                        className="w-20 h-20 rounded-full object-cover ring-2 ring-indigo-200"
+                                    />
+                                </div>
+                            )}
+                            <div className="space-y-3">
+                                <InfoItem
+                                    label="Name"
+                                    value={doctor.FullName}
+                                    icon={<AiOutlineUser className="h-5 w-5 text-indigo-500" />}
+                                />
+                                <InfoItem
+                                    label="Gender"
+                                    value={doctor.Gender}
+                                    icon={<FaUserCircle className="h-5 w-5 text-indigo-400" />}
+                                />
+                                <InfoItem
+                                    label="Contact"
+                                    value={doctor.PhoneNumber}
+                                    icon={<AiOutlinePhone className="h-5 w-5 text-indigo-500" />}
+                                />
+                                <InfoItem
+                                    label="Specialties"
+                                    value={doctor.specialties.map(s => s.Name).join(', ')}
+                                    icon={<FaClipboardList className="h-5 w-5 text-green-500" />}
+                                />
+                                <InfoItem
+                                    label="Experience"
+                                    value={`${doctor.YearsOfExperience} years`}
+                                />
+                                <InfoItem
+                                    label="Rating"
+                                    value={doctor.Rating ? `${doctor.Rating}/5` : 'No rating'}
+                                    icon={<AiOutlineStar className="h-5 w-5 text-yellow-400" />}
+                                />
                             </div>
-                        )}
-                        <div className="space-y-4">
-                            <InfoItem label="Name" value={patient.fullName} icon={<AiOutlineUser className="h-5 w-5 text-pink-500" />} />
-                            <InfoItem label="Gender" value={patient.gender} icon={<FaUserCircle className="h-5 w-5 text-purple-500" />} />
-                            <InfoItem label="Contact" value={patient.contactInfo.phoneNumber} icon={<FaPhone className="h-5 w-5 text-pink-500" />} />
-                            <InfoItem label="Allergies" value={patient.allergies || 'None'} icon={<GiMedicines className="h-5 w-5 text-green-500" />} />
-                            <InfoItem label="Mental Disorders" value={patient.medicalHistory.specificMentalDisorders.map(d => d.name).join(', ') || 'None'} icon={<MdPsychology className="h-5 w-5 text-blue-500" />} />
-                            <InfoItem label="Physical Symptoms" value={patient.medicalHistory.physicalSymptoms.map(s => s.name).join(', ') || 'None'} icon={<FaHeartbeat className="h-5 w-5 text-red-500" />} />
                         </div>
-                    </div>
-                )}
-            </div>
-        </div>
+                    )}
 
+                    {/* Cột 2: Thông tin đặt lịch */}
+                    {booking && (
+                        <div className="bg-white rounded-2xl shadow-md p-6 border-l-4 border-purple-500">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                                <ClockIcon className="h-5 w-5 mr-2 text-purple-600" />
+                                Booking Information
+                            </h2>
+                            <div className="space-y-4">
+                                <InfoItem label="Booking Code" value={booking.BookingCode} />
+                                <div className="flex items-center gap-4">
+                                    <InfoItem label="Date" value={booking.Date} />
+                                    <InfoItem
+                                        label="Time"
+                                        value={`${booking.StartTime} (${booking.Duration} mins)`}
+                                        icon={<ClockIcon className="h-5 w-5 text-purple-500" />}
+                                    />
+                                </div>
+                                <InfoItem
+                                    label="Price"
+                                    value={`${booking.Price.toLocaleString()} VND`}
+                                    icon={<CurrencyDollarIcon className="h-5 w-5 text-green-600" />}
+                                />
+                                <InfoItem
+                                    label="Status"
+                                    value={booking.Status}
+                                    className={`font-semibold ${booking.Status === 'Confirmed' ? 'text-green-600' : 'text-orange-500'}`}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Cột 3: Thông tin bệnh nhân */}
+                    {patient && (
+                        <div className="bg-white rounded-2xl shadow-lg p-6 transform transition-all duration-300 hover:shadow-xl border-l-4 border-rose-500">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                                <FaHeart className="h-5 w-5 mr-2 text-rose-600" />
+                                Patient Information
+                            </h2>
+                            {patientImage && (
+                                <div className="flex justify-center mb-6">
+                                    <img
+                                        src={patientImage}
+                                        alt="Patient Profile"
+                                        className="w-20 h-20 rounded-full object-cover ring-2 ring-rose-200"
+                                    />
+                                </div>
+                            )}
+                            <div className="space-y-3">
+                                <InfoItem
+                                    label="Name"
+                                    value={patient.FullName}
+                                    icon={<AiOutlineUser className="h-5 w-5 text-rose-500" />}
+                                />
+                                <InfoItem
+                                    label="Gender"
+                                    value={patient.Gender}
+                                    icon={<FaUserCircle className="h-5 w-5 text-rose-400" />}
+                                />
+                                <InfoItem
+                                    label="Contact"
+                                    value={patient.PhoneNumber}
+                                    icon={<FaPhone className="h-5 w-5 text-rose-500" />}
+                                />
+                                <InfoItem
+                                    label="Allergies"
+                                    value={patient.Allergies || 'None'}
+                                    icon={<GiMedicines className="h-5 w-5 text-green-500" />}
+                                />
+                                <InfoItem
+                                    label="Mental Disorders"
+                                    value={patient.PersonalityTraits || 'None'}
+                                    icon={<MdPsychology className="h-5 w-5 text-indigo-500" />}
+                                />
+                                <InfoItem
+                                    label="Physical Symptoms"
+                                    value={patient.MedicalHistoryId ? 'Available' : 'None'}
+                                    icon={<FaHeartbeat className="h-5 w-5 text-rose-500" />}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div >
     );
 };
 
 // Reusable InfoItem Component
 const InfoItem = ({ label, value, icon, className = '' }) => (
-    <div className="flex items-start space-x-2">
-        {icon && <span>{icon}</span>}
+    <div className="flex items-start space-x-3 group">
+        {icon && <span className="mt-1 text-gray-500 group-hover:text-gray-700 transition-colors">{icon}</span>}
         <div>
-            <p className="text-gray-600 text-sm font-medium">{label}:</p>
-            <p className={`font-medium text-gray-800 ${className}`}>{value}</p>
+            <p className="text-sm font-medium text-gray-500">{label}</p>
+            <p className={`text-base font-medium text-gray-900 ${className}`}>{value}</p>
         </div>
     </div>
 );
