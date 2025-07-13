@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { createClient } from "@supabase/supabase-js";
-import { FaUser, FaCamera, FaTrash } from 'react-icons/fa';
+import { FaUser, FaCamera, FaTrash } from "react-icons/fa";
 
 const ProfileDoctor = () => {
   const id = localStorage.getItem("profileId");
@@ -23,7 +23,7 @@ const ProfileDoctor = () => {
     Status: "",
   });
 
-  const VITE_API_PROFILE_URL = "http://localhost:3000/api";
+  const VITE_API_PROFILE_URL = import.meta.env.VITE_API;
   const VITE_SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
   const supabase = createClient(
     import.meta.env.VITE_SUPABASE_URL,
@@ -36,18 +36,26 @@ const ProfileDoctor = () => {
         setLoading(true);
 
         // Fetch ảnh đại diện
-        const avatarResponse = await axios.get(`${VITE_API_PROFILE_URL}/profile/${id}/image`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const avatarResponse = await axios.get(
+          `${VITE_API_PROFILE_URL}/profile/${id}/image`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setAvatarUrl(avatarResponse.data.data.publicUrl || null);
 
         // Fetch dữ liệu bác sĩ
-        const doctorResponse = await axios.get(`${VITE_API_PROFILE_URL}/doctor-profiles/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
+        const doctorResponse = await axios.get(
+          `${VITE_API_PROFILE_URL}/doctor-profiles/${id}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         const doctorProfile = doctorResponse.data;
         setFormData({
           FullName: doctorProfile.FullName || "",
@@ -65,19 +73,33 @@ const ProfileDoctor = () => {
         });
 
         // Fetch danh sách chuyên môn
-        const specialtiesResponse = await axios.get(`${VITE_API_PROFILE_URL}/specialties`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const specialtiesResponse = await axios.get(
+          `${VITE_API_PROFILE_URL}/specialties`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setSpecialtiesList(specialtiesResponse.data);
       } catch (err) {
         setError("Lỗi khi lấy dữ liệu. Vui lòng thử lại.");
         console.error("Lỗi fetch dữ liệu:", err);
         setSpecialtiesList([
-          { Id: "4064c495-80af-4f54-8bd2-151cebf029a6", Name: "Liệu pháp nghiện" },
+          {
+            Id: "4064c495-80af-4f54-8bd2-151cebf029a6",
+            Name: "Liệu pháp nghiện",
+          },
           { Id: "cac4f120-834f-41f8-859d-dd1de7883609", Name: "Tâm lý trẻ em" },
-          { Id: "8704cf2c-e7ec-4ece-a057-883653578ae6", Name: "Liệu pháp hành vi" },
+          {
+            Id: "8704cf2c-e7ec-4ece-a057-883653578ae6",
+            Name: "Liệu pháp hành vi",
+          },
           { Id: "ddf4b47a-65d1-451f-a297-41606caacfe2", Name: "Thần kinh học" },
-          { Id: "e09aa07d-6313-4e21-919c-f17f3497b6ff", Name: "Chuyên môn mới 3" },
+          {
+            Id: "e09aa07d-6313-4e21-919c-f17f3497b6ff",
+            Name: "Chuyên môn mới 3",
+          },
         ]);
       } finally {
         setLoading(false);
@@ -141,7 +163,9 @@ const ProfileDoctor = () => {
       const isUpdate = !!avatarUrl;
       const response = await axios({
         method: isUpdate ? "PUT" : "POST",
-        url: `${VITE_API_PROFILE_URL}/profile/${id}/${isUpdate ? "update" : "upload"}?token=${token}`,
+        url: `${VITE_API_PROFILE_URL}/profile/${id}/${
+          isUpdate ? "update" : "upload"
+        }?token=${token}`,
         data: formData,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -149,9 +173,13 @@ const ProfileDoctor = () => {
         },
       });
 
-      toast.success(`Ảnh đại diện đã được ${isUpdate ? "cập nhật" : "tải lên"} thành công!`);
+      toast.success(
+        `Ảnh đại diện đã được ${isUpdate ? "cập nhật" : "tải lên"} thành công!`
+      );
     } catch (err) {
-      toast.error(`Lỗi khi ${avatarUrl ? "cập nhật" : "tải lên"} ảnh đại diện!`);
+      toast.error(
+        `Lỗi khi ${avatarUrl ? "cập nhật" : "tải lên"} ảnh đại diện!`
+      );
       console.error("Lỗi xử lý ảnh:", err.response?.data || err.message || err);
     } finally {
       setAvatarLoading(false);
@@ -196,9 +224,13 @@ const ProfileDoctor = () => {
         specialties: formData.specialties.map((id) => ({ Id: id })),
       };
 
-      await axios.put(`${VITE_API_PROFILE_URL}/doctor-profiles/${id}`, updatedProfile, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await axios.put(
+        `${VITE_API_PROFILE_URL}/doctor-profiles/${id}`,
+        updatedProfile,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
 
       toast.success("Hồ sơ bác sĩ đã được cập nhật thành công!");
     } catch (err) {
@@ -217,8 +249,7 @@ const ProfileDoctor = () => {
       </div>
     );
 
-  if (error)
-    return <div className="text-center p-6 text-red-600">{error}</div>;
+  if (error) return <div className="text-center p-6 text-red-600">{error}</div>;
 
   return (
     <div className="max-w-7xl h-[94vh] mx-auto p-6">
@@ -262,9 +293,9 @@ const ProfileDoctor = () => {
                 />
               </div>
 
-
               <p className="mt-4 text-sm text-gray-500 font-medium">
-                Nhấn vào ảnh để {avatarUrl ? "thay đổi" : "tải lên"} ảnh đại diện
+                Nhấn vào ảnh để {avatarUrl ? "thay đổi" : "tải lên"} ảnh đại
+                diện
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Định dạng hỗ trợ: JPEG, PNG, GIF (tối đa 5MB)
@@ -276,7 +307,9 @@ const ProfileDoctor = () => {
             <h2 className="text-xl font-semibold mb-4">Thông tin cá nhân</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Họ và tên
+                </label>
                 <input
                   type="text"
                   name="FullName"
@@ -287,7 +320,9 @@ const ProfileDoctor = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Giới tính
+                </label>
                 <select
                   name="Gender"
                   value={formData.Gender}
@@ -338,7 +373,9 @@ const ProfileDoctor = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tiểu sử</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tiểu sử
+                </label>
                 <textarea
                   name="Bio"
                   value={formData.Bio}
@@ -365,7 +402,10 @@ const ProfileDoctor = () => {
                     onChange={handleSpecialtyChange}
                     className="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                   />
-                  <label htmlFor={`specialty-${specialty.Id}`} className="ml-2 text-sm text-gray-700">
+                  <label
+                    htmlFor={`specialty-${specialty.Id}`}
+                    className="ml-2 text-sm text-gray-700"
+                  >
                     {specialty.Name}
                   </label>
                 </div>
@@ -377,11 +417,17 @@ const ProfileDoctor = () => {
             <h2 className="text-xl font-semibold mb-4">Thông tin liên hệ</h2>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <span className="px-3 py-2 text-gray-600">{formData.contactInfo.Email}</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <span className="px-3 py-2 text-gray-600">
+                  {formData.contactInfo.Email}
+                </span>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Số điện thoại
+                </label>
                 <input
                   type="tel"
                   name="PhoneNumber"
@@ -392,7 +438,9 @@ const ProfileDoctor = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Địa chỉ
+                </label>
                 <textarea
                   name="Address"
                   value={formData.contactInfo.Address}

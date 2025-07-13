@@ -39,7 +39,7 @@ const VerifyDoctorEmail = () => {
         const userId = payload.sub;
 
         // Gọi API để verify doctor email
-        await axios.post("http://localhost:3000/api/verify-doctor-email", {
+        await axios.post(`${import.meta.env.VITE_API}/verify-doctor-email`, {
           userId,
         });
         setVerificationStatus("success");
@@ -84,7 +84,8 @@ const VerifyDoctorEmail = () => {
                     className="h-6 w-6 text-green-600"
                     fill="none"
                     stroke="currentColor"
-                    viewBox="0 0 24 24">
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -109,7 +110,8 @@ const VerifyDoctorEmail = () => {
                     className="h-6 w-6 text-red-600"
                     fill="none"
                     stroke="currentColor"
-                    viewBox="0 0 24 24">
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -121,7 +123,8 @@ const VerifyDoctorEmail = () => {
                 <p className="mt-4 text-lg text-red-600">{errorMessage}</p>
                 <button
                   onClick={() => navigate("/EMO")}
-                  className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                  className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                >
                   Quay lại trang đăng nhập
                 </button>
               </div>

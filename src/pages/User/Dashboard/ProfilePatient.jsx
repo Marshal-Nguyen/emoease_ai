@@ -2,7 +2,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
-import { FaUser, FaCamera, FaTrash } from 'react-icons/fa';
+import { FaUser, FaCamera, FaTrash } from "react-icons/fa";
 
 const EditProfileForm = () => {
   const profileId = localStorage.getItem("profileId") || "123"; // Lấy profileId từ localStorage, fallback là "123"
@@ -30,7 +30,7 @@ const EditProfileForm = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `http://localhost:3000/api/patient-profiles/${profileId}`,
+          `${import.meta.env.VITE_API}/patient-profiles/${profileId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -53,9 +53,14 @@ const EditProfileForm = () => {
         });
 
         // Fetch avatar
-        const avatarResponse = await axios.get(`http://localhost:3000/api/profile/${profileId}/image`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+        const avatarResponse = await axios.get(
+          `${import.meta.env.VITE_API}/profile/${profileId}/image`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setAvatarUrl(avatarResponse.data.data.publicUrl || null);
 
         setLoading(false);
@@ -96,7 +101,9 @@ const EditProfileForm = () => {
       const isUpdate = !!avatarUrl;
       const response = await axios({
         method: isUpdate ? "PUT" : "POST",
-        url: `http://localhost:3000/api/profile/${profileId}/${isUpdate ? "update" : "upload"}?token=${token}`,
+        url: `${import.meta.env.VITE_API}/profile/${profileId}/${
+          isUpdate ? "update" : "upload"
+        }?token=${token}`,
         data: formData,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -104,10 +111,17 @@ const EditProfileForm = () => {
         },
       });
 
-      toast.success(`Profile picture ${isUpdate ? "updated" : "uploaded"} successfully!`);
+      toast.success(
+        `Profile picture ${isUpdate ? "updated" : "uploaded"} successfully!`
+      );
     } catch (err) {
-      toast.error(`Error ${avatarUrl ? "updating" : "uploading"} profile picture!`);
-      console.error("Error updating avatar:", err.response?.data || err.message || err);
+      toast.error(
+        `Error ${avatarUrl ? "updating" : "uploading"} profile picture!`
+      );
+      console.error(
+        "Error updating avatar:",
+        err.response?.data || err.message || err
+      );
     } finally {
       setAvatarLoading(false);
     }
@@ -115,18 +129,25 @@ const EditProfileForm = () => {
 
   // Handle deleting avatar
   const handleAvatarDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete the profile picture?")) return;
+    if (!window.confirm("Are you sure you want to delete the profile picture?"))
+      return;
 
     setAvatarLoading(true);
     try {
-      await axios.delete(`http://localhost:3000/api/profile/${profileId}/delete`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      await axios.delete(
+        `${import.meta.env.VITE_API}/profile/${profileId}/delete`,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
       setAvatarUrl(null);
       toast.success("Profile picture deleted successfully!");
     } catch (err) {
       toast.error("Error deleting profile picture!");
-      console.error("Error deleting avatar:", err.response?.data || err.message);
+      console.error(
+        "Error deleting avatar:",
+        err.response?.data || err.message
+      );
     } finally {
       setAvatarLoading(false);
     }
@@ -156,7 +177,7 @@ const EditProfileForm = () => {
       };
 
       await axios.put(
-        `http://localhost:3000/api/patient-profiles/${profileId}`,
+        `${import.meta.env.VITE_API}/patient-profiles/${profileId}`,
         updatedProfile,
         {
           headers: {
@@ -274,9 +295,7 @@ const EditProfileForm = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email:
                 </label>
-                <p className="px-3 py-2 mt-1">
-                  {formData.Email}
-                </p>
+                <p className="px-3 py-2 mt-1">{formData.Email}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

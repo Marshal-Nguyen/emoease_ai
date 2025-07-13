@@ -38,7 +38,7 @@ const DoctorList = () => {
   // Refs for specialty scrolling
   const specialtyScrollRef = useRef(null);
   const YOUR_TOKEN = localStorage.getItem("token");
-  const API_PROFILE = "http://localhost:3000/api";
+  const API_PROFILE = import.meta.env.VITE_API;
   const fetchDoctors = async (params = {}) => {
     // Don't set loading true immediately to prevent flashing on quick responses
     const loadingTimeout = setTimeout(() => {
@@ -62,13 +62,16 @@ const DoctorList = () => {
         mergedParams.EndDate = formattedEndDate;
       }
 
-      const doctorsResponse = await axios.get(`${API_PROFILE}/doctor-profiles`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${YOUR_TOKEN}`,
-        },
-        params: mergedParams,
-      });
+      const doctorsResponse = await axios.get(
+        `${API_PROFILE}/doctor-profiles`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${YOUR_TOKEN}`,
+          },
+          params: mergedParams,
+        }
+      );
 
       setDoctors(doctorsResponse.data.data || []);
     } catch (error) {
@@ -174,12 +177,14 @@ const DoctorList = () => {
         <div
           ref={specialtyScrollRef}
           className="flex overflow-x-auto pb-2 hide-scrollbar"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           <div className="flex space-x-1 px-1">
             {specialties.map((spec, idx) => (
               <span
                 key={idx}
-                className="text-xs whitespace-nowrap bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full flex-shrink-0">
+                className="text-xs whitespace-nowrap bg-indigo-50 text-indigo-600 px-2 py-1 rounded-full flex-shrink-0"
+              >
                 {spec.Name}
               </span>
             ))}
@@ -191,13 +196,15 @@ const DoctorList = () => {
             <button
               onClick={() => scrollSpecialties("left")}
               className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Scroll left">
+              aria-label="Scroll left"
+            >
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
             <button
               onClick={() => scrollSpecialties("right")}
               className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Scroll right">
+              aria-label="Scroll right"
+            >
               <ChevronRight className="w-4 h-4 text-gray-600" />
             </button>
           </>
@@ -265,7 +272,8 @@ const DoctorList = () => {
         <div className="mt-auto">
           <button
             onClick={() => navigate(`/EMO/booking/${doctor.Id}`)}
-            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center">
+            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white py-3 rounded-lg font-medium transition duration-300 flex items-center justify-center"
+          >
             <Calendar className="w-4 h-4 mr-2" />
             Book now
           </button>
@@ -293,27 +301,32 @@ const DoctorList = () => {
         <div
           ref={filterScrollRef}
           className="flex overflow-x-auto py-1 hide-scrollbar"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           <div className="flex space-x-2 px-1">
             <button
               onClick={() => {
                 setSelectedSpecialty("");
                 fetchDoctors();
               }}
-              className={`px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 ${!selectedSpecialty
-                ? "bg-blue-100 text-blue-700"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}>
+              className={`px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 ${
+                !selectedSpecialty
+                  ? "bg-blue-100 text-blue-700"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
               Tất cả
             </button>
             {specialties.map((specialty) => (
               <button
                 key={specialty.id}
                 onClick={() => handleSpecialtySelect(specialty.Id)}
-                className={`px-3 py-1 rounded-full text-sm flex-shrink-0 ${selectedSpecialty === specialty.Id
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }`}>
+                className={`px-3 py-1 rounded-full text-sm flex-shrink-0 ${
+                  selectedSpecialty === specialty.Id
+                    ? "bg-blue-100 text-blue-700"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
                 {specialty.Name}
               </button>
             ))}
@@ -325,13 +338,15 @@ const DoctorList = () => {
             <button
               onClick={() => scrollFilter("left")}
               className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Scroll left">
+              aria-label="Scroll left"
+            >
               <ChevronLeft className="w-4 h-4 text-gray-600" />
             </button>
             <button
               onClick={() => scrollFilter("right")}
               className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Scroll right">
+              aria-label="Scroll right"
+            >
               <ChevronRight className="w-4 h-4 text-gray-600" />
             </button>
           </>
@@ -357,10 +372,12 @@ const DoctorList = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleFilterChange("rating")}
-              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${selectedFilter === "rating"
-                ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}>
+              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                selectedFilter === "rating"
+                  ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
               <div className="flex items-center gap-2">
                 <Star className="w-5 h-5" />
                 <span>Top Rated</span>
@@ -371,10 +388,12 @@ const DoctorList = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleFilterChange("specialties")}
-              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${selectedFilter === "specialties"
-                ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}>
+              className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                selectedFilter === "specialties"
+                  ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
               <div className="flex items-center gap-2">
                 <Award className="w-5 h-5" />
                 <span>Specialty</span>
@@ -416,7 +435,8 @@ const DoctorList = () => {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleDateTimeFilter}
-          className="w-[200px] bg-gradient-to-r from-violet-600 to-purple-600 text-white py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+          className="w-[200px] bg-gradient-to-r from-violet-600 to-purple-600 text-white py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+        >
           Apply Filters
         </motion.button>
       </div>
@@ -441,7 +461,8 @@ const DoctorList = () => {
       {[...Array(8)].map((_, index) => (
         <div
           key={index}
-          className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 animate-pulse">
+          className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 animate-pulse"
+        >
           <div className="relative">
             <div className="h-32 bg-gray-200"></div>
             <div className="absolute top-16 left-1/2 transform -translate-x-1/2">
@@ -482,7 +503,8 @@ const DoctorList = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12 px-4 bg-gradient-to-r from-[#4A2580] to-[#804ac2]  rounded-2xl py-15 flex flex-col justify-center items-center text-white">
+        className="text-center mb-12 px-4 bg-gradient-to-r from-[#4A2580] to-[#804ac2]  rounded-2xl py-15 flex flex-col justify-center items-center text-white"
+      >
         <h1 className="text-5xl font-extrabold text-white mb-4 leading-tight">
           Psychology Experts by Your Side
         </h1>
@@ -503,7 +525,8 @@ const DoctorList = () => {
             variants={staggerContainer}
             initial="initial"
             animate="animate"
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          >
             {doctors.map((doctor, index) => (
               <DoctorCard key={doctor.Id || index} doctor={doctor} />
             ))}

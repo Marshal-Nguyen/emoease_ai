@@ -88,7 +88,7 @@ const RegisterForm = () => {
 
     // Gửi thông tin bổ sung sang BE
     try {
-      await axios.post("http://localhost:3000/api/auth/signup/patient", {
+      await axios.post(`${import.meta.env.VITE_API}/auth/signup/patient`, {
         user_id: userId,
         full_name: fullName.trim(),
         gender,
@@ -111,7 +111,8 @@ const RegisterForm = () => {
       className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat"
       style={{
         backgroundImage: `linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.8)), url('/bg_HomeCenter.webp')`,
-      }}>
+      }}
+    >
       <div className="max-w-md w-full space-y-8 bg-white/90 backdrop-blur-sm p-10 rounded-xl shadow-lg">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -127,7 +128,8 @@ const RegisterForm = () => {
             <div>
               <label
                 htmlFor="email"
-                className="text-sm font-medium text-gray-700">
+                className="text-sm font-medium text-gray-700"
+              >
                 Email
               </label>
               <input
@@ -145,7 +147,8 @@ const RegisterForm = () => {
               <div>
                 <label
                   htmlFor="password"
-                  className="text-sm font-medium text-gray-700">
+                  className="text-sm font-medium text-gray-700"
+                >
                   Mật khẩu
                 </label>
                 <div className="relative">
@@ -160,7 +163,8 @@ const RegisterForm = () => {
                   <button
                     type="button"
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}>
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5 text-gray-400" />
                     ) : (
@@ -172,7 +176,8 @@ const RegisterForm = () => {
               <div>
                 <label
                   htmlFor="confirmPassword"
-                  className="text-sm font-medium text-gray-700">
+                  className="text-sm font-medium text-gray-700"
+                >
                   Xác nhận mật khẩu
                 </label>
                 <div className="relative">
@@ -187,9 +192,8 @@ const RegisterForm = () => {
                   <button
                     type="button"
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() =>
-                      setShowConfirmPassword(!showConfirmPassword)
-                    }>
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
                     {showConfirmPassword ? (
                       <EyeOff className="h-5 w-5 text-gray-400" />
                     ) : (
@@ -205,7 +209,8 @@ const RegisterForm = () => {
               <div>
                 <label
                   htmlFor="fullName"
-                  className="text-sm font-medium text-gray-700">
+                  className="text-sm font-medium text-gray-700"
+                >
                   Họ và tên
                 </label>
                 <input
@@ -219,7 +224,8 @@ const RegisterForm = () => {
               <div>
                 <label
                   htmlFor="phoneNumber"
-                  className="text-sm font-medium text-gray-700">
+                  className="text-sm font-medium text-gray-700"
+                >
                   Số điện thoại
                 </label>
                 <input
@@ -236,14 +242,16 @@ const RegisterForm = () => {
             <div>
               <label
                 htmlFor="gender"
-                className="text-sm font-medium text-gray-700">
+                className="text-sm font-medium text-gray-700"
+              >
                 Giới tính
               </label>
               <select
                 name="gender"
                 value={form.gender}
                 onChange={handleChange}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md">
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
+              >
                 <option value="">Chọn giới tính</option>
                 <option value="male">Nam</option>
                 <option value="female">Nữ</option>
@@ -258,25 +266,29 @@ const RegisterForm = () => {
               type="button"
               onClick={handleSignUp}
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-purple-300 disabled:cursor-not-allowed">
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-purple-300 disabled:cursor-not-allowed"
+            >
               {isLoading ? (
                 <span className="flex items-center">
                   <svg
                     className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
-                    viewBox="0 0 24 24">
+                    viewBox="0 0 24 24"
+                  >
                     <circle
                       className="opacity-25"
                       cx="12"
                       cy="12"
                       r="10"
                       stroke="currentColor"
-                      strokeWidth="4"></circle>
+                      strokeWidth="4"
+                    ></circle>
                     <path
                       className="opacity-75"
                       fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Đang xử lý...
                 </span>

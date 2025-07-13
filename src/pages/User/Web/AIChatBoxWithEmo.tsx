@@ -6,7 +6,7 @@ import MainLayout from "../../../components/Chat/MainLayout";
 import TypewriterMessage from "../../../components/Chat/TypewriterMessage";
 
 // API Base URL
-const BASE_URL = "http://localhost:3000/api";
+const BASE_URL = (import.meta as any).env.VITE_API;
 const TOKEN = localStorage.getItem("token"); // Thay bằng logic lấy token thực tế
 
 // Component hiển thị tin nhắn
@@ -34,7 +34,8 @@ const ChatMessages = ({ messages, isLoadingMessages }) => {
               exit={{ opacity: 0, y: -20 }}
               className={`flex gap-3 mb-4 ${
                 message.senderIsEmo ? "justify-start" : "justify-end"
-              }`}>
+              }`}
+            >
               {message.senderIsEmo && (
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8A2C8] to-[#6B728E] flex items-center justify-center flex-shrink-0 shadow-lg">
                   <img
@@ -51,7 +52,8 @@ const ChatMessages = ({ messages, isLoadingMessages }) => {
                     : "bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-300 text-gray-800 ml-auto shadow"
                 }`}
                 whileHover={{ scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300 }}>
+                transition={{ type: "spring", stiffness: 300 }}
+              >
                 {message.senderIsEmo &&
                 index === lastIndex &&
                 isLoadingMessages ? (
@@ -77,14 +79,16 @@ const ChatMessages = ({ messages, isLoadingMessages }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex gap-3 mb-4 justify-start">
+            className="flex gap-3 mb-4 justify-start"
+          >
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C8A2C8] to-[#6B728E] flex items-center justify-center flex-shrink-0 shadow-lg">
               <img src="/emo.webp" alt="Emo Avatar" className="rounded-full" />
             </div>
             <motion.div
               className="max-w-xs p-3 rounded-xl bg-white/90 text-gray-700 shadow flex items-center"
               animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.1, 1] }}
-              transition={{ repeat: Infinity, duration: 1.2 }}>
+              transition={{ repeat: Infinity, duration: 1.2 }}
+            >
               <span className="text-lg font-bold tracking-widest animate-pulse">
                 ...
               </span>
@@ -113,7 +117,8 @@ const ChatInput = ({ onSendMessage, disabled }) => {
       className="bg-white/80 backdrop-blur-xl shadow-2xl p-4 rounded-3xl border border-white/30 ring-1 ring-purple-100/40"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}>
+      transition={{ duration: 0.5, delay: 0.2 }}
+    >
       <form className="flex gap-3 items-center" onSubmit={handleSubmit}>
         <input
           type="text"
@@ -131,7 +136,8 @@ const ChatInput = ({ onSendMessage, disabled }) => {
           className="px-4 py-3 bg-gradient-to-tr from-[#C8A2C8] to-[#a78bfa] hover:brightness-110 text-white rounded-full shadow-md disabled:opacity-50 transition-all"
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
-          disabled={disabled || !message.trim()}>
+          disabled={disabled || !message.trim()}
+        >
           <Send className="w-5 h-5" />
         </motion.button>
       </form>
@@ -370,7 +376,8 @@ const AIChatBoxWithEmo = () => {
               className="relative flex flex-col items-center justify-center text-center px-6 py-20 md:py-28 z-10"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}>
+              transition={{ duration: 0.6 }}
+            >
               {/* Glow & Blur Layer */}
               <div className="absolute inset-0 z-0 bg-gradient-to-br from-[#EBDCF1]/40 to-[#FDF2F8]/30 backdrop-blur-3xl rounded-[2rem] shadow-2xl" />
 
@@ -382,7 +389,8 @@ const AIChatBoxWithEmo = () => {
                   duration: 3,
                   repeat: Infinity,
                   ease: "easeInOut",
-                }}>
+                }}
+              >
                 🧸
               </motion.div>
 
@@ -407,7 +415,8 @@ const AIChatBoxWithEmo = () => {
                 onClick={() => setShowNewSessionModal(true)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="mt-8 bg-gradient-to-r from-[#c8a2c8] to-[#6b728e] text-white px-7 py-3 rounded-full font-semibold shadow-xl relative z-10">
+                className="mt-8 bg-gradient-to-r from-[#c8a2c8] to-[#6b728e] text-white px-7 py-3 rounded-full font-semibold shadow-xl relative z-10"
+              >
                 🌟 Bắt đầu hành trình cảm xúc
               </motion.button>
 
@@ -451,7 +460,8 @@ const AIChatBoxWithEmo = () => {
                   createSessionWithCustomName(newSessionName.trim());
                   setShowNewSessionModal(false);
                   setNewSessionName("");
-                }}>
+                }}
+              >
                 Tạo mới
               </button>
               <button
@@ -459,7 +469,8 @@ const AIChatBoxWithEmo = () => {
                 onClick={() => {
                   setShowNewSessionModal(false);
                   setNewSessionName("");
-                }}>
+                }}
+              >
                 Hủy
               </button>
             </div>

@@ -52,9 +52,9 @@ const Chat = () => {
     const fetchChatUsers = async () => {
       try {
         const res = await fetch(
-          `http://localhost:3000/api/chat-users/${userRole}/${localStorage.getItem(
-            "profileId"
-          )}`
+          `${
+            import.meta.env.VITE_API
+          }/chat-users/${userRole}/${localStorage.getItem("profileId")}`
         );
         const data = await res.json();
         setUsers(data);
