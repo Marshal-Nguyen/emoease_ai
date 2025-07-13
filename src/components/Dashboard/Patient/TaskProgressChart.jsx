@@ -17,7 +17,7 @@ const TaskProgressChart = () => {
 
   const profileId = useSelector((state) => state.auth.profileId);
   // const API_SCHEDULING = import.meta.env.VITE_API_SCHEDULE_URL;
-  const API_SCHEDULING = "http://localhost:3000/api";
+  const API_SCHEDULING = import.meta.env.VITE_API;
   // Fetch data from API
 
   useEffect(() => {

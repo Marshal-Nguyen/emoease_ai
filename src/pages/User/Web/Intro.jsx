@@ -116,7 +116,7 @@ const Intro = () => {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await axios.get(
-        `http://localhost:3000/api/patient-profiles/${profileId}`,
+        `${import.meta.env.VITE_API}/patient-profiles/${profileId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -211,15 +211,18 @@ const Intro = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`http://localhost:3000/api/daily-emotions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API}/daily-emotions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeoutId);
 
@@ -243,7 +246,7 @@ const Intro = () => {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(
-        `http://localhost:3000/api/habits-lifestyle`,
+        `${import.meta.env.VITE_API}/habits-lifestyle`,
         {
           method: "POST",
           headers: {
@@ -292,7 +295,7 @@ const Intro = () => {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(
-        `http://localhost:3000/api/habits-improvement`,
+        `${import.meta.env.VITE_API}/habits-improvement`,
         {
           method: "POST",
           headers: {
@@ -340,7 +343,7 @@ const Intro = () => {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(
-        `http://localhost:3000/api/habits-entertainment`,
+        `${import.meta.env.VITE_API}/habits-entertainment`,
         {
           method: "POST",
           headers: {
@@ -384,7 +387,7 @@ const Intro = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`http://localhost:3000/api/habits-food`, {
+      const response = await fetch(`${import.meta.env.VITE_API}/habits-food`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -425,7 +428,7 @@ const Intro = () => {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(
-        `http://localhost:3000/api/habits-physical`,
+        `${import.meta.env.VITE_API}/habits-physical`,
         {
           method: "POST",
           headers: {
@@ -473,7 +476,7 @@ const Intro = () => {
       const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       const response = await fetch(
-        `http://localhost:3000/api/habits-therapeutic`,
+        `${import.meta.env.VITE_API}/habits-therapeutic`,
         {
           method: "POST",
           headers: {
@@ -854,7 +857,8 @@ const Intro = () => {
               <p className="text-white/80 mb-4">{error}</p>
               <button
                 onClick={() => setSubmitError(null)}
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all">
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all"
+              >
                 Thử lại
               </button>
             </div>
@@ -903,7 +907,8 @@ const Intro = () => {
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-3 px-3 py-1.5 bg-white text-red-600 rounded-lg hover:bg-gray-100 text-sm">
+            className="mt-3 px-3 py-1.5 bg-white text-red-600 rounded-lg hover:bg-gray-100 text-sm"
+          >
             Thử lại
           </button>
         </div>
@@ -919,7 +924,8 @@ const Intro = () => {
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-      }}>
+      }}
+    >
       <ProgressIndicator currentStep={currentStep} totalSteps={15} />
       {!showWelcomePopup && (
         <MuteButton isMuted={muted} onToggle={toggleMute} />
@@ -931,7 +937,8 @@ const Intro = () => {
           animate={{ opacity: 1, x: 0 }}
           className="fixed bottom-4 left-4 bg-white/20 text-white px-4 py-2 rounded-lg flex items-center gap-2 z-50"
           whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}>
+          whileTap={{ scale: 0.95 }}
+        >
           <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path
               fillRule="evenodd"
@@ -953,7 +960,8 @@ const Intro = () => {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="fixed inset-0 flex items-center justify-center z-50">
+            className="fixed inset-0 flex items-center justify-center z-50"
+          >
             <WelcomePopup onClose={closeWelcomeAndStart} />
           </motion.div>
         )}
@@ -964,7 +972,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <MoodQuestion
               ref={questionRef}
               selectedMoods={selectedMoods}
@@ -982,7 +991,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <SleepQuestion
               ref={question2Ref}
               currentQuestion="availableTimePerDay"
@@ -1002,7 +1012,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <SleepQuestion
               ref={question3Ref}
               currentQuestion="sleepHours"
@@ -1022,7 +1033,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <SleepQuestion
               ref={question4Ref}
               currentQuestion="exerciseFrequency"
@@ -1045,7 +1057,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <ImprovementGoalQuestion
               ref={question5Ref}
               selectedGoal={formData.improvementGoal}
@@ -1065,7 +1078,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <EntertainmentQuestion
               ref={question6Ref}
               selectedActivities={formData.entertainmentActivities}
@@ -1088,7 +1102,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <FavoriteFoodQuestion
               ref={question7Ref}
               selectedFoods={formData.foodActivities}
@@ -1112,7 +1127,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <PhysicalActivityQuestion
               ref={question8Ref}
               selectedActivities={formData.physicalActivities}
@@ -1136,7 +1152,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <TherapeuticActivityQuestion
               ref={question9Ref}
               selectedActivities={formData.therapeuticActivities}
@@ -1160,7 +1177,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <IndustryQuestion
               ref={question10Ref}
               selectedIndustry={formData.industry}
@@ -1181,7 +1199,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <SleepQuestion
               ref={question11Ref}
               currentQuestion="jobId"
@@ -1205,7 +1224,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <PersonalityQuestion
               ref={question12Ref}
               selectedPersonality={formData.personalityTraits}
@@ -1224,7 +1244,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <AllergiesQuestion
               ref={question13Ref}
               allergies={formData.allergies}
@@ -1243,7 +1264,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <BirthDateQuestion
               ref={question13Ref}
               birthDate={formData.birthDate}
@@ -1262,7 +1284,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <AddressQuestion
               ref={thankYouRef}
               address={formData.address}
@@ -1284,7 +1307,8 @@ const Intro = () => {
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}>
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+          >
             <ThankYouScreen ref={thankYouRef} />
           </motion.div>
         )}
@@ -1303,13 +1327,15 @@ const MuteButton = ({ isMuted, onToggle }) => {
   return (
     <button
       onClick={onToggle}
-      className="fixed top-4 right-4 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all">
+      className="fixed top-4 right-4 z-20 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all"
+    >
       {isMuted ? (
         <svg
           className="h-6 w-6"
           fill="none"
           viewBox="0 0 24 24"
-          stroke="currentColor">
+          stroke="currentColor"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -1329,7 +1355,8 @@ const MuteButton = ({ isMuted, onToggle }) => {
           className="h-6 w-6"
           fill="none"
           viewBox="0 0 24 24"
-          stroke="currentColor">
+          stroke="currentColor"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

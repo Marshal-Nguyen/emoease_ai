@@ -28,7 +28,7 @@ const OAuthCallback = () => {
 
         // Gửi access_token lên backend để xác thực
         const res = await axios.post(
-          "http://localhost:3000/api/auth/google/callback",
+          `${import.meta.env.VITE_API}/auth/google/callback`,
           { access_token },
           {
             headers: {
@@ -59,7 +59,7 @@ const OAuthCallback = () => {
         // --- Thêm logic kiểm tra IsProfileCompleted ---
         try {
           const patientRes = await axios.get(
-            `http://localhost:3000/api/patient-profiles/${profileId}`,
+            `${import.meta.env.VITE_API}/patient-profiles/${profileId}`,
             {
               headers: {
                 "Content-Type": "application/json",

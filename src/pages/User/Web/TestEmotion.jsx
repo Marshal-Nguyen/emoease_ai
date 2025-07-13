@@ -117,11 +117,13 @@ const ScoreCard = ({ type, score, compact }) => {
         compact ? "p-3" : "p-5"
       } rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-l-8 ${
         borderColorMap[type] || "border-indigo-200"
-      } flex flex-col items-center justify-center`}>
+      } flex flex-col items-center justify-center`}
+    >
       <h3
         className={`font-semibold text-gray-800 mb-1 flex items-center capitalize ${
           compact ? "text-base" : "text-lg"
-        }`}>
+        }`}
+      >
         {/* Đã xóa icon */}
         {type}
       </h3>
@@ -133,7 +135,8 @@ const ScoreCard = ({ type, score, compact }) => {
         className={`mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${getScoreColor(
           type,
           score
-        ).replace("bg-", "bg-opacity-20 text-")}`}>
+        ).replace("bg-", "bg-opacity-20 text-")}`}
+      >
         {getScoreLevel(type, score)}
       </span>
     </motion.div>
@@ -146,7 +149,8 @@ const RecommendationSection = ({ recommendation }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-5 rounded-2xl shadow-lg border-l-4 border-amber-500">
+        className="bg-white p-5 rounded-2xl shadow-lg border-l-4 border-amber-500"
+      >
         <div className="flex items-center mb-3">
           <Lottie
             animationData={alertIcon}
@@ -175,7 +179,8 @@ const RecommendationSection = ({ recommendation }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-5 rounded-2xl shadow-lg border-l-4 border-purple-500">
+        className="bg-white p-5 rounded-2xl shadow-lg border-l-4 border-purple-500"
+      >
         <ReactMarkdown
           children={recommendation.raw}
           components={{
@@ -223,7 +228,8 @@ const RecommendationSection = ({ recommendation }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white p-5 rounded-2xl shadow-lg border-l-4 border-amber-500">
+      className="bg-white p-5 rounded-2xl shadow-lg border-l-4 border-amber-500"
+    >
       <p className="text-sm text-gray-600">
         Không có khuyến nghị cho kết quả này.
       </p>
@@ -236,17 +242,20 @@ const IncompleteAssessment = ({ onClose }) => (
     initial={{ opacity: 0, scale: 0.95 }}
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.95 }}
-    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40"
+  >
     <motion.div
       initial={{ y: 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 40, opacity: 0 }}
-      className="bg-gradient-to-br from-[#f0f9ff] to-[#fdf4ff] rounded-3xl p-8 md:p-12 shadow-2xl max-w-xl w-full flex flex-col items-center relative space-y-6">
+      className="bg-gradient-to-br from-[#f0f9ff] to-[#fdf4ff] rounded-3xl p-8 md:p-12 shadow-2xl max-w-xl w-full flex flex-col items-center relative space-y-6"
+    >
       {/* Nút đóng */}
       <button
         className="absolute top-4 right-4 text-gray-400 hover:text-purple-600 text-2xl font-bold"
         onClick={onClose}
-        aria-label="Đóng">
+        aria-label="Đóng"
+      >
         &times;
       </button>
 
@@ -254,7 +263,8 @@ const IncompleteAssessment = ({ onClose }) => (
       <motion.div
         animate={{ rotate: [0, 5, -5, 0] }}
         transition={{ duration: 2, repeat: Infinity }}
-        className="text-4xl mb-2 select-none">
+        className="text-4xl mb-2 select-none"
+      >
         📝
       </motion.div>
 
@@ -317,11 +327,13 @@ const RecommendationModal = ({ open, onClose, recommendation }) => {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-white max-w-2xl w-full rounded-2xl shadow-2xl p-6 md:p-10 relative overflow-y-auto max-h-[90vh]">
+        className="bg-white max-w-2xl w-full rounded-2xl shadow-2xl p-6 md:p-10 relative overflow-y-auto max-h-[90vh]"
+      >
         <button
           onClick={onClose}
           className="absolute hover:cursor-pointer top-3 right-3 text-gray-400 hover:text-purple-600 text-2xl font-bold"
-          aria-label="Đóng">
+          aria-label="Đóng"
+        >
           &times;
         </button>
         <h2 className="text-2xl font-bold text-purple-700 mb-4 text-center">
@@ -381,7 +393,9 @@ const TestEmotion = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `http://localhost:3000/api/tests/${testId}/questions?pageIndex=1&pageSize=21`,
+          `${
+            import.meta.env.VITE_API
+          }/tests/${testId}/questions?pageIndex=1&pageSize=21`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -441,7 +455,7 @@ const TestEmotion = () => {
     const payload = { patientId, testId, selectedOptionIds };
     try {
       const response = await fetch(
-        `http://localhost:3000/api/tests/test-results`,
+        `${import.meta.env.VITE_API}/tests/test-results`,
         {
           method: "POST",
           headers: {
@@ -566,12 +580,14 @@ const TestEmotion = () => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className="bg-white p-4 md:p-8 rounded-2xl shadow-lg min-h-[340px] flex flex-col justify-between">
+                  className="bg-white p-4 md:p-8 rounded-2xl shadow-lg min-h-[340px] flex flex-col justify-between"
+                >
                   <motion.p
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.4 }}
-                    className="text-lg md:text-xl font-semibold text-gray-800 mb-4 md:mb-8 text-center italic">
+                    className="text-lg md:text-xl font-semibold text-gray-800 mb-4 md:mb-8 text-center italic"
+                  >
                     Câu {currentQuestionIndex + 1}/{totalQuestions}:{" "}
                     {currentQuestion.Content}
                   </motion.p>
@@ -579,7 +595,8 @@ const TestEmotion = () => {
                     className="flex flex-col w-full space-y-3 md:space-y-4"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ staggerChildren: 0.1, delayChildren: 0.3 }}>
+                    transition={{ staggerChildren: 0.1, delayChildren: 0.3 }}
+                  >
                     {currentQuestion.options.map((option) => (
                       <motion.button
                         key={option.id}
@@ -594,7 +611,8 @@ const TestEmotion = () => {
                                 textColorMap[option.Content]
                               } shadow-md`
                             : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                        }`}>
+                        }`}
+                      >
                         {option.Content}
                       </motion.button>
                     ))}
@@ -621,13 +639,15 @@ const TestEmotion = () => {
       answers[currentQuestionIndex]
         ? "bg-gradient-to-r from-emerald-500 to-indigo-500 text-white shadow-lg hover:shadow-xl"
         : "bg-gray-300 text-gray-500 cursor-not-allowed"
-    }`}>
+    }`}
+                  >
                     <span>Nộp bài</span>
                     <svg
                       className="w-5 h-5"
                       fill="none"
                       stroke="currentColor"
-                      viewBox="0 0 24 24">
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -675,7 +695,8 @@ const TestEmotion = () => {
                             testInfo.severityLevel === "Severe"
                               ? "bg-red-100 text-red-700"
                               : "bg-green-100 text-green-700"
-                          }`}>
+                          }`}
+                        >
                           {testInfo.severityLevel}
                         </span>
                       </li>
@@ -702,20 +723,23 @@ const TestEmotion = () => {
                     <div className="flex flex-col w-64 p-2 rounded-3xl gap-2 bg-white shadow-inner border border-indigo-100">
                       <a
                         onClick={() => setShowRecommendation(true)}
-                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-2 rounded-xl text-center font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-2 rounded-xl text-center font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                      >
                         📈 Xem báo cáo chi tiết
                       </a>
 
                       <a
                         onClick={handleTestAgain}
-                        className="bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white px-6 py-2 rounded-xl text-center font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105">
+                        className="bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white px-6 py-2 rounded-xl text-center font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105"
+                      >
                         <span className="flex items-center justify-center gap-2">
                           Thử lại
                           <svg
                             viewBox="0 0 24 24"
                             stroke="currentColor"
                             fill="none"
-                            className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1">
+                            className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
+                          >
                             <path
                               d="M13 7l5 5m0 0l-5 5m5-5H6"
                               strokeWidth="2"

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { toast } from "react-toastify"
+import { toast } from "react-toastify";
 import {
   CalendarIcon,
   Clock,
@@ -28,7 +28,7 @@ export default function DoctorScheduleViewer({ doctorId }) {
 
   const [isBusyLoading, setIsBusyLoading] = useState(false);
   const [busyMessage, setBusyMessage] = useState({ type: "", text: "" });
-  const VITE_API_SCHEDULE_URL = "http://localhost:3000/api";
+  const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API;
   const daysOfWeek = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
   // State cho form tạo lịch
@@ -119,10 +119,14 @@ export default function DoctorScheduleViewer({ doctorId }) {
       );
       const { timeSlots, message } = response.data;
       // Chuyển đổi dữ liệu từ API về định dạng frontend
-      const formattedSlots = timeSlots.map(slot => ({
+      const formattedSlots = timeSlots.map((slot) => ({
         startTime: slot.startTime,
         endTime: slot.endTime,
-        status: slot.status ? (slot.occupiedInfo ? "Booked" : "Available") : "Unavailable",
+        status: slot.status
+          ? slot.occupiedInfo
+            ? "Booked"
+            : "Available"
+          : "Unavailable",
       }));
       setScheduledSlots(formattedSlots || []);
       setUpdateMessage({ type: "", text: message });
@@ -157,7 +161,9 @@ export default function DoctorScheduleViewer({ doctorId }) {
     setBusyMessage({ type: "", text: "" });
 
     try {
-      const formattedDate = selectedDate.toLocaleDateString("en-CA").split("T")[0]; // Format: YYYY-MM-DD
+      const formattedDate = selectedDate
+        .toLocaleDateString("en-CA")
+        .split("T")[0]; // Format: YYYY-MM-DD
       const response = await axios.put(
         `${VITE_API_SCHEDULE_URL}/doctors/${doctorId}/${formattedDate}`,
         {
@@ -218,7 +224,9 @@ export default function DoctorScheduleViewer({ doctorId }) {
     setBusyMessage({ type: "", text: "" });
 
     try {
-      const formattedDate = selectedDate.toLocaleDateString("en-CA").split("T")[0]; // Format: YYYY-MM-DD
+      const formattedDate = selectedDate
+        .toLocaleDateString("en-CA")
+        .split("T")[0]; // Format: YYYY-MM-DD
       const response = await axios.put(
         `${VITE_API_SCHEDULE_URL}/doctors/${doctorId}/${formattedDate}`,
         {
@@ -259,7 +267,8 @@ export default function DoctorScheduleViewer({ doctorId }) {
 
   // Xử lý khi chọn slot (không cần thiết nữa vì backend đã xử lý trạng thái)
   const handleSlotSelection = (slot) => {
-    if (slot.status !== "Available" || !isDateEligibleForUpdate(selectedDate)) return;
+    if (slot.status !== "Available" || !isDateEligibleForUpdate(selectedDate))
+      return;
     setUpdateMessage({
       type: "warning",
       text: "Slot selection is disabled. Use the backend to manage availability.",
@@ -338,7 +347,8 @@ export default function DoctorScheduleViewer({ doctorId }) {
       setCreateScheduleMessage({
         type: "error",
         text:
-          error.response?.data?.message || "Đã xảy ra lỗi khi tạo lịch làm việc.",
+          error.response?.data?.message ||
+          "Đã xảy ra lỗi khi tạo lịch làm việc.",
       });
     } finally {
       setIsCreatingSchedule(false);
@@ -363,14 +373,19 @@ export default function DoctorScheduleViewer({ doctorId }) {
           onClick={() => setIsModalOpen(true)}
           className="bg-white text-indigo-600  px-4 py-2 rounded-full font-medium flex items-center gap-2 hover:bg-indigo-100 transition duration-200"
         >
-          <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+          <svg
+            className="w-5 h-5 text-green-600"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+            />
           </svg>
           Create Schedule
         </button>
       </div>
-
-
 
       {/* Calendar */}
       <div className="p-4 bg-white overflow-y-auto">
@@ -378,7 +393,8 @@ export default function DoctorScheduleViewer({ doctorId }) {
         <div className="flex justify-between items-center mb-4">
           <button
             className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 transition-colors duration-200"
-            onClick={() => changeMonth(-1)}>
+            onClick={() => changeMonth(-1)}
+          >
             <ArrowLeft size={18} className="text-purple-600" />
           </button>
           <h4 className="font-medium text-lg text-purple-800">
@@ -386,7 +402,8 @@ export default function DoctorScheduleViewer({ doctorId }) {
           </h4>
           <button
             className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 transition-colors duration-200"
-            onClick={() => changeMonth(1)}>
+            onClick={() => changeMonth(1)}
+          >
             <ArrowLeft
               size={18}
               className="text-purple-600 transform rotate-180"
@@ -399,7 +416,8 @@ export default function DoctorScheduleViewer({ doctorId }) {
           {daysOfWeek.map((day, idx) => (
             <span
               key={idx}
-              className="text-center font-medium text-purple-800 py-2">
+              className="text-center font-medium text-purple-800 py-2"
+            >
               {day}
             </span>
           ))}
@@ -434,19 +452,23 @@ export default function DoctorScheduleViewer({ doctorId }) {
                 className={`flex justify-center items-center h-10 rounded-full
                   cursor-pointer transition-colors duration-200
                   ${isEligible ? "hover:bg-purple-100" : "opacity-70"}
-                  ${isSelectedDate ? "bg-purple-600 text-white font-medium" : ""
+                  ${
+                    isSelectedDate ? "bg-purple-600 text-white font-medium" : ""
                   }
-                  ${isTodayDate && !isSelectedDate
-                    ? "border border-purple-500 font-medium"
-                    : ""
+                  ${
+                    isTodayDate && !isSelectedDate
+                      ? "border border-purple-500 font-medium"
+                      : ""
                   }
-                  ${currentDate < todayDate && !isSelectedDate
-                    ? "text-gray-400 cursor-not-allowed"
-                    : "hover:bg-purple-100"
+                  ${
+                    currentDate < todayDate && !isSelectedDate
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "hover:bg-purple-100"
                   }
                   
                 `}
-                onClick={() => handleDateClick(day)}>
+                onClick={() => handleDateClick(day)}
+              >
                 {day}
               </div>
             );
@@ -470,14 +492,16 @@ export default function DoctorScheduleViewer({ doctorId }) {
                 <div
                   key={i}
                   className={`p-3 border rounded-lg flex justify-between items-center
-                    ${slot.status === "Unavailable"
-                      ? "bg-red-50 border-red-200"
-                      : slot.status === "Booked"
+                    ${
+                      slot.status === "Unavailable"
+                        ? "bg-red-50 border-red-200"
+                        : slot.status === "Booked"
                         ? "bg-blue-50 border-blue-200"
                         : "bg-green-50 border-green-200"
                     }
                   `}
-                  onClick={() => handleSlotSelection(slot)}>
+                  onClick={() => handleSlotSelection(slot)}
+                >
                   <div className="flex items-center">
                     <Clock size={16} className="mr-2 text-gray-600" />
                     <span className="font-medium">
@@ -486,13 +510,15 @@ export default function DoctorScheduleViewer({ doctorId }) {
                   </div>
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium
-                      ${slot.status === "Unavailable"
-                        ? "bg-red-100 text-red-800"
-                        : slot.status === "Booked"
+                      ${
+                        slot.status === "Unavailable"
+                          ? "bg-red-100 text-red-800"
+                          : slot.status === "Booked"
                           ? "bg-blue-100 text-blue-800"
                           : "bg-green-100 text-green-800"
                       }
-                    `}>
+                    `}
+                  >
                     {slot.status}
                   </span>
                 </div>
@@ -514,7 +540,8 @@ export default function DoctorScheduleViewer({ doctorId }) {
             <button
               className="w-full py-2 px-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
               onClick={markDoctorBusy}
-              disabled={isBusyLoading}>
+              disabled={isBusyLoading}
+            >
               {isBusyLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white mr-2"></div>
@@ -530,29 +557,28 @@ export default function DoctorScheduleViewer({ doctorId }) {
           </div>
         )}
         {/* Nút đặt ngày bận và ngày làm việc */}
-        {isDateEligibleForUpdate(selectedDate) && scheduledSlots.length <= 0 && (
-          <div className="mt-4 ">
-
-            <button
-              className="w-full py-2 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
-              onClick={markDoctorAvailable}
-              disabled={isBusyLoading}>
-              {isBusyLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white mr-2"></div>
-                  Marking as Available...
-                </>
-              ) : (
-                <>
-                  <CheckCircle size={18} className="mr-2" />
-                  Mark {selectedDate.toLocaleDateString()} as Available
-                </>
-              )}
-            </button>
-          </div>
-        )}
-
-
+        {isDateEligibleForUpdate(selectedDate) &&
+          scheduledSlots.length <= 0 && (
+            <div className="mt-4 ">
+              <button
+                className="w-full py-2 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+                onClick={markDoctorAvailable}
+                disabled={isBusyLoading}
+              >
+                {isBusyLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white mr-2"></div>
+                    Marking as Available...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={18} className="mr-2" />
+                    Mark {selectedDate.toLocaleDateString()} as Available
+                  </>
+                )}
+              </button>
+            </div>
+          )}
 
         {/* Thống kê */}
         <div className="mt-6 bg-purple-50 rounded-lg p-4 space-y-3">
@@ -568,14 +594,20 @@ export default function DoctorScheduleViewer({ doctorId }) {
           <div className="flex justify-between items-center">
             <span className="text-gray-700">Available slots:</span>
             <span className="font-bold text-green-600">
-              {scheduledSlots.filter((slot) => slot.status === "Available").length}
+              {
+                scheduledSlots.filter((slot) => slot.status === "Available")
+                  .length
+              }
             </span>
           </div>
 
           <div className="flex justify-between items-center">
             <span className="text-gray-700">Unavailable slots:</span>
             <span className="font-bold text-red-600">
-              {scheduledSlots.filter((slot) => slot.status === "Unavailable").length}
+              {
+                scheduledSlots.filter((slot) => slot.status === "Unavailable")
+                  .length
+              }
             </span>
           </div>
 
@@ -593,19 +625,26 @@ export default function DoctorScheduleViewer({ doctorId }) {
           <div className="bg-white bg-opacity-95 rounded-xl p-8 w-full max-w-lg shadow-2xl transform transition-all duration-300 scale-100 hover:scale-105">
             <div className="flex justify-between items-center mb-6">
               <div className="bg-gradient-to-br from-[#8047db] to-[#c2a6ee] text-white p-4 rounded-lg flex items-center space-x-2">
-                <h4 className="text-xl font-bold flex items-center">Create New Schedule</h4>
+                <h4 className="text-xl font-bold flex items-center">
+                  Create New Schedule
+                </h4>
               </div>
 
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
               >
-                <XCircle size={24} className="hover:scale-110 transition-transform duration-200" />
+                <XCircle
+                  size={24}
+                  className="hover:scale-110 transition-transform duration-200"
+                />
               </button>
             </div>
             <div className="flex flex-col gap-6">
               <div>
-                <label className="text-sm font-medium text-gray-700">Days of Week:</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Days of Week:
+                </label>
                 <div className="flex gap-3 mt-2 flex-wrap">
                   {daysOfWeek.map((day, index) => (
                     <label key={index} className="flex items-center space-x-2">
@@ -628,11 +667,16 @@ export default function DoctorScheduleViewer({ doctorId }) {
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Month:</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Month:
+                </label>
                 <select
                   value={scheduleForm.month}
                   onChange={(e) =>
-                    setScheduleForm({ ...scheduleForm, month: parseInt(e.target.value) })
+                    setScheduleForm({
+                      ...scheduleForm,
+                      month: parseInt(e.target.value),
+                    })
                   }
                   className="mt-2 p-2 rounded-lg text-gray-800 border border-gray-300 w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                 >
@@ -644,11 +688,12 @@ export default function DoctorScheduleViewer({ doctorId }) {
                         scheduleForm.year === today.getFullYear() &&
                         month < today.getMonth() + 1
                       }
-                      className={`${scheduleForm.year === today.getFullYear() &&
+                      className={`${
+                        scheduleForm.year === today.getFullYear() &&
                         month < today.getMonth() + 1
-                        ? "text-gray-400"
-                        : "text-gray-800"
-                        } bg-white hover:bg-indigo-50 transition-colors duration-200`}
+                          ? "text-gray-400"
+                          : "text-gray-800"
+                      } bg-white hover:bg-indigo-50 transition-colors duration-200`}
                     >
                       Month {month}
                     </option>
@@ -656,15 +701,23 @@ export default function DoctorScheduleViewer({ doctorId }) {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Year:</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Year:
+                </label>
                 <select
                   value={scheduleForm.year}
                   onChange={(e) =>
-                    setScheduleForm({ ...scheduleForm, year: parseInt(e.target.value) })
+                    setScheduleForm({
+                      ...scheduleForm,
+                      year: parseInt(e.target.value),
+                    })
                   }
                   className="mt-2 p-2 rounded-lg text-gray-800 border border-gray-300 w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                 >
-                  {Array.from({ length: 5 }, (_, i) => today.getFullYear() + i).map((year) => (
+                  {Array.from(
+                    { length: 5 },
+                    (_, i) => today.getFullYear() + i
+                  ).map((year) => (
                     <option
                       key={year}
                       value={year}
@@ -678,10 +731,11 @@ export default function DoctorScheduleViewer({ doctorId }) {
               <button
                 onClick={createSchedule}
                 disabled={isCreatingSchedule}
-                className={`mt-6 p-3 rounded-lg font-medium text-white flex items-center justify-center w-full transition-all duration-200 ${isCreatingSchedule
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700 active:scale-95"
-                  }`}
+                className={`mt-6 p-3 rounded-lg font-medium text-white flex items-center justify-center w-full transition-all duration-200 ${
+                  isCreatingSchedule
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-indigo-600 hover:bg-indigo-700 active:scale-95"
+                }`}
               >
                 {isCreatingSchedule ? (
                   <span>Creating...</span>
@@ -692,7 +746,6 @@ export default function DoctorScheduleViewer({ doctorId }) {
                   </>
                 )}
               </button>
-
             </div>
           </div>
         </div>

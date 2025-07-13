@@ -22,7 +22,9 @@ const PaymentCallback = () => {
 
       try {
         const { data } = await axios.get(
-          `http://localhost:3000/api/payment-zalo/check-payment-status/${tranID}`
+          `${
+            import.meta.env.VITE_API
+          }/payment-zalo/check-payment-status/${tranID}`
         );
 
         if (data.success && data.status === "Success") {

@@ -41,8 +41,8 @@ export default function Booking() {
 
   const daysOfWeek = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
   const profileId = useSelector((state) => state.auth.profileId);
-  const API_SCHEDULING_SERVICE = "http://localhost:3000/api";
-  const API_PROFILE_SERVICE = "http://localhost:3000/api";
+  const API_SCHEDULING_SERVICE = import.meta.env.VITE_API;
+  const API_PROFILE_SERVICE = import.meta.env.VITE_API;
 
   // Hàm lấy số ngày trong tháng (cải tiến)
   const getDaysInMonth = (year, month) => {

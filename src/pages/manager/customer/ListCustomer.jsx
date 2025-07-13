@@ -7,9 +7,9 @@ import { FiSearch } from "react-icons/fi";
 import { MdFilterList } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
-const BASE_API_URL = "http://localhost:3000/api/patient-profiles";
-const SEARCH_API_URL = "http://localhost:3000/api/patient-profiles/search";
-const IMAGE_API_URL = "http://localhost:3000/api/profile";
+const BASE_API_URL = `${import.meta.env.VITE_API}/patient-profiles`;
+const SEARCH_API_URL = `${import.meta.env.VITE_API}/patient-profiles/search`;
+const IMAGE_API_URL = `${import.meta.env.VITE_API}/profile`;
 
 const PsychologistList = () => {
   const [customers, setCustomers] = useState([]);
@@ -27,19 +27,25 @@ const PsychologistList = () => {
   const fetchCustomers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(searchQuery ? SEARCH_API_URL : BASE_API_URL, {
-        params: searchQuery
-          ? { fullName: searchQuery, pageIndex, pageSize, sortBy, sortOrder }
-          : { pageIndex, pageSize, sortBy, sortOrder },
-      });
+      const response = await axios.get(
+        searchQuery ? SEARCH_API_URL : BASE_API_URL,
+        {
+          params: searchQuery
+            ? { fullName: searchQuery, pageIndex, pageSize, sortBy, sortOrder }
+            : { pageIndex, pageSize, sortBy, sortOrder },
+        }
+      );
 
       const customersWithImagesAndPackages = await Promise.all(
         response.data.data.map(async (customer) => {
           // Fetch profile image
           let profileImage;
           try {
-            const imageResponse = await axios.get(`${IMAGE_API_URL}/${customer.Id}/image`);
-            profileImage = imageResponse.data.data.publicUrl ||
+            const imageResponse = await axios.get(
+              `${IMAGE_API_URL}/${customer.Id}/image`
+            );
+            profileImage =
+              imageResponse.data.data.publicUrl ||
               "https://via.placeholder.com/150?text=No+Image"; // Placeholder for no image
           } catch (imgError) {
             profileImage =
@@ -66,7 +72,7 @@ const PsychologistList = () => {
       setCustomers(customersWithImagesAndPackages);
       setHasMoreData(
         customersWithImagesAndPackages.length === pageSize &&
-        response.data.pageIndex < response.data.totalPages
+          response.data.pageIndex < response.data.totalPages
       );
     } catch (error) {
       setError("Failed to load customers. Please try again.");
@@ -94,7 +100,9 @@ const PsychologistList = () => {
 
   if (initialLoad) return <div>Loading...</div>;
   if (error)
-    return <p className="text-center text-red-500 text-xl font-semibold">{error}</p>;
+    return (
+      <p className="text-center text-red-500 text-xl font-semibold">{error}</p>
+    );
 
   return (
     <div className="container mx-auto p-6 mt-2 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
@@ -169,12 +177,24 @@ const PsychologistList = () => {
             <thead className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
               <tr>
                 <th className="px-6 py-4 text-left font-semibold text-sm">#</th>
-                <th className="px-6 py-4 text-center font-semibold text-sm">Avatar</th>
-                <th className="px-6 py-4 text-left font-semibold text-sm">Name</th>
-                <th className="px-6 py-4 text-left font-semibold text-sm">Gender</th>
-                <th className="px-6 py-4 text-left font-semibold text-sm">Phone Number</th>
-                <th className="px-6 py-4 text-left font-semibold text-sm">Personality Traits</th>
-                <th className="px-6 py-4 text-center font-semibold text-sm">Actions</th>
+                <th className="px-6 py-4 text-center font-semibold text-sm">
+                  Avatar
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-sm">
+                  Name
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-sm">
+                  Gender
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-sm">
+                  Phone Number
+                </th>
+                <th className="px-6 py-4 text-left font-semibold text-sm">
+                  Personality Traits
+                </th>
+                <th className="px-6 py-4 text-center font-semibold text-sm">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -198,27 +218,34 @@ const PsychologistList = () => {
                         className="w-12 h-12 rounded-full object-cover mx-auto border-2 border-indigo-300 shadow-md transition-transform duration-300 hover:scale-110"
                       />
                     </td>
-                    <td className="px-6 py-4 text-gray-800 font-semibold">{customer.fullName}</td>
+                    <td className="px-6 py-4 text-gray-800 font-semibold">
+                      {customer.fullName}
+                    </td>
                     <td className="px-6 py-7 flex items-center gap-2 text-gray-600">
-                      {customer.gender === "Male" || customer.gender === "male" ? (
+                      {customer.gender === "Male" ||
+                      customer.gender === "male" ? (
                         <FaMars className="text-blue-600" size={18} />
-                      ) : customer.gender === "female" || customer.gender === "Female" ? (
+                      ) : customer.gender === "female" ||
+                        customer.gender === "Female" ? (
                         <FaVenus className="text-pink-600" size={18} />
                       ) : (
                         <span>-</span>
                       )}
-                      <span className="font-medium">{customer.gender || "N/A"}</span>
+                      <span className="font-medium">
+                        {customer.gender || "N/A"}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-gray-600 font-medium">
                       {customer.phoneNumber || "N/A"}
                     </td>
                     <td
-                      className={`px-6 py-4 italic ${customer.personalityTraits === "Introversion"
-                        ? "text-blue-600"
-                        : customer.personalityTraits === "Extroversion"
+                      className={`px-6 py-4 italic ${
+                        customer.personalityTraits === "Introversion"
+                          ? "text-blue-600"
+                          : customer.personalityTraits === "Extroversion"
                           ? "text-red-600"
                           : "text-gray-600"
-                        }`}
+                      }`}
                     >
                       {customer.personalityTraits || "N/A"}
                     </td>
@@ -239,7 +266,10 @@ const PsychologistList = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                  <td
+                    colSpan={8}
+                    className="px-6 py-4 text-center text-gray-500"
+                  >
                     No data available
                   </td>
                 </tr>
@@ -258,7 +288,9 @@ const PsychologistList = () => {
         >
           Previous
         </motion.button>
-        <span className="py-2 text-gray-800 font-semibold text-lg">Page {pageIndex}</span>
+        <span className="py-2 text-gray-800 font-semibold text-lg">
+          Page {pageIndex}
+        </span>
         <motion.button
           onClick={() => setPageIndex((prev) => prev + 1)}
           disabled={!hasMoreData}
