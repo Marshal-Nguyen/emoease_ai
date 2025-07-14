@@ -1,103 +1,100 @@
-import React, { useState, useEffect, use } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import CreateMedical from "../../../components/Dashboard/Doctor/CreateMedical";
-import { useSelector } from "react-redux";
 const PatientBooking = () => {
-  const [patients, setPatients] = useState([]);
+  // Hardcoded patient data
+  const [patients] = useState([
+    {
+      bookingCode: "BOOK-001",
+      patientId: "1",
+      date: "2025-07-12",
+      startTime: "09:00 AM",
+    },
+    {
+      bookingCode: "BOOK-002",
+      patientId: "2",
+      date: "2025-07-12",
+      startTime: "10:00 AM",
+    },
+    {
+      bookingCode: "BOOK-003",
+      patientId: "3",
+      date: "2025-07-13",
+      startTime: "11:00 AM",
+    },
+  ]);
+
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedPatientDetails, setSelectedPatientDetails] = useState(null);
   const [pagination, setPagination] = useState({
     pageIndex: 1,
     pageSize: 10,
-    totalPages: 1,
+    totalPages: 1, // Only one page for hardcoded data
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const profileId = useSelector((state) => state.auth.profileId);
-  console.log("profileId Doctor", profileId);
-  const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API_SCHEDULE_URL;
-  const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
-  // Hàm fetch danh sách bệnh nhân từ API
-  const fetchPatients = async (pageIndex = 1) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.get(
-        `${VITE_API_SCHEDULE_URL}/bookings?PageIndex=${pageIndex}&PageSize=10&SortBy=date&SortOrder=asc&DoctorId=${profileId}&Status=AwaitMeeting`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+  const [loading] = useState(false);
+  const [error] = useState(null);
+  const profileId = "DOC123"; // Hardcoded doctor profile ID
 
-      const { bookings } = response.data;
-      setPatients(bookings.data);
-      setPagination({
-        pageIndex: bookings.pageIndex,
-        pageSize: bookings.pageSize,
-        totalPages: bookings.totalPages,
-      });
-    } catch (error) {
-      console.error("Lỗi tải danh sách bệnh nhân:", error);
-      setError("Không thể tải danh sách bệnh nhân. Vui lòng thử lại.");
-    } finally {
-      setLoading(false);
-    }
+  // Hardcoded patient details
+  const patientDetailsData = {
+    1: {
+      fullName: "John Doe",
+      gender: "Male",
+      contactInfo: { phoneNumber: "123-456-7890" },
+      medicalHistory: {
+        specificMentalDisorders: [
+          { id: "1", name: "Anxiety Disorder" },
+          { id: "2", name: "Depression" },
+        ],
+        physicalSymptoms: [
+          { id: "1", name: "Fatigue" },
+          { id: "2", name: "Headache" },
+        ],
+      },
+    },
+    2: {
+      fullName: "Jane Smith",
+      gender: "Female",
+      contactInfo: { phoneNumber: "987-654-3210" },
+      medicalHistory: {
+        specificMentalDisorders: [{ id: "3", name: "PTSD" }],
+        physicalSymptoms: [{ id: "3", name: "Insomnia" }],
+      },
+    },
+    3: {
+      fullName: "Alex Johnson",
+      gender: "Non-binary",
+      contactInfo: { phoneNumber: "555-123-4567" },
+      medicalHistory: {
+        specificMentalDisorders: [{ id: "4", name: "Bipolar Disorder" }],
+        physicalSymptoms: [{ id: "4", name: "Nausea" }],
+      },
+    },
   };
 
-  // Hàm fetch chi tiết bệnh nhân
-  const fetchPatientDetails = async (patientId) => {
-    if (!patientId) return;
-
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${VITE_API_PROFILE_URL}/patients/${patientId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      setSelectedPatientDetails(response.data.patientProfileDto);
-    } catch (error) {
-      console.error("Lỗi tải thông tin bệnh nhân:", error);
-      setError("Không thể tải thông tin chi tiết bệnh nhân.");
-    } finally {
-      setLoading(false);
-    }
+  // Simulate fetching patient details
+  const fetchPatientDetails = (patientId) => {
+    setSelectedPatientDetails(patientDetailsData[patientId] || null);
   };
 
-  // Hàm xử lý chọn bệnh nhân
+  // Handle patient selection
   const handleSelectPatient = (patient) => {
     setSelectedPatient(patient);
     fetchPatientDetails(patient.patientId);
   };
 
-  // Hàm xử lý thay đổi trang
+  // Handle page change (not fully functional with hardcoded data)
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= pagination.totalPages) {
-      fetchPatients(newPage);
+      setPagination({ ...pagination, pageIndex: newPage });
     }
   };
 
-  // Hàm lọc bệnh nhân theo từ khóa tìm kiếm
+  // Filter patients by search term
   const filteredPatients = patients.filter((patient) =>
     patient.bookingCode.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // Gọi API khi component mount
-  useEffect(() => {
-    fetchPatients();
-  }, []);
-
-  // Component tạo hồ sơ bệnh án với thông tin chi tiết bệnh nhân
 
   return (
     <div className="flex h-screen bg-gray-50 py-6 px-2 gap-1">
@@ -153,15 +150,14 @@ const PatientBooking = () => {
                     {filteredPatients.map((patient) => (
                       <tr
                         key={patient.bookingCode}
-                        className={`hover:bg-gray-50 transition-colors duration-150 ${
-                          selectedPatient?.bookingCode === patient.bookingCode
-                            ? "bg-purple-50"
-                            : ""
-                        }`}>
+                        className={`hover:bg-gray-50 transition-colors duration-150 ${selectedPatient?.bookingCode === patient.bookingCode
+                          ? "bg-purple-50"
+                          : ""
+                          }`}
+                      >
                         <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                           {patient.bookingCode?.split("-")[1]}
                         </td>
-
                         <td className="px-6 py-4 text-sm text-gray-500">
                           {patient.date}
                         </td>
@@ -170,13 +166,13 @@ const PatientBooking = () => {
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <button
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
-                              selectedPatient?.bookingCode ===
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${selectedPatient?.bookingCode ===
                               patient.bookingCode
-                                ? "bg-purple-600 text-white hover:bg-purple-700"
-                                : "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                            }`}
-                            onClick={() => handleSelectPatient(patient)}>
+                              ? "bg-purple-600 text-white hover:bg-purple-700"
+                              : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                              }`}
+                            onClick={() => handleSelectPatient(patient)}
+                          >
                             Select
                           </button>
                         </td>
@@ -191,7 +187,8 @@ const PatientBooking = () => {
                 <button
                   className="px-4 py-2 flex items-center text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handlePageChange(pagination.pageIndex - 1)}
-                  disabled={pagination.pageIndex === 1}>
+                  disabled={pagination.pageIndex === 1}
+                >
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Pre
                 </button>
@@ -201,7 +198,8 @@ const PatientBooking = () => {
                 <button
                   className="px-4 py-2 flex items-center text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handlePageChange(pagination.pageIndex + 1)}
-                  disabled={pagination.pageIndex === pagination.totalPages}>
+                  disabled={pagination.pageIndex === pagination.totalPages}
+                >
                   Next
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </button>

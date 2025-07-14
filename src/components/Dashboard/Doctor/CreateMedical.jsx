@@ -1,40 +1,38 @@
-import React, { useState, useEffect } from "react";
-import { User, FileText, AlertCircle, Search } from "lucide-react";
-import axios from "axios";
+import React, { useState } from "react";
+import { User, FileText, Search } from "lucide-react";
 import { toast } from "react-toastify";
 
 const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
-  const [mentalDisorders, setMentalDisorders] = useState([]);
+  // Hardcoded mental disorders
+  const [mentalDisorders] = useState([
+    {
+      id: "1",
+      mentalDisorderName: "Anxiety",
+      name: "Generalized Anxiety Disorder",
+    },
+    {
+      id: "2",
+      mentalDisorderName: "Depression",
+      name: "Major Depressive Disorder",
+    },
+    {
+      id: "3",
+      mentalDisorderName: "PTSD",
+      name: "Post-Traumatic Stress Disorder",
+    },
+    {
+      id: "4",
+      mentalDisorderName: "Bipolar",
+      name: "Bipolar II Disorder",
+    },
+  ]);
+
   const [selectedDisorders, setSelectedDisorders] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage] = useState(1);
+  const [totalPages] = useState(1); // Only one page for hardcoded data
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("Processing");
-  const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
-  const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API_SCHEDULE_URL;
-  const fetchMentalDisorders = async (page) => {
-    try {
-      const response = await axios.get(
-        `${VITE_API_PROFILE_URL}/specific-mental-disorders`,
-        {
-          params: {
-            PageIndex: page,
-            PageSize: 10,
-          },
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
 
-      const { data, totalPages } = response.data.specificMentalDisorder;
-      setMentalDisorders(data);
-      setTotalPages(totalPages);
-    } catch (error) {
-      console.error("Error fetching mental disorders:", error);
-    }
-  };
   const toggleDisorderSelection = (disorderId) => {
     setSelectedDisorders((prev) =>
       prev.includes(disorderId)
@@ -42,63 +40,22 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
         : [...prev, disorderId]
     );
   };
-  const submitMedicalRecord = async () => {
-    if (!selectedPatient) return;
-    console.log("Selected Patient:", selectedPatient);
-    try {
-      const payload = {
-        patientProfileId: selectedPatient.patientId, // Assuming the patient object has an id
-        doctorId: profileId, // Replace with actual doctor ID
-        notes: notes || "No notes provided",
-        status: status,
-        existingDisorderIds: selectedDisorders,
-      };
 
-      await axios.post(
-        `${VITE_API_PROFILE_URL}/patients/medical-record`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      await axios.put(
-        `${VITE_API_SCHEDULE_URL}/bookings/${selectedPatient.bookingCode}/status`,
-        { status: "Completed" },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-      toast.success(
-        "Medical record created and booking status updated successfully!"
-      );
-    } catch (error) {
-      console.error("Error creating medical record:", error);
-      alert("Failed to create medical record");
+  const submitMedicalRecord = () => {
+    if (!selectedPatient) {
+      toast.error("Please select a patient!");
+      return;
     }
-  };
-
-  // Fetch disorders on component mount and page change
-  useEffect(() => {
-    fetchMentalDisorders(currentPage);
-  }, [currentPage]);
-
-  // Pagination handlers
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
+    console.log("Submitting medical record:", {
+      patientProfileId: selectedPatient.patientId,
+      doctorId: profileId,
+      notes: notes || "No notes provided",
+      status: status,
+      existingDisorderIds: selectedDisorders,
+    });
+    toast.success(
+      "Medical record created and booking status updated successfully!"
+    );
   };
 
   return (
@@ -117,7 +74,7 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
       {patientDetails ? (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-6">
-            {/* Thông tin bệnh nhân */}
+            {/* Patient Information */}
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-3 mb-4">
                 <User className="w-5 h-5 text-purple-600" />
@@ -164,7 +121,7 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
               </div>
             </div>
 
-            {/* Tiền sử bệnh */}
+            {/* Medical History */}
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center space-x-3 mb-4">
                 <FileText className="w-5 h-5 text-purple-600" />
@@ -180,7 +137,8 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
                       (disorder) => (
                         <span
                           key={disorder.id}
-                          className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs mr-2">
+                          className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs mr-2"
+                        >
                           {disorder.name}
                         </span>
                       )
@@ -196,7 +154,8 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
                       (symptom) => (
                         <span
                           key={symptom.id}
-                          className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs mr-2">
+                          className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs mr-2"
+                        >
                           {symptom.name}
                         </span>
                       )
@@ -217,12 +176,12 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
               {mentalDisorders.map((disorder) => (
                 <div
                   key={disorder.id}
-                  className={`p-3 border rounded-md cursor-pointer transition-all ${
-                    selectedDisorders.includes(disorder.id)
+                  className={`p-3 border rounded-md cursor-pointer transition-all ${selectedDisorders.includes(disorder.id)
                       ? "bg-purple-100 border-purple-500"
                       : "bg-white border-gray-300 hover:bg-gray-50"
-                  }`}
-                  onClick={() => toggleDisorderSelection(disorder.id)}>
+                    }`}
+                  onClick={() => toggleDisorderSelection(disorder.id)}
+                >
                   <div className="flex justify-between items-center">
                     <div>
                       <h4 className="font-semibold text-gray-800">
@@ -243,18 +202,18 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
             {/* Pagination */}
             <div className="flex justify-center items-center space-x-4 mt-4">
               <button
-                onClick={handlePrevPage}
                 disabled={currentPage === 1}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50">
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50"
+              >
                 Pre
               </button>
               <span className="text-sm text-gray-600">
                 Page {currentPage} / {totalPages}
               </span>
               <button
-                onClick={handleNextPage}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50">
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50"
+              >
                 Next
               </button>
             </div>
@@ -268,7 +227,8 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="px-3 py-2 border rounded-md text-sm">
+                  className="px-3 py-2 border rounded-md text-sm"
+                >
                   <option value="Processing">Processing</option>
                   <option value="Done">Done</option>
                 </select>
@@ -288,7 +248,8 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
             </button>
             <button
               onClick={submitMedicalRecord}
-              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700">
+              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+            >
               Save
             </button>
           </div>
@@ -307,4 +268,5 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
     </div>
   );
 };
+
 export default CreateMedical;
