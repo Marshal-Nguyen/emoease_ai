@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "../../../styles/Dashboard/Patients/Navigation.module.css";
-import { Link, useLocation } from "react-router-dom"; // Thêm useLocation
+import { Link, useLocation, useNavigate } from "react-router-dom"; // Thêm useLocation
 import {
   LayoutDashboard,
   LogOut,
@@ -9,6 +9,7 @@ import {
   User,
   MessageCircleCode,
   ShoppingCart,
+  ArrowLeft,
 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { clearCredentials } from "../../../store/authSlice";
@@ -18,6 +19,7 @@ const Navigation = () => {
   const dispatch = useDispatch();
   const profileId = useSelector((state) => state.auth.profileId);
   const { setIsLoggedIn } = useAuth();
+  const nav = useNavigate();
   console.log("Test Profile", profileId);
 
   // Sử dụng useLocation để lấy thông tin URL hiện tại
@@ -34,7 +36,8 @@ const Navigation = () => {
           isActive
             ? "text-white text-[15px] font-serif bg-gradient-to-r from-[#9284e0] to-[#5849b1] px-4 py-2.5 rounded-[11px] shadow-sm"
             : "text-[#554d4ddc] font-serif text-[15px] hover:text-[#5241b1] hover:bg-white/10 px-4 py-2.5 rounded-xl"
-        }`}>
+        }`}
+      >
         {icon}
         <span className="tracking-wide">{text}</span>
       </Link>
@@ -80,6 +83,16 @@ const Navigation = () => {
           </nav>
         </div>
         <div className="row-start-8 hover:text-[#5D4DB8] flex justify-center gap-3 items-center rounded-xl px-2.5 mx-auto transition duration-200">
+          <ArrowLeft size={20} strokeWidth={1.5} color="#554d4ddc" />
+          <button
+            type="button"
+            onClick={() => nav("/")}
+            className="cursor-pointer font-medium tracking-wide text-[#554d4ddc] hover:text-[#5D4DB8] font-serif"
+          >
+            Back To Home
+          </button>
+        </div>
+        <div className="hover:text-[#5D4DB8] flex justify-center gap-3 items-center rounded-xl px-2.5 mx-auto transition duration-200">
           <LogOut size={20} strokeWidth={1.5} color="#554d4ddc" />
           <button
             type="button"
@@ -88,7 +101,8 @@ const Navigation = () => {
               setIsLoggedIn(false);
               toast.success("Logout successfully!");
             }}
-            className="cursor-pointer font-medium tracking-wide text-[#554d4ddc] hover:text-[#5D4DB8] font-serif">
+            className="cursor-pointer font-medium tracking-wide text-[#554d4ddc] hover:text-[#5D4DB8] font-serif"
+          >
             Log Out
           </button>
         </div>

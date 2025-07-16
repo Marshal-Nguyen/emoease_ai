@@ -23,6 +23,9 @@ const HistoryBooking = () => {
   // State cho lý do hủy lịch
   const [cancelReason, setCancelReason] = useState("");
 
+  // State cho thông tin hoàn tiền
+  const [refundInfo, setRefundInfo] = useState(null);
+
   // Thông tin phân trang
   const [pageIndex, setPageIndex] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -141,6 +144,28 @@ const HistoryBooking = () => {
     return minutesDiff > 30;
   };
 
+  // Tính toán thông tin hoàn tiền
+  const getRefundInfo = (date, time, price) => {
+    const appointmentDate = new Date(`${date}T${time}`);
+    const now = new Date();
+    const timeDiff = appointmentDate.getTime() - now.getTime();
+    const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+
+    if (daysDiff >= 1) {
+      return {
+        willRefund: true,
+        message: "Bạn sẽ nhận được tiền hoàn sau 2 ngày (hủy trước 1 ngày)",
+        refundAmount: 100000, // Hoặc tính toán dựa trên price
+      };
+    } else {
+      return {
+        willRefund: false,
+        message: "Do hủy trễ hơn 1 ngày, không hoàn tiền",
+        refundAmount: 0,
+      };
+    }
+  };
+
   // Hàm hủy lịch hẹn
   const cancelBooking = async () => {
     if (!selectedBooking) return;
@@ -151,8 +176,12 @@ const HistoryBooking = () => {
 
     try {
       // Gọi API để hủy lịch hẹn sử dụng endpoint mới
-      await axios.post(
+      const response = await axios.post(
         `${VITE_API_SCHEDULE_URL}/cancelBooking/${selectedBooking.Id}`,
+        {
+          // Có thể gửi thêm reason nếu backend cần
+          reason: cancelReason || "User cancelled",
+        },
         {
           headers: {
             "Content-Type": "application/json",
@@ -164,18 +193,32 @@ const HistoryBooking = () => {
       // Cập nhật lại danh sách lịch hẹn
       fetchBookings();
 
-      // Hiển thị thông báo thành công bằng toast
-      toast.success(
-        `Đã hủy lịch hẹn ${selectedBooking.BookingCode} thành công`,
-        {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        }
-      );
+      // Lấy message từ response
+      const { message, updatedPrice, newAmount } = response.data;
+
+      // Hiển thị thông báo thành công với message từ backend
+      toast.success(message, {
+        position: "top-right",
+        autoClose: 5000, // Tăng thời gian hiển thị cho message dài
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      // Nếu có thông tin hoàn tiền, hiển thị thêm toast info
+      if (updatedPrice && newAmount) {
+        setTimeout(() => {
+          toast.info(`Số tiền hoàn lại: ${newAmount?.toLocaleString()} VND`, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        }, 1000);
+      }
 
       // Đóng modal
       handleCloseModal();
@@ -208,11 +251,6 @@ const HistoryBooking = () => {
       return;
     }
 
-    // if (booking.Status.toLowerCase() === "booking success") {
-    //   toast.warning("Không thể hủy lịch hẹn đã hoàn thành.");
-    //   return;
-    // }
-
     // Kiểm tra thời gian có thể hủy không
     if (!canCancelByTime(booking.Date, booking.StartTime)) {
       toast.error(
@@ -220,6 +258,14 @@ const HistoryBooking = () => {
       );
       return;
     }
+
+    // Tính toán thông tin hoàn tiền
+    const refundCalculation = getRefundInfo(
+      booking.Date,
+      booking.StartTime,
+      booking.Price
+    );
+    setRefundInfo(refundCalculation);
 
     // Đặt booking đã chọn và mở modal
     setSelectedBooking(booking);
@@ -233,6 +279,7 @@ const HistoryBooking = () => {
     setSelectedBooking(null);
     setCancelReason("");
     setCancelError(null);
+    setRefundInfo(null);
   };
 
   // Gọi API khi các tham số thay đổi
@@ -439,8 +486,77 @@ const HistoryBooking = () => {
                     <span className="font-medium">Duration:</span>{" "}
                     {selectedBooking.Duration} minutes
                   </p>
+                  <p className="text-sm">
+                    <span className="font-medium">Price:</span>{" "}
+                    {selectedBooking.Price.toLocaleString()} VND
+                  </p>
                 </div>
               </div>
+
+              {/* Thông tin hoàn tiền */}
+              {refundInfo && (
+                <div
+                  className={`mb-4 p-4 rounded-lg border-l-4 ${
+                    refundInfo.willRefund
+                      ? "bg-green-50 border-green-400"
+                      : "bg-orange-50 border-orange-400"
+                  }`}
+                >
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className={`h-5 w-5 ${
+                          refundInfo.willRefund
+                            ? "text-green-400"
+                            : "text-orange-400"
+                        }`}
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        {refundInfo.willRefund ? (
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        ) : (
+                          <path
+                            fillRule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        )}
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <h4
+                        className={`text-sm font-medium ${
+                          refundInfo.willRefund
+                            ? "text-green-800"
+                            : "text-orange-800"
+                        }`}
+                      >
+                        Refund Information
+                      </h4>
+                      <p
+                        className={`text-sm ${
+                          refundInfo.willRefund
+                            ? "text-green-700"
+                            : "text-orange-700"
+                        }`}
+                      >
+                        {refundInfo.message}
+                      </p>
+                      {refundInfo.willRefund && refundInfo.refundAmount > 0 && (
+                        <p className="text-sm text-green-700 mt-1 font-medium">
+                          Estimated refund:{" "}
+                          {refundInfo.refundAmount.toLocaleString()} VND
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="mb-4">
                 <label
