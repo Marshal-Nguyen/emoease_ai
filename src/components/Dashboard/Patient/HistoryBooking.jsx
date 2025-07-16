@@ -39,6 +39,7 @@ const HistoryBooking = () => {
 
   // ID bệnh nhân cố định (có thể chuyển thành prop nếu cần)
   const patientId = useSelector((state) => state.auth.profileId);
+  console.log("Patient ID:", patientId);
   const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API;
   const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
   // Hàm lấy dữ liệu booking
@@ -497,16 +498,16 @@ const HistoryBooking = () => {
               {refundInfo && (
                 <div
                   className={`mb-4 p-4 rounded-lg border-l-4 ${refundInfo.willRefund
-                      ? "bg-green-50 border-green-400"
-                      : "bg-orange-50 border-orange-400"
+                    ? "bg-green-50 border-green-400"
+                    : "bg-orange-50 border-orange-400"
                     }`}
                 >
                   <div className="flex">
                     <div className="flex-shrink-0">
                       <svg
                         className={`h-5 w-5 ${refundInfo.willRefund
-                            ? "text-green-400"
-                            : "text-orange-400"
+                          ? "text-green-400"
+                          : "text-orange-400"
                           }`}
                         viewBox="0 0 20 20"
                         fill="currentColor"
@@ -529,16 +530,16 @@ const HistoryBooking = () => {
                     <div className="ml-3">
                       <h4
                         className={`text-sm font-medium ${refundInfo.willRefund
-                            ? "text-green-800"
-                            : "text-orange-800"
+                          ? "text-green-800"
+                          : "text-orange-800"
                           }`}
                       >
                         Refund Information
                       </h4>
                       <p
                         className={`text-sm ${refundInfo.willRefund
-                            ? "text-green-700"
-                            : "text-orange-700"
+                          ? "text-green-700"
+                          : "text-orange-700"
                           }`}
                       >
                         {refundInfo.message}
@@ -784,14 +785,17 @@ const HistoryBooking = () => {
                               </button>
                             ) : (
                               <span className="text-gray-400 text-xs italic">
-                                {booking.Status.toLowerCase() === "cancelled"
+                                {/* {booking.Status.toLowerCase() === "cancelled"
                                   ? "Cancelled"
                                   : !canCancelByTime(
-                                    booking.Date,
-                                    booking.StartTime
-                                  )
-                                    ? "Cancellation expired (< 30 minutes)"
-                                    : "Cannot cancel"}
+
+                                      booking.Date,
+                                      booking.StartTime
+                                    )
+                                  ? "Cancellation expired (< 30 minutes)"
+                                  : "Cannot cancel"} */}
+                                {booking.Status.toLowerCase() === "cancelled" &&
+                                  "Cancelled"}
                               </span>
                             )}
                           </td>
@@ -854,8 +858,8 @@ const HistoryBooking = () => {
                     )}
                     <button
                       className={`px-3 py-1 rounded-md text-sm font-medium ${pageIndex === page
-                          ? "bg-blue-500 text-white"
-                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        ? "bg-blue-500 text-white"
+                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                         }`}
                       onClick={() => handlePageChange(page)}
                     >

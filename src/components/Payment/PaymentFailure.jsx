@@ -55,6 +55,22 @@ const PaymentFailure = () => {
     }),
   };
 
+  if (!state) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen">
+        <h1 className="text-red-500 text-xl font-bold">
+          Some thing went wrong. Please try again later.
+        </h1>
+        <button
+          className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg"
+          onClick={() => navigate("/EMO")}
+        >
+          Go Back to Home
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col justify-center items-center min-h-[cals[100vh-10px]]">
       <img src="/FreeYourMind.png" className="h-[200px]" />
