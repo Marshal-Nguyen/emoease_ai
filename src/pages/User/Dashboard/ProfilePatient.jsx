@@ -206,7 +206,7 @@ const EditProfileForm = () => {
   if (error) return <div className="text-center p-6 text-red-600">{error}</div>;
 
   return (
-    <div className="max-w-7xl mx-auto p-8 h-[94vh] bg-[#f6e8ff] rounded-2xl">
+    <div className="max-w-full bg-[#ffffff] h-screen py-6 px-3 rounded-2xl">
       <div className="h-full overflow-y-auto p-2">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar Section */}

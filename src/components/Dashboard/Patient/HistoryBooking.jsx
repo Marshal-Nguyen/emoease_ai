@@ -31,12 +31,12 @@ const HistoryBooking = () => {
 
   // Thông tin tìm kiếm và sắp xếp
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("date");
+  const [sortBy, setSortBy] = useState("Date");
   const [sortOrder, setSortOrder] = useState("asc");
 
   // ID bệnh nhân cố định (có thể chuyển thành prop nếu cần)
   const patientId = useSelector((state) => state.auth.profileId);
-  const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API_SCHEDULE_URL;
+  const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API;
   const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
   // Hàm lấy dữ liệu booking
   const fetchBookings = async () => {
@@ -61,14 +61,14 @@ const HistoryBooking = () => {
       });
 
       // Cập nhật state với dữ liệu trả về
-      const bookingsData = response.data.bookings.data || [];
+      const bookingsData = response.data.data || [];
       setBookings(bookingsData);
-      setTotalCount(response.data.bookings.totalCount || 0);
-      setTotalPages(response.data.bookings.totalPages || 0);
+      setTotalCount(response.data.totalCount || 0);
+      setTotalPages(response.data.totalPages || 0);
 
       // Lấy danh sách doctorId duy nhất để gọi API doctor
       const doctorIds = [
-        ...new Set(bookingsData.map((booking) => booking.doctorId)),
+        ...new Set(bookingsData.map((booking) => booking.DoctorId)),
       ];
       fetchDoctorsInfo(doctorIds);
     } catch (err) {
@@ -123,7 +123,7 @@ const HistoryBooking = () => {
     }
   };
 
-  // Hàm kiểm tra thời gian có thể hủy (trước 30 phút)
+  // Kiểm tra thời gian có thể hủy (trước 30 phút)
   const canCancelByTime = (date, time) => {
     // Kết hợp ngày và giờ từ booking
     const appointmentDate = new Date(`${date}T${time}`);
@@ -150,12 +150,9 @@ const HistoryBooking = () => {
     setCancelError(null);
 
     try {
-      // Gọi API để hủy lịch hẹn
-      await axios.put(
-        `${VITE_API_SCHEDULE_URL}/bookings/${selectedBooking.bookingCode}/status`,
-        {
-          status: "Cancelled",
-        },
+      // Gọi API để hủy lịch hẹn sử dụng endpoint mới
+      await axios.post(
+        `${VITE_API_SCHEDULE_URL}/cancelBooking/${selectedBooking.Id}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -169,7 +166,7 @@ const HistoryBooking = () => {
 
       // Hiển thị thông báo thành công bằng toast
       toast.success(
-        `Đã hủy lịch hẹn ${selectedBooking.bookingCode} thành công`,
+        `Đã hủy lịch hẹn ${selectedBooking.BookingCode} thành công`,
         {
           position: "top-right",
           autoClose: 3000,
@@ -185,6 +182,19 @@ const HistoryBooking = () => {
     } catch (err) {
       setCancelError(`Không thể hủy lịch hẹn: ${err.message}`);
       console.error("Error cancelling booking:", err);
+
+      // Hiển thị toast error
+      toast.error(
+        `Lỗi khi hủy lịch hẹn: ${err.response?.data?.message || err.message}`,
+        {
+          position: "top-right",
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
     } finally {
       setCancelLoading(false);
     }
@@ -193,18 +203,18 @@ const HistoryBooking = () => {
   // Mở modal xác nhận hủy lịch hẹn
   const openCancelModal = (booking) => {
     // Kiểm tra trạng thái có thể hủy không
-    if (booking.status.toLowerCase() === "cancelled") {
+    if (booking.Status.toLowerCase() === "Cancelled") {
       toast.warning("Lịch hẹn này đã được hủy trước đó.");
       return;
     }
 
-    if (booking.status.toLowerCase() === "completed") {
-      toast.warning("Không thể hủy lịch hẹn đã hoàn thành.");
-      return;
-    }
+    // if (booking.Status.toLowerCase() === "booking success") {
+    //   toast.warning("Không thể hủy lịch hẹn đã hoàn thành.");
+    //   return;
+    // }
 
     // Kiểm tra thời gian có thể hủy không
-    if (!canCancelByTime(booking.date, booking.startTime)) {
+    if (!canCancelByTime(booking.Date, booking.StartTime)) {
       toast.error(
         "Chỉ có thể hủy lịch hẹn trước thời gian diễn ra ít nhất 30 phút."
       );
@@ -269,6 +279,12 @@ const HistoryBooking = () => {
         return "bg-red-100 text-red-800";
       case "completed":
         return "bg-blue-100 text-blue-800";
+      case "Booking Success":
+        return "bg-green-100 text-green-800";
+      case "Check In":
+        return "bg-blue-100 text-blue-800";
+      case "Check Out":
+        return "bg-purple-100 text-purple-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -276,8 +292,13 @@ const HistoryBooking = () => {
 
   // Kiểm tra xem lịch hẹn có thể hủy không (dựa trên trạng thái)
   const canCancelBooking = (status) => {
-    const lowerStatus = status;
-    return lowerStatus === "Awaiting Meeting" || lowerStatus === "confirmed";
+    const cancelableStatuses = [
+      "Awaiting Meeting",
+      "confirmed",
+      "Booking Success",
+      "Pending", // Thêm các trạng thái có thể hủy khác
+    ];
+    return cancelableStatuses.includes(status);
   };
 
   // Lấy tên và chuyên môn của bác sĩ
@@ -292,6 +313,14 @@ const HistoryBooking = () => {
       rating: doctor.rating,
       experience: doctor.yearsOfExperience,
     };
+  };
+
+  // Sử dụng doctorName từ API response nếu có
+  const getDoctorDisplayName = (booking) => {
+    if (booking.doctorName) {
+      return booking.doctorName;
+    }
+    return getDoctorInfo(booking.DoctorId).name;
   };
 
   return (
@@ -311,7 +340,8 @@ const HistoryBooking = () => {
         />
         <button
           onClick={() => setPageIndex(1)}
-          className="px-4 py-2 bg-blue-500 text-white font-medium rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          className="px-4 py-2 bg-blue-500 text-white font-medium rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
           Search
         </button>
       </div>
@@ -340,12 +370,14 @@ const HistoryBooking = () => {
 
               <button
                 onClick={handleCloseModal}
-                className="text-gray-400 hover:text-gray-500 focus:outline-none">
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
                 <svg
                   className="h-6 w-6"
                   fill="none"
                   viewBox="0 0 24 24"
-                  stroke="currentColor">
+                  stroke="currentColor"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -363,7 +395,8 @@ const HistoryBooking = () => {
                     <svg
                       className="h-5 w-5 text-yellow-400"
                       viewBox="0 0 20 20"
-                      fill="currentColor">
+                      fill="currentColor"
+                    >
                       <path
                         fillRule="evenodd"
                         d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -388,22 +421,23 @@ const HistoryBooking = () => {
                 <div className="bg-gray-50 rounded p-3">
                   <p className="text-sm">
                     <span className="font-medium">Booking Code:</span>{" "}
-                    {selectedBooking.bookingCode}
+                    {selectedBooking.BookingCode}
                   </p>
                   <p className="text-sm">
                     <span className="font-medium">Doctor:</span>{" "}
-                    {getDoctorInfo(selectedBooking.doctorId).name}
+                    {selectedBooking.doctorName ||
+                      getDoctorInfo(selectedBooking.DoctorId).name}
                   </p>
                   <p className="text-sm">
                     <span className="font-medium">Date & Time:</span>{" "}
                     {formatDateTime(
-                      selectedBooking.date,
-                      selectedBooking.startTime
+                      selectedBooking.Date,
+                      selectedBooking.StartTime
                     )}
                   </p>
                   <p className="text-sm">
                     <span className="font-medium">Duration:</span>{" "}
-                    {selectedBooking.duration} minutes
+                    {selectedBooking.Duration} minutes
                   </p>
                 </div>
               </div>
@@ -411,7 +445,8 @@ const HistoryBooking = () => {
               <div className="mb-4">
                 <label
                   htmlFor="cancelReason"
-                  className="block text-sm font-medium text-gray-700 mb-1">
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Cancellation Reason (Optional):
                 </label>
 
@@ -421,7 +456,11 @@ const HistoryBooking = () => {
                   className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder="Vui lòng cho biết lý do bạn hủy lịch hẹn..."></textarea>
+                  placeholder="Please provide a reason for cancellation (optional)..."
+                ></textarea>
+                <p className="text-xs text-gray-500 mt-1">
+                  This information will help us improve our service.
+                </p>
               </div>
 
               {cancelError && (
@@ -431,7 +470,8 @@ const HistoryBooking = () => {
                       <svg
                         className="h-5 w-5 text-red-400"
                         viewBox="0 0 20 20"
-                        fill="currentColor">
+                        fill="currentColor"
+                      >
                         <path
                           fillRule="evenodd"
                           d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -451,7 +491,8 @@ const HistoryBooking = () => {
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
                 Cancel
               </button>
 
@@ -459,30 +500,34 @@ const HistoryBooking = () => {
                 type="button"
                 onClick={cancelBooking}
                 disabled={cancelLoading}
-                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 {cancelLoading ? (
                   <span className="flex items-center">
                     <svg
                       className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
-                      viewBox="0 0 24 24">
+                      viewBox="0 0 24 24"
+                    >
                       <circle
                         className="opacity-25"
                         cx="12"
                         cy="12"
                         r="10"
                         stroke="currentColor"
-                        strokeWidth="4"></circle>
+                        strokeWidth="4"
+                      ></circle>
                       <path
                         className="opacity-75"
                         fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Đang xử lý...
                   </span>
                 ) : (
-                  "Xác nhận hủy lịch"
+                  "Confirm Cancellation"
                 )}
               </button>
             </div>
@@ -499,26 +544,29 @@ const HistoryBooking = () => {
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
                     <th
-                      onClick={() => handleSortChange("bookingCode")}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      onClick={() => handleSortChange("BookingCode")}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    >
                       Booking Code{" "}
-                      {sortBy === "bookingCode" &&
+                      {sortBy === "BookingCode" &&
                         (sortOrder === "asc" ? "↑" : "↓")}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Doctor
                     </th>
                     <th
-                      onClick={() => handleSortChange("date")}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      onClick={() => handleSortChange("Date")}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    >
                       Date{" "}
-                      {sortBy === "date" && (sortOrder === "asc" ? "↑" : "↓")}
+                      {sortBy === "Date" && (sortOrder === "asc" ? "↑" : "↓")}
                     </th>
                     <th
-                      onClick={() => handleSortChange("startTime")}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      onClick={() => handleSortChange("StartTime")}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    >
                       Time{" "}
-                      {sortBy === "startTime" &&
+                      {sortBy === "StartTime" &&
                         (sortOrder === "asc" ? "↑" : "↓")}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -528,10 +576,11 @@ const HistoryBooking = () => {
                       Price
                     </th>
                     <th
-                      onClick={() => handleSortChange("status")}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                      onClick={() => handleSortChange("Status")}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    >
                       State{" "}
-                      {sortBy === "status" && (sortOrder === "asc" ? "↑" : "↓")}
+                      {sortBy === "Status" && (sortOrder === "asc" ? "↑" : "↓")}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -541,22 +590,23 @@ const HistoryBooking = () => {
                 <tbody className="divide-y divide-gray-200">
                   {bookings.length > 0 ? (
                     bookings.map((booking) => {
-                      const doctorInfo = getDoctorInfo(booking.doctorId);
+                      const doctorInfo = getDoctorInfo(booking.DoctorId);
                       const canCancel =
-                        canCancelBooking(booking.status) &&
-                        canCancelByTime(booking.date, booking.startTime);
+                        canCancelBooking(booking.Status) &&
+                        canCancelByTime(booking.Date, booking.StartTime);
 
                       return (
                         <tr
-                          key={booking.bookingCode}
-                          className="hover:bg-gray-50">
+                          key={booking.BookingCode}
+                          className="hover:bg-gray-50"
+                        >
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {booking.bookingCode}
+                            {booking.BookingCode}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-500">
                             <div className="max-w-xs">
                               <div className="font-medium text-gray-900">
-                                {doctorInfo.name}
+                                {getDoctorDisplayName(booking)}
                               </div>
                               {/* <div className="text-xs text-gray-500 mt-1">
                                 {doctorInfo.specialties
@@ -579,35 +629,38 @@ const HistoryBooking = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {booking.date}
+                            {booking.Date}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {booking.startTime}
+                            {booking.StartTime}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {booking.duration} minutes
+                            {booking.Duration} minutes
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {booking.price.toLocaleString()}
+                            {booking.Price.toLocaleString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <span
                               className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(
-                                booking.status
-                              )}`}>
-                              {booking.status}
+                                booking.Status
+                              )}`}
+                            >
+                              {booking.Status}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {canCancel ? (
                               <button
                                 onClick={() => openCancelModal(booking)}
-                                className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                              >
                                 <svg
                                   className="mr-1 h-4 w-4"
                                   fill="none"
                                   viewBox="0 0 24 24"
-                                  stroke="currentColor">
+                                  stroke="currentColor"
+                                >
                                   <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -619,11 +672,11 @@ const HistoryBooking = () => {
                               </button>
                             ) : (
                               <span className="text-gray-400 text-xs italic">
-                                {booking.status.toLowerCase() === "cancelled"
+                                {booking.Status.toLowerCase() === "cancelled"
                                   ? "Cancelled"
                                   : !canCancelByTime(
-                                      booking.date,
-                                      booking.startTime
+                                      booking.Date,
+                                      booking.StartTime
                                     )
                                   ? "Cancellation expired (< 30 minutes)"
                                   : "Cannot cancel"}
@@ -637,7 +690,8 @@ const HistoryBooking = () => {
                     <tr>
                       <td
                         colSpan="8"
-                        className="px-6 py-10 text-center text-sm text-gray-500">
+                        className="px-6 py-10 text-center text-sm text-gray-500"
+                      >
                         Không có lịch hẹn nào
                       </td>
                     </tr>
@@ -659,13 +713,15 @@ const HistoryBooking = () => {
               <button
                 onClick={() => handlePageChange(1)}
                 disabled={pageIndex === 1}
-                className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 &laquo;
               </button>
               <button
                 onClick={() => handlePageChange(pageIndex - 1)}
                 disabled={pageIndex === 1}
-                className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 &lt;
               </button>
 
@@ -690,7 +746,8 @@ const HistoryBooking = () => {
                           ? "bg-blue-500 text-white"
                           : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                       }`}
-                      onClick={() => handlePageChange(page)}>
+                      onClick={() => handlePageChange(page)}
+                    >
                       {page}
                     </button>
                   </React.Fragment>
@@ -699,13 +756,15 @@ const HistoryBooking = () => {
               <button
                 onClick={() => handlePageChange(pageIndex + 1)}
                 disabled={pageIndex === totalPages}
-                className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 &gt;
               </button>
               <button
                 onClick={() => handlePageChange(totalPages)}
                 disabled={pageIndex === totalPages}
-                className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                className="px-3 py-1 rounded-md bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 &raquo;
               </button>
             </div>
@@ -715,7 +774,8 @@ const HistoryBooking = () => {
               <select
                 value={pageSize}
                 onChange={handlePageSizeChange}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+              >
                 <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
