@@ -1,104 +1,104 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import CreateMedical from "../../../components/Dashboard/Doctor/CreateMedical";
-const PatientBooking = () => {
-  // Hardcoded patient data
-  const [patients] = useState([
-    {
-      bookingCode: "BOOK-001",
-      patientId: "1",
-      date: "2025-07-12",
-      startTime: "09:00 AM",
-    },
-    {
-      bookingCode: "BOOK-002",
-      patientId: "2",
-      date: "2025-07-12",
-      startTime: "10:00 AM",
-    },
-    {
-      bookingCode: "BOOK-003",
-      patientId: "3",
-      date: "2025-07-13",
-      startTime: "11:00 AM",
-    },
-  ]);
 
+const PatientBooking = () => {
+  const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedPatientDetails, setSelectedPatientDetails] = useState(null);
   const [pagination, setPagination] = useState({
     pageIndex: 1,
     pageSize: 10,
-    totalPages: 1, // Only one page for hardcoded data
+    totalPages: 1,
   });
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading] = useState(false);
-  const [error] = useState(null);
-  const profileId = "DOC123"; // Hardcoded doctor profile ID
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const profileId = "26205c9d-c1d0-4ba2-bd90-edcfe2ce7b52";
 
-  // Hardcoded patient details
-  const patientDetailsData = {
-    1: {
-      fullName: "John Doe",
-      gender: "Male",
-      contactInfo: { phoneNumber: "123-456-7890" },
-      medicalHistory: {
-        specificMentalDisorders: [
-          { id: "1", name: "Anxiety Disorder" },
-          { id: "2", name: "Depression" },
-        ],
-        physicalSymptoms: [
-          { id: "1", name: "Fatigue" },
-          { id: "2", name: "Headache" },
-        ],
-      },
-    },
-    2: {
-      fullName: "Jane Smith",
-      gender: "Female",
-      contactInfo: { phoneNumber: "987-654-3210" },
-      medicalHistory: {
-        specificMentalDisorders: [{ id: "3", name: "PTSD" }],
-        physicalSymptoms: [{ id: "3", name: "Insomnia" }],
-      },
-    },
-    3: {
-      fullName: "Alex Johnson",
-      gender: "Non-binary",
-      contactInfo: { phoneNumber: "555-123-4567" },
-      medicalHistory: {
-        specificMentalDisorders: [{ id: "4", name: "Bipolar Disorder" }],
-        physicalSymptoms: [{ id: "4", name: "Nausea" }],
-      },
-    },
+  const [patientDetailsData, setPatientDetailsData] = useState({});
+
+  const fetchBookings = async (pageIndex = 1, pageSize = 10, search = "") => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `http://localhost:3000/api/bookings?doctorId=${profileId}&pageIndex=${pageIndex}&pageSize=${pageSize}&Search=${encodeURIComponent(search)}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch bookings");
+      const data = await response.json();
+      setPatients(data.data || []);
+      setPagination({
+        pageIndex: data.pageIndex || 1,
+        pageSize: data.pageSize || 10,
+        totalPages: data.totalPages || 1,
+      });
+    } catch (err) {
+      setError(err.message);
+      setPatients([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Simulate fetching patient details
-  const fetchPatientDetails = (patientId) => {
-    setSelectedPatientDetails(patientDetailsData[patientId] || null);
+  const fetchPatientDetails = async (patientId) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/patient-profiles/${patientId}`);
+      if (!response.ok) throw new Error("Failed to fetch patient details");
+      const data = await response.json();
+
+      const patientDetails = {
+        id: data.Id,
+        fullName: data.FullName || "Unknown",
+        gender: data.Gender || "Unknown",
+        contactInfo: { phoneNumber: data.PhoneNumber || "Unknown" },
+        medicalHistory: {
+          mentalDisorders: data.MedicalHistories?.[0]?.MedicalHistorySpecificMentalDisorder?.map(
+            (disorder) => ({
+              id: disorder.MentalDisorders.Id,
+              name: disorder.MentalDisorders.Name,
+              description: disorder.MentalDisorders.Description,
+            })
+          ) || [],
+          physicalSymptoms: data.MedicalHistories?.[0]?.MedicalHistoryPhysicalSymptom?.map(
+            (symptom) => ({
+              id: symptom.PhysicalSymptoms.Id,
+              name: symptom.PhysicalSymptoms.Name,
+              description: symptom.PhysicalSymptoms.Description,
+            })
+          ) || [],
+        },
+      };
+
+      setPatientDetailsData((prev) => ({ ...prev, [patientId]: patientDetails }));
+      setSelectedPatientDetails(patientDetails);
+    } catch (err) {
+      setError("Failed to fetch patient details");
+      setSelectedPatientDetails(null);
+    }
   };
 
-  // Handle patient selection
+  useEffect(() => {
+    fetchBookings(pagination.pageIndex, pagination.pageSize, searchTerm);
+  }, [pagination.pageIndex, pagination.pageSize]);
+
   const handleSelectPatient = (patient) => {
     setSelectedPatient(patient);
-    fetchPatientDetails(patient.patientId);
+    fetchPatientDetails(patient.PatientId);
   };
 
-  // Handle page change (not fully functional with hardcoded data)
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= pagination.totalPages) {
       setPagination({ ...pagination, pageIndex: newPage });
     }
   };
 
-  // Filter patients by search term
-  const filteredPatients = patients.filter((patient) =>
-    patient.bookingCode.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSearch = () => {
+    fetchBookings(1, pagination.pageSize, searchTerm);
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 py-6 px-2 gap-1">
-      {/* Patient List Section */}
       <div className="w-1/3">
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <div className="p-6 border-b">
@@ -106,13 +106,17 @@ const PatientBooking = () => {
               Waiting For Examination
             </h2>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search by booking code..."
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer"
+                onClick={handleSearch}
               />
             </div>
           </div>
@@ -147,27 +151,24 @@ const PatientBooking = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {filteredPatients.map((patient) => (
+                    {patients.map((patient) => (
                       <tr
-                        key={patient.bookingCode}
-                        className={`hover:bg-gray-50 transition-colors duration-150 ${selectedPatient?.bookingCode === patient.bookingCode
-                          ? "bg-purple-50"
-                          : ""
+                        key={patient.Id}
+                        className={`hover:bg-gray-50 transition-colors duration-150 ${selectedPatient?.Id === patient.Id ? "bg-purple-50" : ""
                           }`}
                       >
                         <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                          {patient.bookingCode?.split("-")[1]}
+                          {patient.BookingCode}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {patient.date}
+                          {patient.Date}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
-                          {patient.startTime}
+                          {patient.StartTime}
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <button
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${selectedPatient?.bookingCode ===
-                              patient.bookingCode
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${selectedPatient?.Id === patient.Id
                               ? "bg-purple-600 text-white hover:bg-purple-700"
                               : "bg-purple-100 text-purple-700 hover:bg-purple-200"
                               }`}
@@ -182,8 +183,7 @@ const PatientBooking = () => {
                 </table>
               </div>
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between px-6 py-4 bg-gray-50">
+              <div className="float-end my-2 mx-2">
                 <button
                   className="px-4 py-2 flex items-center text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => handlePageChange(pagination.pageIndex - 1)}
@@ -192,7 +192,7 @@ const PatientBooking = () => {
                   <ChevronLeft className="w-4 h-4 mr-2" />
                   Pre
                 </button>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-700 mx-2">
                   Page {pagination.pageIndex} / {pagination.totalPages}
                 </span>
                 <button
@@ -209,7 +209,6 @@ const PatientBooking = () => {
         </div>
       </div>
 
-      {/* Medical Record Creation Section */}
       <div className="w-2/3">
         <CreateMedical
           selectedPatient={selectedPatient}

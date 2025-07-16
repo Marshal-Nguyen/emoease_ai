@@ -1,37 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { User, FileText, Search } from "lucide-react";
 import { toast } from "react-toastify";
 
 const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
-  // Hardcoded mental disorders
-  const [mentalDisorders] = useState([
-    {
-      id: "1",
-      mentalDisorderName: "Anxiety",
-      name: "Generalized Anxiety Disorder",
-    },
-    {
-      id: "2",
-      mentalDisorderName: "Depression",
-      name: "Major Depressive Disorder",
-    },
-    {
-      id: "3",
-      mentalDisorderName: "PTSD",
-      name: "Post-Traumatic Stress Disorder",
-    },
-    {
-      id: "4",
-      mentalDisorderName: "Bipolar",
-      name: "Bipolar II Disorder",
-    },
-  ]);
-
+  const [mentalDisorders, setMentalDisorders] = useState([]);
   const [selectedDisorders, setSelectedDisorders] = useState([]);
   const [currentPage] = useState(1);
-  const [totalPages] = useState(1); // Only one page for hardcoded data
+  const [totalPages] = useState(1);
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("Processing");
+  const [newDisorders, setNewDisorders] = useState([{ Name: "", Description: "" }]);
+
+  // Fetch mental disorders from API
+  useEffect(() => {
+    fetch("http://localhost:3000/special-disorders")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          setMentalDisorders(data.data);
+        } else {
+          toast.error("Failed to fetch mental disorders");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching disorders:", error);
+        toast.error("Error fetching mental disorders");
+      });
+  }, []);
 
   const toggleDisorderSelection = (disorderId) => {
     setSelectedDisorders((prev) =>
@@ -41,21 +36,69 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
     );
   };
 
-  const submitMedicalRecord = () => {
+  const handleNewDisorderChange = (index, e) => {
+    const { name, value } = e.target;
+    setNewDisorders((prev) =>
+      prev.map((disorder, i) =>
+        i === index ? { ...disorder, [name]: value } : disorder
+      )
+    );
+  };
+
+  const addNewDisorderField = () => {
+    setNewDisorders((prev) => [...prev, { Name: "", Description: "" }]);
+  };
+
+  const removeNewDisorderField = (index) => {
+    setNewDisorders((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const submitMedicalRecord = async () => {
     if (!selectedPatient) {
       toast.error("Please select a patient!");
       return;
     }
-    console.log("Submitting medical record:", {
-      patientProfileId: selectedPatient.patientId,
+
+    // Prepare mental disorders array combining selected disorders and new disorders
+    const selectedMentalDisorders = mentalDisorders
+      .filter((disorder) => selectedDisorders.includes(disorder.Id))
+      .map((disorder) => ({
+        name: disorder.Name,
+        description: disorder.Description || "No description",
+      }));
+
+    const newMentalDisorders = newDisorders
+      .filter((disorder) => disorder.Name.trim() !== "")
+      .map((disorder) => ({
+        name: disorder.Name,
+        description: disorder.Description || "No description",
+      }));
+
+    const payload = {
+      patientId: patientDetails.id,
       doctorId: profileId,
-      notes: notes || "No notes provided",
-      status: status,
-      existingDisorderIds: selectedDisorders,
-    });
-    toast.success(
-      "Medical record created and booking status updated successfully!"
-    );
+      bookingId: selectedPatient.Id,
+      description: notes || "Khám ban đầu",
+      diagnosedAt: new Date().toISOString().split("T")[0], // Current date in YYYY-MM-DD format
+      mentalDisorders: [...selectedMentalDisorders, ...newMentalDisorders],
+    };
+
+    try {
+      const response = await fetch("http://localhost:3000/api/medical-records", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      toast.success("Medical record created and booking status updated successfully!");
+
+
+
+    } catch (error) {
+      console.error("Error submitting medical record:", error);
+      toast.error("Error submitting medical record");
+    }
   };
 
   return (
@@ -66,7 +109,7 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
         </h2>
         {selectedPatient && (
           <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
-            Code: {selectedPatient.bookingCode}
+            Code: {selectedPatient.BookingCode}
           </span>
         )}
       </div>
@@ -133,14 +176,19 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
                     Mental Disorders
                   </label>
                   <div className="mt-1 space-y-2">
-                    {patientDetails.medicalHistory.specificMentalDisorders.map(
+                    {patientDetails.medicalHistory.mentalDisorders.map(
                       (disorder) => (
-                        <span
+                        <div
                           key={disorder.id}
-                          className="inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs mr-2"
+                          className="inline-block px-3 py-2 bg-purple-100 text-purple-700 rounded-lg text-xs mr-2"
                         >
-                          {disorder.name}
-                        </span>
+                          <div className="text-sm font-semibold">
+                            {disorder.name}
+                          </div>
+                          <div className="text-xs">
+                            {disorder.description || "No description"}
+                          </div>
+                        </div>
                       )
                     )}
                   </div>
@@ -152,12 +200,17 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
                   <div className="mt-1 space-y-2">
                     {patientDetails.medicalHistory.physicalSymptoms.map(
                       (symptom) => (
-                        <span
+                        <div
                           key={symptom.id}
-                          className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs mr-2"
+                          className="inline-block px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-xs mr-2"
                         >
-                          {symptom.name}
-                        </span>
+                          <div className="text-sm font-semibold">
+                            {symptom.name}
+                          </div>
+                          <div className="text-xs mt-1">
+                            {symptom.description || "No description"}
+                          </div>
+                        </div>
                       )
                     )}
                   </div>
@@ -175,21 +228,23 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
             <div className="grid grid-cols-2 gap-4 mb-4">
               {mentalDisorders.map((disorder) => (
                 <div
-                  key={disorder.id}
-                  className={`p-3 border rounded-md cursor-pointer transition-all ${selectedDisorders.includes(disorder.id)
-                      ? "bg-purple-100 border-purple-500"
-                      : "bg-white border-gray-300 hover:bg-gray-50"
+                  key={disorder.Id}
+                  className={`p-3 border rounded-md cursor-pointer transition-all ${selectedDisorders.includes(disorder.Id)
+                    ? "bg-purple-100 border-purple-500"
+                    : "bg-white border-gray-300 hover:bg-gray-50"
                     }`}
-                  onClick={() => toggleDisorderSelection(disorder.id)}
+                  onClick={() => toggleDisorderSelection(disorder.Id)}
                 >
                   <div className="flex justify-between items-center">
                     <div>
                       <h4 className="font-semibold text-gray-800">
-                        {disorder.mentalDisorderName}
+                        {disorder.Name}
                       </h4>
-                      <p className="text-xs text-gray-600">{disorder.name}</p>
+                      <p className="text-xs text-gray-600">
+                        {disorder.Description}
+                      </p>
                     </div>
-                    {selectedDisorders.includes(disorder.id) && (
+                    {selectedDisorders.includes(disorder.Id) && (
                       <div className="w-5 h-5 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs">
                         ✓
                       </div>
@@ -199,13 +254,67 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
               ))}
             </div>
 
+            {/* New Disorder Input */}
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-600 mb-2">
+                Add New Disorder
+              </h4>
+              {newDisorders.map((disorder, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-2 gap-4 mb-2 relative"
+                >
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      name="Name"
+                      value={disorder.Name}
+                      onChange={(e) => handleNewDisorderChange(index, e)}
+                      className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-purple-500"
+                      placeholder="Enter disorder name"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      name="Description"
+                      value={disorder.Description}
+                      onChange={(e) => handleNewDisorderChange(index, e)}
+                      className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-purple-500"
+                      placeholder="Enter disorder description"
+                    />
+                  </div>
+                  {newDisorders.length > 1 && (
+                    <button
+                      onClick={() => removeNewDisorderField(index)}
+                      className="absolute -top-2 -right-2 text-red-500 hover:text-red-700 text-sm"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                onClick={addNewDisorderField}
+                className="mt-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 flex items-center"
+              >
+                <span className="mr-2">+</span> Add
+              </button>
+            </div>
+
             {/* Pagination */}
             <div className="flex justify-center items-center space-x-4 mt-4">
               <button
                 disabled={currentPage === 1}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md disabled:opacity-50"
               >
-                Pre
+                Previous
               </button>
               <span className="text-sm text-gray-600">
                 Page {currentPage} / {totalPages}

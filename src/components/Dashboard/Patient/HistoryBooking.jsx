@@ -55,7 +55,7 @@ const HistoryBooking = () => {
           Search: search,
           SortBy: sortBy,
           SortOrder: sortOrder,
-          PatientId: patientId,
+          patientId: patientId,
         },
         headers: {
           "Content-Type": "application/json",
@@ -496,20 +496,18 @@ const HistoryBooking = () => {
               {/* Thông tin hoàn tiền */}
               {refundInfo && (
                 <div
-                  className={`mb-4 p-4 rounded-lg border-l-4 ${
-                    refundInfo.willRefund
+                  className={`mb-4 p-4 rounded-lg border-l-4 ${refundInfo.willRefund
                       ? "bg-green-50 border-green-400"
                       : "bg-orange-50 border-orange-400"
-                  }`}
+                    }`}
                 >
                   <div className="flex">
                     <div className="flex-shrink-0">
                       <svg
-                        className={`h-5 w-5 ${
-                          refundInfo.willRefund
+                        className={`h-5 w-5 ${refundInfo.willRefund
                             ? "text-green-400"
                             : "text-orange-400"
-                        }`}
+                          }`}
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -530,20 +528,18 @@ const HistoryBooking = () => {
                     </div>
                     <div className="ml-3">
                       <h4
-                        className={`text-sm font-medium ${
-                          refundInfo.willRefund
+                        className={`text-sm font-medium ${refundInfo.willRefund
                             ? "text-green-800"
                             : "text-orange-800"
-                        }`}
+                          }`}
                       >
                         Refund Information
                       </h4>
                       <p
-                        className={`text-sm ${
-                          refundInfo.willRefund
+                        className={`text-sm ${refundInfo.willRefund
                             ? "text-green-700"
                             : "text-orange-700"
-                        }`}
+                          }`}
                       >
                         {refundInfo.message}
                       </p>
@@ -791,11 +787,11 @@ const HistoryBooking = () => {
                                 {booking.Status.toLowerCase() === "cancelled"
                                   ? "Cancelled"
                                   : !canCancelByTime(
-                                      booking.Date,
-                                      booking.StartTime
-                                    )
-                                  ? "Cancellation expired (< 30 minutes)"
-                                  : "Cannot cancel"}
+                                    booking.Date,
+                                    booking.StartTime
+                                  )
+                                    ? "Cancellation expired (< 30 minutes)"
+                                    : "Cannot cancel"}
                               </span>
                             )}
                           </td>
@@ -857,11 +853,10 @@ const HistoryBooking = () => {
                       </span>
                     )}
                     <button
-                      className={`px-3 py-1 rounded-md text-sm font-medium ${
-                        pageIndex === page
+                      className={`px-3 py-1 rounded-md text-sm font-medium ${pageIndex === page
                           ? "bg-blue-500 text-white"
                           : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
+                        }`}
                       onClick={() => handlePageChange(page)}
                     >
                       {page}
