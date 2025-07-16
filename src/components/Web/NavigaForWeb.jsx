@@ -235,7 +235,8 @@ const NavigaForWeb = () => {
             onClick={handleComingSoon}
             className="hover:text-purple-500 cursor-pointer relative group text-base"
             data-tooltip-id="coming-soon-tooltip"
-            data-tooltip-content="Coming Soon!">
+            data-tooltip-content="Coming Soon!"
+          >
             {shortMenu ? "Ga.." : "Game"}
             <span className="absolute -top-2 -right-4 bg-yellow-400 text-xs px-1 rounded-full text-white">
               Soon
@@ -247,22 +248,27 @@ const NavigaForWeb = () => {
               location.pathname === "/EMO/learnAboutEmo"
                 ? "text-purple-500"
                 : ""
-            }`}>
+            }`}
+          >
             {shortMenu ? "Lear..." : "Learn about EmoEase"}
           </Link>
-          <Link
-            to="counselor"
-            className={`hover:text-purple-500 ${
-              location.pathname === "/EMO/counselor" ? "text-purple-500" : ""
-            }`}>
-            Therapist
-          </Link>
+          {userRole === "User" && (
+            <Link
+              to="counselor"
+              className={`hover:text-purple-500 ${
+                location.pathname === "/EMO/counselor" ? "text-purple-500" : ""
+              }`}
+            >
+              Therapist
+            </Link>
+          )}
         </div>
         {/* Logo giữa */}
         <div className="flex flex-1 justify-center min-w-0">
           <Link to="/">
             <div
-              className={`${styles.knewave} text-[#4a2580] font-light text-5xl tracking-widest`}>
+              className={`${styles.knewave} text-[#4a2580] font-light text-5xl tracking-widest`}
+            >
               EMOEASE
             </div>
           </Link>
@@ -275,7 +281,8 @@ const NavigaForWeb = () => {
             onClick={handleComingSoon}
             className="hover:text-purple-500 cursor-pointer relative group text-base"
             data-tooltip-id="coming-soon-tooltip"
-            data-tooltip-content="Coming Soon!">
+            data-tooltip-content="Coming Soon!"
+          >
             {shortMenu ? "Ex.." : "Extras"}
             <span className="absolute -top-2 -right-4 bg-yellow-400 text-xs px-1 rounded-full text-white">
               Soon
@@ -285,7 +292,8 @@ const NavigaForWeb = () => {
             to="shop"
             className={`hover:text-purple-500 ${
               location.pathname === "/EMO/shop" ? "text-purple-500" : ""
-            }`}>
+            }`}
+          >
             Store
           </Link>
           {isLoggedIn ? (
@@ -304,12 +312,14 @@ const NavigaForWeb = () => {
       <div className="flex w-full items-center justify-between md:hidden">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-white/30 backdrop-blur-md shadow px-3 py-2 rounded-xl text-sm font-semibold">
+          className="bg-white/30 backdrop-blur-md shadow px-3 py-2 rounded-xl text-sm font-semibold"
+        >
           <Menu className="w-5 h-5 text-[#C8A2C8]" />
         </button>
         <div className="pointer-events-none select-none flex-1 flex justify-center">
           <div
-            className={`${styles.knewave} text-[#4a2580] font-light text-2xl tracking-widest`}>
+            className={`${styles.knewave} text-[#4a2580] font-light text-2xl tracking-widest`}
+          >
             EMOEASE
           </div>
         </div>
@@ -329,19 +339,22 @@ const NavigaForWeb = () => {
           {/* Menu mobile */}
           <div
             ref={mobileMenuRef}
-            className="md:hidden absolute top-full left-0 w-full bg-gradient-to-b from-purple-50 to-white shadow-lg rounded-b-2xl z-[1000] pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out">
+            className="md:hidden absolute top-full left-0 w-full bg-gradient-to-b from-purple-50 to-white shadow-lg rounded-b-2xl z-[1000] pointer-events-auto overflow-hidden transition-all duration-300 ease-in-out"
+          >
             <div className="p-4">
               <Link
                 to="learnAboutEmo"
                 className="flex items-center justify-between px-4 py-3 bg-white bg-opacity-90 rounded-lg mb-2 hover:bg-purple-100 hover:text-purple-700 transition-colors duration-200 text-base border-none shadow-sm"
-                onClick={handleMenuItemClick}>
+                onClick={handleMenuItemClick}
+              >
                 <span>Learn about EmoEase</span>
                 <span className="text-purple-500">📖</span>
               </Link>
               <Link
                 to="shop"
                 className="flex items-center justify-between px-4 py-3 bg-white bg-opacity-90 rounded-lg mb-2 hover:bg-purple-100 hover:text-purple-700 transition-colors duration-200 text-base border-none shadow-sm"
-                onClick={handleMenuItemClick}>
+                onClick={handleMenuItemClick}
+              >
                 <span>Store</span>
                 <span className="text-purple-500">🛒</span>
               </Link>
@@ -349,7 +362,8 @@ const NavigaForWeb = () => {
                 <Link
                   to="/AIChatBoxWithEmo"
                   onClick={handleTestClick}
-                  className="flex items-center justify-center px-4 py-2">
+                  className="flex items-center justify-center px-4 py-2"
+                >
                   <span>
                     <StartButton />
                   </span>
@@ -360,7 +374,8 @@ const NavigaForWeb = () => {
                     handleMenuItemClick();
                     dispatch(openLoginModal());
                   }}
-                  className="flex items-center justify-center w-full text-left px-4 py-2">
+                  className="flex items-center justify-center w-full text-left px-4 py-2"
+                >
                   <span>
                     <StartButton />
                   </span>

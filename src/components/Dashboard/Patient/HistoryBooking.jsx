@@ -39,6 +39,7 @@ const HistoryBooking = () => {
 
   // ID bệnh nhân cố định (có thể chuyển thành prop nếu cần)
   const patientId = useSelector((state) => state.auth.profileId);
+  console.log("Patient ID:", patientId);
   const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API;
   const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
   // Hàm lấy dữ liệu booking
@@ -55,7 +56,7 @@ const HistoryBooking = () => {
           Search: search,
           SortBy: sortBy,
           SortOrder: sortOrder,
-          PatientId: patientId,
+          patientId: patientId,
         },
         headers: {
           "Content-Type": "application/json",
@@ -788,14 +789,16 @@ const HistoryBooking = () => {
                               </button>
                             ) : (
                               <span className="text-gray-400 text-xs italic">
-                                {booking.Status.toLowerCase() === "cancelled"
+                                {/* {booking.Status.toLowerCase() === "cancelled"
                                   ? "Cancelled"
                                   : !canCancelByTime(
                                       booking.Date,
                                       booking.StartTime
                                     )
                                   ? "Cancellation expired (< 30 minutes)"
-                                  : "Cannot cancel"}
+                                  : "Cannot cancel"} */}
+                                {booking.Status.toLowerCase() === "cancelled" &&
+                                  "Cancelled"}
                               </span>
                             )}
                           </td>
