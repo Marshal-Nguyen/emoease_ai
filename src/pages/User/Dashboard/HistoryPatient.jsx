@@ -16,7 +16,8 @@ const HistoryPatient = () => {
             activeTab === "Result"
               ? "bg-white text-blue-600 shadow-sm"
               : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-          }`}>
+          }`}
+        >
           <div className="flex flex-col items-center">
             <span>Test Results</span>
             <span className="text-xs text-gray-500">
@@ -31,7 +32,8 @@ const HistoryPatient = () => {
             activeTab === "Booking"
               ? "bg-white text-blue-600 shadow-sm"
               : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-          }`}>
+          }`}
+        >
           <div className="flex flex-col items-center">
             <span>Bookings</span>
             <span className="text-xs text-gray-500">

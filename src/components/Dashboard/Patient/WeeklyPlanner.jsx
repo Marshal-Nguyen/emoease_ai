@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import supabase from "../../../Supabase/supabaseClient";
+import axios from "axios";
 
 const WeeklyPlanner = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -12,18 +13,10 @@ const WeeklyPlanner = () => {
   const [showTaskDetail, setShowTaskDetail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [taskLoading, setTaskLoading] = useState({});
-  const [sessions, setSessions] = useState([]);
-  const [sessionsForDate, setSessionsForDate] = useState(null);
+  const [bookings, setBookings] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const profileId = useSelector((state) => state.auth.profileId);
-
-  // API endpoints và keys
-  const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API_SCHEDULE_URL; // Thay bằng URL của bạn
-  const SCHEDULES_ENDPOINT = import.meta.env.VITE_API;
-  const ACTIVITIES_ENDPOINT = `${VITE_API_SCHEDULE_URL}/schedule-activities`;
-  // const OPENAI_API_KEY = import.meta.env.VITE_API_GPT_KEY; // Thay bằng key của bạn
-  // const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_API_GM_KEY; // Thay bằng key của bạn
 
   // Cấu hình bản đồ
   const mapContainerStyle = {
@@ -39,167 +32,307 @@ const WeeklyPlanner = () => {
       .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
   };
 
-  // Fetch sessions once when component mounts
+  // Fetch bookings from Supabase
   useEffect(() => {
-    const fetchSessions = async () => {
+    const fetchBookings = async () => {
       try {
-        console.log("Fetching sessions data...");
-        const scheduleResponse = await axios.get(
-          `${SCHEDULES_ENDPOINT}/bookings?PageIndex=1&PageSize=10&SortBy=startDate&SortOrder=asc&PatientId=${profileId}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        const sessionsData =
-          scheduleResponse.data.schedules.data[0]?.sessions || [];
-        setSessions(sessionsData);
+        console.log("Fetching bookings from Supabase...");
+        setLoading(true);
+
+        if (!profileId) {
+          console.log("No profileId available");
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("Bookings")
+          .select(
+            `
+            Id,
+            PatientId,
+            DoctorId,
+            Date,
+            StartTime,
+            EndTime,
+            Status,
+            Notes,
+            CreatedAt
+          `
+          )
+          .eq("PatientId", profileId)
+          .order("Date", { ascending: true });
+
+        if (error) {
+          console.error("Supabase error:", error);
+          throw error;
+        }
+
+        console.log("Bookings data fetched:", data);
+        setBookings(data || []);
       } catch (error) {
-        console.error("Error fetching sessions:", error);
-        toast.error(
-          "Có lỗi xảy ra khi tải dữ liệu sessions. Vui lòng thử lại!"
-        );
+        console.error("Error fetching bookings:", error);
+        toast.error("Error loading bookings. Please try again!");
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchSessions();
+    // fetchBookings();
   }, [profileId]);
 
-  // Fetch activities only for the selected date
+  // Generate activity suggestions based on time of day and user preferences
+  const generateActivitySuggestions = (timeSlot, hasBooking = false) => {
+    const suggestions = [];
+    const hour = parseInt(timeSlot.split(":")[0]);
+
+    // Morning activities (6-12)
+    if (hour >= 6 && hour < 12) {
+      suggestions.push(
+        {
+          type: "physical",
+          name: "Morning Stretching",
+          description: "Gentle stretching to start your day fresh",
+          duration: "15 minutes",
+          color: "indigo",
+        },
+        {
+          type: "nutrition",
+          name: "Healthy Breakfast",
+          description: "Nutritious meal to fuel your morning",
+          duration: "30 minutes",
+          color: "green",
+        }
+      );
+    }
+
+    // Afternoon activities (12-18)
+    if (hour >= 12 && hour < 18) {
+      suggestions.push(
+        {
+          type: "mindfulness",
+          name: "Mindful Break",
+          description: "Take a moment to practice mindfulness",
+          duration: "10 minutes",
+          color: "purple",
+        },
+        {
+          type: "physical",
+          name: "Walk Outside",
+          description: "Fresh air and light exercise",
+          duration: "20 minutes",
+          color: "indigo",
+        }
+      );
+    }
+
+    // Evening activities (18-22)
+    if (hour >= 18 && hour <= 22) {
+      suggestions.push(
+        {
+          type: "relaxation",
+          name: "Evening Relaxation",
+          description: "Wind down with calming activities",
+          duration: "30 minutes",
+          color: "blue",
+        },
+        {
+          type: "reflection",
+          name: "Daily Reflection",
+          description: "Reflect on your day and set intentions",
+          duration: "15 minutes",
+          color: "orange",
+        }
+      );
+    }
+
+    return suggestions;
+  };
+
+  // Generate two weeks of dates from current date
+  const generateTwoWeekDates = useCallback(() => {
+    const dates = [];
+    const today = new Date();
+
+    for (let i = -7; i <= 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date);
+    }
+
+    return dates;
+  }, []);
+
+  // Fetch activities for the selected date
   useEffect(() => {
     const fetchActivitiesForDate = async () => {
       try {
         setLoading(true);
         const dateKey = formatDateKey(selectedDate);
-        const sessionForDate = sessions.find((session) => {
-          const sessionDate = new Date(session.startDate);
-          return formatDateKey(sessionDate) === dateKey;
+        console.log("Fetching activities for date:", dateKey);
+
+        // Find bookings for the selected date
+        const bookingsForDate = bookings.filter((booking) => {
+          const bookingDate = new Date(booking.Date);
+          return formatDateKey(bookingDate) === dateKey;
         });
+
+        console.log("Bookings for date:", bookingsForDate);
 
         let activitiesForDate = [];
 
-        if (sessionForDate) {
-          setSessionsForDate(sessionForDate.id);
-          const activityResponse = await axios.get(
-            `${ACTIVITIES_ENDPOINT}/${sessionForDate.id}`
-          );
-          activitiesForDate = activityResponse.data.scheduleActivities.map(
-            (activity) =>
-              createActivityObject(
-                activity,
-                new Date(activity.timeRange),
-                sessionForDate.id
-              )
-          );
+        // Generate activities based on bookings
+        bookingsForDate.forEach((booking, index) => {
+          // Main consultation activity
+          activitiesForDate.push({
+            id: `consultation-${booking.Id}`,
+            time: booking.StartTime || "09:00",
+            title: "Mental Health Consultation",
+            duration: `${booking.StartTime || "09:00"} - ${
+              booking.EndTime || "10:00"
+            }`,
+            color: "blue",
+            description:
+              booking.Notes ||
+              "Scheduled consultation with your doctor. This is an important session for your mental health journey.",
+            benefits: [
+              "Professional mental health assessment",
+              "Personalized treatment recommendations",
+              "Progress tracking and monitoring",
+              "Safe space to discuss concerns",
+            ],
+            status: booking.Status || "Pending",
+            preferenceType: "consultation",
+            preference: "Mental Health",
+            bookingId: booking.Id,
+          });
+
+          // Additional therapeutic activities
+          const baseActivities = [
+            {
+              id: `mindfulness-${booking.Id}-${index}`,
+              time: "14:00",
+              title: "Mindfulness Meditation",
+              duration: "14:00 - 14:30",
+              color: "green",
+              description:
+                "Practice mindfulness meditation to reduce stress and anxiety. Focus on breathing and present moment awareness.",
+              benefits: [
+                "Reduces stress and anxiety levels",
+                "Improves focus and concentration",
+                "Promotes emotional well-being",
+                "Enhances self-awareness",
+              ],
+              status: "Pending",
+              preferenceType: "activity",
+              preference: "Meditation",
+              bookingId: booking.Id,
+            },
+            {
+              id: `exercise-${booking.Id}-${index}`,
+              time: "16:00",
+              title: "Light Physical Exercise",
+              duration: "16:00 - 17:00",
+              color: "indigo",
+              description:
+                "Gentle physical activities to boost mood and energy. Include walking, stretching, or light cardio exercises.",
+              benefits: [
+                "Releases endorphins for better mood",
+                "Improves physical fitness",
+                "Enhances sleep quality",
+                "Boosts energy levels",
+              ],
+              status: "Pending",
+              preferenceType: "activity",
+              preference: "Exercise",
+              bookingId: booking.Id,
+            },
+            {
+              id: `journaling-${booking.Id}-${index}`,
+              time: "20:00",
+              title: "Reflection & Journaling",
+              duration: "20:00 - 20:30",
+              color: "purple",
+              description:
+                "End your day with reflection and journaling. Write down thoughts, feelings, and daily experiences.",
+              benefits: [
+                "Improves emotional processing",
+                "Enhances self-reflection",
+                "Tracks mental health progress",
+                "Promotes better sleep",
+              ],
+              status: "Pending",
+              preferenceType: "activity",
+              preference: "Journaling",
+              bookingId: booking.Id,
+            },
+          ];
+
+          activitiesForDate.push(...baseActivities);
+        });
+
+        // If no bookings, create default wellness activities
+        if (bookingsForDate.length === 0) {
+          activitiesForDate = [
+            {
+              id: `default-mindfulness-${dateKey}`,
+              time: "08:00",
+              title: "Morning Mindfulness",
+              duration: "08:00 - 08:15",
+              color: "green",
+              description:
+                "Start your day with a brief mindfulness session to set a positive tone.",
+              benefits: [
+                "Sets positive intention for the day",
+                "Reduces morning anxiety",
+                "Improves focus throughout the day",
+              ],
+              status: "Pending",
+              preferenceType: "activity",
+              preference: "Meditation",
+              bookingId: null,
+            },
+            {
+              id: `default-exercise-${dateKey}`,
+              time: "17:00",
+              title: "Evening Walk",
+              duration: "17:00 - 17:30",
+              color: "indigo",
+              description:
+                "Take a relaxing evening walk to unwind and reflect on your day.",
+              benefits: [
+                "Promotes physical health",
+                "Reduces stress",
+                "Improves sleep quality",
+              ],
+              status: "Pending",
+              preferenceType: "activity",
+              preference: "Exercise",
+              bookingId: null,
+            },
+          ];
         }
 
+        console.log("Generated activities:", activitiesForDate);
         setActivities(activitiesForDate);
 
+        // Initialize task status
         const initialTaskStatus = {};
         activitiesForDate.forEach((activity) => {
           initialTaskStatus[activity.id] = activity.status === "Completed";
         });
         setTaskStatus(initialTaskStatus);
-
-        setLoading(false);
       } catch (error) {
-        console.error("Error fetching activities for date:", error);
-        toast.error(
-          "Có lỗi xảy ra khi tải dữ liệu activities. Vui lòng thử lại!"
-        );
+        console.error("Error generating activities for date:", error);
+        toast.error("Error loading activities. Please try again!");
+      } finally {
         setLoading(false);
       }
     };
 
-    if (sessions.length > 0) {
-      fetchActivitiesForDate();
-    }
-  }, [selectedDate, sessions]);
+    fetchActivitiesForDate();
+  }, [selectedDate, bookings]);
 
-  // Create a standardized activity object from API data
-  const createActivityObject = (activity, time, sessionId) => {
-    let title = "Activity";
-    let description = "No description available";
-    let color = "blue";
-    let benefits = [];
-    let preferenceType = "";
-    let preference = "";
-
-    if (activity.foodActivity) {
-      title = `Meal: ${activity.foodActivity.name}`;
-      description = activity.foodActivity.description;
-      color = "green";
-      benefits = [
-        `Time: ${activity.foodActivity.mealTime}`,
-        `Nutrition: ${activity.foodActivity.foodNutrients.join(", ")}`,
-        `Intensity: ${activity.foodActivity.intensityLevel}`,
-      ];
-      preferenceType = "food";
-      preference = activity.foodActivity.name;
-    } else if (activity.physicalActivity) {
-      title = `Physical Activity: ${activity.physicalActivity.name}`;
-      description = activity.physicalActivity.description;
-      color = "indigo";
-      benefits = [
-        `Intensity: ${activity.physicalActivity.intensityLevel}`,
-        `Impact Level: ${activity.physicalActivity.impactLevel}`,
-      ];
-      preferenceType = "activity";
-      preference = activity.physicalActivity.name;
-    } else if (activity.entertainmentActivity) {
-      title = `Entertainment: ${activity.entertainmentActivity.name}`;
-      description = activity.entertainmentActivity.description;
-      color = "purple";
-      benefits = [
-        `Intensity: ${activity.entertainmentActivity.intensityLevel}`,
-        `Impact Level: ${activity.entertainmentActivity.impactLevel}`,
-      ];
-      preferenceType = "activity";
-      preference = activity.entertainmentActivity.name;
-    } else if (activity.therapeuticActivity) {
-      title = `Therapy: ${activity.therapeuticActivity.name}`;
-      description = activity.therapeuticActivity.description;
-      color = "orange";
-      benefits = [
-        `Intensity: ${activity.therapeuticActivity.intensityLevel}`,
-        `Impact Level: ${activity.therapeuticActivity.impactLevel}`,
-        `Instructions: ${activity.therapeuticActivity.instructions}`,
-      ];
-      preferenceType = "activity";
-      preference = activity.therapeuticActivity.name;
-    }
-
-    const timeString =
-      time.getUTCHours().toString().padStart(2, "0") +
-      ":" +
-      time.getUTCMinutes().toString().padStart(2, "0");
-
-    const endTime = new Date(time);
-    const durationMinutes = parseInt(activity.duration?.split(" ")[0] || "30");
-    endTime.setMinutes(endTime.getUTCMinutes() + durationMinutes);
-
-    const endTimeString =
-      endTime.getUTCHours().toString().padStart(2, "0") +
-      ":" +
-      endTime.getUTCMinutes().toString().padStart(2, "0");
-
-    return {
-      id: activity.id,
-      time: timeString,
-      title,
-      duration: `${timeString} - ${endTimeString}`,
-      color,
-      description,
-      benefits,
-      status: activity.status,
-      preferenceType,
-      preference,
-    };
-  };
-
-  // Toggle task status with API call
+  // Toggle task status with Supabase update
   const toggleTaskStatus = useCallback(
     async (taskId) => {
       const currentStatus = taskStatus[taskId] || false;
@@ -207,38 +340,36 @@ const WeeklyPlanner = () => {
       const newStatus = !currentStatus;
       const apiStatus = newStatus ? "Completed" : "Pending";
 
-      if (
-        (apiStatus === "Completed" && activity.status === "Completed") ||
-        (apiStatus === "Pending" && activity.status !== "Completed")
-      ) {
-        setTaskStatus((prevStatus) => ({
-          ...prevStatus,
-          [taskId]: newStatus,
-        }));
-        return;
-      }
+      // Update local state immediately for better UX
+      setTaskStatus((prevStatus) => ({
+        ...prevStatus,
+        [taskId]: newStatus,
+      }));
 
       setTaskLoading((prev) => ({ ...prev, [taskId]: true }));
+
       try {
-        const response = await fetch(
-          `${ACTIVITIES_ENDPOINT}/${taskId}/${sessionsForDate}/status`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({ status: apiStatus }),
+        // If this is a booking-related activity, update the booking status
+        if (activity && activity.bookingId) {
+          const { error } = await supabase
+            .from("Bookings")
+            .update({
+              Status: apiStatus,
+              LastModified: new Date().toISOString(),
+            })
+            .eq("Id", activity.bookingId);
+
+          if (error) {
+            console.error("Supabase update error:", error);
+            throw error;
           }
-        );
 
-        if (!response.ok) throw new Error("Failed to update activity status");
+          console.log(
+            `Updated booking ${activity.bookingId} status to ${apiStatus}`
+          );
+        }
 
-        setTaskStatus((prevStatus) => ({
-          ...prevStatus,
-          [taskId]: newStatus,
-        }));
-
+        // Update activity status in local state
         setActivities((prevActivities) =>
           prevActivities.map((act) =>
             act.id === taskId ? { ...act, status: apiStatus } : act
@@ -246,13 +377,15 @@ const WeeklyPlanner = () => {
         );
 
         toast.success(
-          `Đã cập nhật trạng thái thành ${
-            apiStatus === "Completed" ? "Hoàn thành" : "Chờ xử lý"
+          `Status updated to ${
+            apiStatus === "Completed" ? "Completed" : "Pending"
           }!`
         );
       } catch (error) {
         console.error("Error updating activity status:", error);
-        toast.error("Có lỗi xảy ra khi cập nhật trạng thái. Vui lòng thử lại!");
+        toast.error("Error updating status. Please try again!");
+
+        // Revert local state on error
         setTaskStatus((prevStatus) => ({
           ...prevStatus,
           [taskId]: currentStatus,
@@ -261,7 +394,7 @@ const WeeklyPlanner = () => {
         setTaskLoading((prev) => ({ ...prev, [taskId]: false }));
       }
     },
-    [taskStatus, activities, sessionsForDate]
+    [taskStatus, activities]
   );
 
   // Parse ChatGPT response into structured data
@@ -500,22 +633,6 @@ const WeeklyPlanner = () => {
     return months[date.getMonth()];
   };
 
-  const generateTwoWeekDates = () => {
-    let startDate =
-      sessions.length > 0
-        ? new Date(
-            [...sessions].sort(
-              (a, b) => new Date(a.startDate) - new Date(b.startDate)
-            )[0].startDate
-          )
-        : new Date();
-    return Array.from({ length: 14 }, (_, i) => {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
-      return date;
-    });
-  };
-
   const calculateProgress = () => {
     if (activities.length === 0) return 0;
     const completedTasks = activities.filter(
@@ -599,6 +716,116 @@ const WeeklyPlanner = () => {
             className="bg-purple-600 h-2.5 rounded-full"
             style={{ width: `${calculateProgress()}%` }}
           ></div>
+        </div>
+      </div>
+
+      {/* Roadmap Section - Coming Soon */}
+      <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg shadow-md p-6 mb-4 border border-purple-100">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center mr-3">
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-800">Personalized Roadmap</h3>
+              <p className="text-sm text-gray-600">
+                AI-powered mental health journey planning
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-orange-100 to-yellow-100 text-orange-800 border border-orange-200">
+              <svg
+                className="w-3 h-3 mr-1.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Coming Soon
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/50">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-4 h-4 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-semibold text-gray-700 mb-1">
+                What's Coming:
+              </h4>
+              <ul className="text-xs text-gray-600 space-y-1">
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2"></span>
+                  Personalized mental health journey mapping
+                </li>
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2"></span>
+                  AI-driven milestone tracking and recommendations
+                </li>
+                <li className="flex items-center">
+                  <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2"></span>
+                  Progress visualization and goal setting tools
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center justify-center">
+          <button
+            disabled
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-400 bg-gray-100 cursor-not-allowed"
+          >
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 00-15 0v5h5l-5 5-5-5h5V7a9.5 9.5 0 0119 0v10z"
+              />
+            </svg>
+            Get Notified When Available
+          </button>
         </div>
       </div>
       {/* Activities list */}

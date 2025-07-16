@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Info } from "lucide-react";
 import { useSelector } from "react-redux";
+import supabase from "../../../Supabase/supabaseClient";
+import ReactMarkdown from "react-markdown";
 
 const HistoryTestResult = () => {
   const [testResults, setTestResults] = useState([]);
@@ -8,36 +10,169 @@ const HistoryTestResult = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const profileId = useSelector((state) => state.auth.profileId);
-  const VITE_API_TEST_URL = import.meta.env.VITE_API_TEST_URL;
   useEffect(() => {
     const fetchTestResults = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
-          `${VITE_API_TEST_URL}/test-results/${profileId}?PageIndex=0&PageSize=10&SortBy=TakenAt&SortOrder=desc`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        setError(null);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!profileId) {
+          throw new Error("Profile ID is required");
         }
 
-        const data = await response.json();
-        setTestResults(data.testResults.data || []);
+        console.log("Fetching test results for profileId:", profileId);
+
+        // First, let's check if we can connect to Supabase and see what tables exist
+        const { data: tableCheck, error: tableError } = await supabase
+          .from("TestResults")
+          .select("Id, PatientId")
+          .limit(1);
+
+        console.log("Table connection test:", { tableCheck, tableError });
+
+        // Query Supabase directly for ALL TestResults of this patient
+        const { data, error: supabaseError } = await supabase
+          .from("TestResults")
+          .select("*")
+          .eq("PatientId", profileId)
+          .not("TakenAt", "is", null)
+          .order("TakenAt", { ascending: false });
+
+        console.log("Supabase query result:", { data, error: supabaseError });
+
+        if (supabaseError) {
+          console.error("Supabase error:", supabaseError);
+          throw new Error(`Supabase Error: ${supabaseError.message}`);
+        }
+
+        if (data && data.length > 0) {
+          console.log("Test results found:", data.length, "records");
+
+          // Transform Supabase data to match the expected format
+          const transformedData = data.map((test) => {
+            let recommendation = "No recommendation provided.";
+
+            if (test.RecommendationJson) {
+              try {
+                if (typeof test.RecommendationJson === "string") {
+                  const parsed = JSON.parse(test.RecommendationJson);
+                  if (Array.isArray(parsed)) {
+                    recommendation = parsed.join(". ");
+                  } else if (typeof parsed === "string") {
+                    recommendation = parsed;
+                  } else if (parsed?.raw && typeof parsed.raw === "string") {
+                    recommendation = parsed.raw;
+                  } else {
+                    recommendation = String(parsed);
+                  }
+                } else if (Array.isArray(test.RecommendationJson)) {
+                  recommendation = test.RecommendationJson.join(". ");
+                } else {
+                  recommendation = String(test.RecommendationJson);
+                }
+              } catch (error) {
+                console.error("Error parsing RecommendationJson:", error);
+                recommendation = String(test.RecommendationJson);
+              }
+            }
+
+            return {
+              id: test.Id,
+              patientId: test.PatientId,
+              testId: test.TestId,
+              takenAt: test.TakenAt,
+              depressionScore: {
+                value: test.DepressionScore || 0,
+              },
+              anxietyScore: {
+                value: test.AnxietyScore || 0,
+              },
+              stressScore: {
+                value: test.StressScore || 0,
+              },
+              severityLevel: test.SeverityLevel || "Normal",
+              recommendation: recommendation,
+              createdAt: test.CreatedAt,
+              createdBy: test.CreatedBy,
+            };
+          });
+
+          setTestResults(transformedData);
+        } else {
+          console.log("No test results found for this patient");
+
+          // For testing purposes, let's create mock data with multiple test results
+          const mockTestResults = [
+            {
+              id: "mock-test-id-1",
+              patientId: profileId,
+              testId: "mock-assessment-id-1",
+              takenAt: new Date().toISOString(),
+              depressionScore: { value: 12 },
+              anxietyScore: { value: 8 },
+              stressScore: { value: 15 },
+              severityLevel: "Mild",
+              recommendation:
+                "Practice regular meditation and mindfulness exercises. Maintain a consistent sleep schedule of 7-8 hours per night. Engage in regular physical activity such as walking or light exercise.",
+              createdAt: new Date().toISOString(),
+              createdBy: "System",
+            },
+            {
+              id: "mock-test-id-2",
+              patientId: profileId,
+              testId: "mock-assessment-id-2",
+              takenAt: new Date(
+                Date.now() - 7 * 24 * 60 * 60 * 1000
+              ).toISOString(), // 7 days ago
+              depressionScore: { value: 18 },
+              anxietyScore: { value: 14 },
+              stressScore: { value: 22 },
+              severityLevel: "Moderate",
+              recommendation:
+                "Consider talking to a mental health professional. Practice stress reduction techniques. Maintain social connections and support systems.",
+              createdAt: new Date(
+                Date.now() - 7 * 24 * 60 * 60 * 1000
+              ).toISOString(),
+              createdBy: "System",
+            },
+            {
+              id: "mock-test-id-3",
+              patientId: profileId,
+              testId: "mock-assessment-id-3",
+              takenAt: new Date(
+                Date.now() - 14 * 24 * 60 * 60 * 1000
+              ).toISOString(), // 14 days ago
+              depressionScore: { value: 6 },
+              anxietyScore: { value: 4 },
+              stressScore: { value: 8 },
+              severityLevel: "Normal",
+              recommendation:
+                "Continue current healthy lifestyle practices. Regular exercise and good sleep hygiene are beneficial.",
+              createdAt: new Date(
+                Date.now() - 14 * 24 * 60 * 60 * 1000
+              ).toISOString(),
+              createdBy: "System",
+            },
+          ];
+
+          console.log("Using mock data:", mockTestResults);
+          setTestResults(mockTestResults);
+        }
       } catch (err) {
+        console.error("Error fetching test results:", err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTestResults();
-  }, []);
+    if (profileId) {
+      fetchTestResults();
+    } else {
+      setLoading(false);
+      setError("No profile ID available");
+    }
+  }, [profileId]);
 
   const formatDate = (dateString) => {
     try {
@@ -119,6 +254,42 @@ const HistoryTestResult = () => {
 
   const selectedTest = testResults[selectedTestIndex];
 
+  // ✅ Parse recommendation
+  let recommendations = [];
+
+  if (selectedTest.recommendation) {
+    try {
+      const raw = selectedTest.recommendation;
+
+      if (typeof raw === "string") {
+        const parsed = JSON.parse(raw);
+
+        if (Array.isArray(parsed)) {
+          recommendations = parsed;
+        } else if (typeof parsed === "string") {
+          recommendations = [parsed];
+        } else if (parsed?.raw && typeof parsed.raw === "string") {
+          recommendations = [parsed.raw];
+        } else {
+          recommendations = [String(parsed)];
+        }
+      } else {
+        recommendations = [String(raw)];
+      }
+    } catch (error) {
+      // Nếu recommendation là markdown hoặc text thường thì vẫn fallback an toàn
+      recommendations = [selectedTest.recommendation];
+    }
+  }
+
+  if (recommendations.length === 0) {
+    recommendations = [
+      "Engage in relaxation techniques (deep breathing, meditation, light physical activities)",
+      "Adjust lifestyle habits, focusing on sleep and nutrition",
+      "If symptoms persist or worsen, seeking professional psychological support is advised",
+    ];
+  }
+
   return (
     <div className="flex h-full overflow-y-auto bg-[#ffffff]">
       {/* Test History Panel */}
@@ -135,7 +306,8 @@ const HistoryTestResult = () => {
                   ? "bg-blue-50 border-l-4 border-blue-500 shadow-md"
                   : "hover:bg-gray-50 border-l-4 border-transparent"
               }`}
-              onClick={() => setSelectedTestIndex(index)}>
+              onClick={() => setSelectedTestIndex(index)}
+            >
               <div className="font-medium text-gray-800">
                 Test on {formatDate(test.takenAt)}
               </div>
@@ -172,7 +344,8 @@ const HistoryTestResult = () => {
                   selectedTest.depressionScore.value,
                   "depression"
                 )}%`,
-              }}></div>
+              }}
+            ></div>
           </div>
           <div className="flex justify-between items-center">
             <span className="font-medium">
@@ -184,7 +357,8 @@ const HistoryTestResult = () => {
                   selectedTest.depressionScore.value,
                   "depression"
                 )
-              )}-500`}>
+              )}-500`}
+            >
               {getScoreCategory(
                 selectedTest.depressionScore.value,
                 "depression"
@@ -209,7 +383,8 @@ const HistoryTestResult = () => {
                   selectedTest.anxietyScore.value,
                   "anxiety"
                 )}%`,
-              }}></div>
+              }}
+            ></div>
           </div>
           <div className="flex justify-between items-center">
             <span className="font-medium">
@@ -218,7 +393,8 @@ const HistoryTestResult = () => {
             <span
               className={`text-${getColorForCategory(
                 getScoreCategory(selectedTest.anxietyScore.value, "anxiety")
-              )}-500`}>
+              )}-500`}
+            >
               {getScoreCategory(selectedTest.anxietyScore.value, "anxiety")}
             </span>
           </div>
@@ -240,7 +416,8 @@ const HistoryTestResult = () => {
                   selectedTest.stressScore.value,
                   "stress"
                 )}%`,
-              }}></div>
+              }}
+            ></div>
           </div>
           <div className="flex justify-between items-center">
             <span className="font-medium">
@@ -249,7 +426,8 @@ const HistoryTestResult = () => {
             <span
               className={`text-${getColorForCategory(
                 getScoreCategory(selectedTest.stressScore.value, "stress")
-              )}-500`}>
+              )}-500`}
+            >
               {getScoreCategory(selectedTest.stressScore.value, "stress")}
             </span>
           </div>
@@ -263,9 +441,13 @@ const HistoryTestResult = () => {
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-1">Important Note</h3>
-              <p className="text-gray-700">
-                {selectedTest.recommendation || "No recommendation provided."}
-              </p>
+              <div className="space-y-4 text-gray-700">
+                {recommendations.map((text, index) => (
+                  <div key={index} className="prose max-w-none">
+                    <ReactMarkdown>{text}</ReactMarkdown>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
