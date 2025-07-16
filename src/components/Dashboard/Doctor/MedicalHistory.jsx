@@ -1,92 +1,99 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useSelector } from "react-redux";
 import PatientMedicalRecord from "../../../components/Dashboard/Doctor/PatientMedicalRecord";
 
-export default function MedicalHistory() {
-  const profileId = useSelector((state) => state.auth.profileId);
+export default function MedicalHistory({ profileId }) {
   const [medicalRecords, setMedicalRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [activeRecord, setActiveRecord] = useState(null);
-
-  // Phân trang
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const pageSize = 10;
 
   useEffect(() => {
-    fetchMedicalRecords(currentPage);
-  }, [profileId, currentPage]);
+    const fetchMedicalRecords = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:3000/api/medical-records/doctor/26205c9d-c1d0-4ba2-bd90-edcfe2ce7b52"
+        );
+        const medicalData = await response.json();
 
-  const fetchMedicalRecords = async (pageIndex) => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `https://anhtn.id.vn/profile-service/medical-records`,
-        {
-          params: {
-            PageIndex: pageIndex,
-            PageSize: pageSize,
-            SortBy: "CreatedAt",
-            SortOrder: "desc",
-            DoctorId: profileId,
-          },
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+        // Fetch booking details for each medical record
+        const formattedRecords = await Promise.all(
+          medicalData.map(async (record) => {
+            let bookingDetails = {};
+            try {
+              const bookingResponse = await fetch(
+                `http://localhost:3000/api/bookings?Id=${record.BookingId}`
+              );
+              const bookingData = await bookingResponse.json();
+              bookingDetails = bookingData.data[0] || {};
+
+            } catch (error) {
+              console.error(`Error fetching booking for ID ${record.BookingId}:`, error);
+            }
+
+            return {
+              id: record.Id,
+              patientProfileId: record.PatientId,
+              status: record.DiagnosedAt ? "Done" : "Processing",
+              createdAt: record.CreatedAt,
+              notes: record.Description || "No description provided",
+              mentalDisorders: record.MedicalRecordSpecificMentalDisorder?.map(
+                m => m.MentalDisorders.Name
+              ).join(", ") || "No disorders specified",
+              patientName: bookingDetails.patientName || "Unknown",
+              doctorName: bookingDetails.doctorName || "Unknown",
+              bookingCode: bookingDetails.BookingCode || "N/A"
+            };
+          })
+        );
+
+        // Filter for completed records
+        const completedRecords = formattedRecords
+        // const completedRecords = formattedRecords.filter(
+        //   record => getStatusBadge(record.status) === "Done"
+        // );
+
+        // Implement pagination
+        const startIndex = (currentPage - 1) * pageSize;
+        const paginatedRecords = completedRecords.slice(
+          startIndex,
+          startIndex + pageSize
+        );
+
+        setMedicalRecords(paginatedRecords);
+        setTotalRecords(completedRecords.length);
+        setTotalPages(Math.max(1, Math.ceil(completedRecords.length / pageSize)));
+
+        // If current page exceeds total pages, reset to page 1
+        if (currentPage > Math.max(1, Math.ceil(completedRecords.length / pageSize))) {
+          setCurrentPage(1);
         }
-      );
 
-      console.log("response", response.data);
-
-      // Lọc chỉ lấy hồ sơ có status là "Done"
-      const completedRecords = response.data.medicalRecords.data.filter(
-        (record) => getStatusBadge(record.status) === "Done"
-      );
-
-      setMedicalRecords(completedRecords);
-
-      // Cập nhật thông tin phân trang
-      const totalDoneRecords = response.data.medicalRecords.data.filter(
-        (record) => getStatusBadge(record.status) === "Done"
-      ).length;
-
-      // Sử dụng số lượng records đã lọc để tính tổng số trang
-      setTotalRecords(totalDoneRecords);
-      setTotalPages(Math.max(1, Math.ceil(totalDoneRecords / pageSize)));
-
-      // Nếu trang hiện tại vượt quá tổng số trang, quay lại trang 1
-      if (pageIndex > Math.max(1, Math.ceil(totalDoneRecords / pageSize))) {
-        setCurrentPage(1);
-      }
-
-      // Nếu có hồ sơ, tự động chọn hồ sơ đầu tiên
-      if (completedRecords.length > 0) {
-        const firstRecord = completedRecords[0];
-        setSelectedPatientId(firstRecord.patientProfileId);
-        setActiveRecord(firstRecord.id);
-      } else {
-        // Nếu không có hồ sơ, reset
+        // Automatically select the first completed record
+        if (paginatedRecords.length > 0) {
+          const firstRecord = paginatedRecords[0];
+          setSelectedPatientId(firstRecord.patientProfileId);
+          setActiveRecord(firstRecord.id);
+        } else {
+          setSelectedPatientId(null);
+          setActiveRecord(null);
+        }
+      } catch (error) {
+        console.error("Error fetching medical records:", error);
+        setMedicalRecords([]);
+        setTotalRecords(0);
+        setTotalPages(1);
         setSelectedPatientId(null);
         setActiveRecord(null);
       }
+    };
 
-      setLoading(false);
-    } catch (err) {
-      setError("**Unable to load completed medical profile data.**");
-      setLoading(false);
-      console.error("Error fetching completed medical records:", err);
-    }
-  };
+    fetchMedicalRecords();
+  }, [profileId, currentPage]);
 
   const handleViewPatientDetails = (patientId, recordId) => {
-    console.log("patientId", patientId);
-    console.log("recordId", recordId);
-
     setSelectedPatientId(patientId);
     setActiveRecord(recordId);
   };
@@ -119,7 +126,6 @@ export default function MedicalHistory() {
     return new Date(dateString).toLocaleString("en-GB", options);
   };
 
-  // Truncate ID to first 8 characters
   const truncateId = (id) => {
     if (!id) return "";
     return id.substring(0, 8) + "...";
@@ -130,31 +136,26 @@ export default function MedicalHistory() {
     setCurrentPage(pageNumber);
   };
 
-  // Tạo các nút phân trang
   const renderPagination = () => {
-    // Nếu chỉ có 1 trang, không hiển thị phân trang
     if (totalPages <= 1) {
       return null;
     }
 
     const pageButtons = [];
-
-    // Nút Previous
     pageButtons.push(
       <button
         key="prev"
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`px-3 py-1 mx-1 rounded ${
-          currentPage === 1
-            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-            : "bg-gray-100 hover:bg-gray-200"
-        }`}>
-        &laquo;
+        className={`px-3 py-1 mx-1 rounded ${currentPage === 1
+          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+          : "bg-gray-100 hover:bg-gray-200"
+          }`}
+      >
+        «
       </button>
     );
 
-    // Hiển thị các nút trang
     const maxButtonsToShow = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxButtonsToShow / 2));
     let endPage = Math.min(totalPages, startPage + maxButtonsToShow - 1);
@@ -168,52 +169,38 @@ export default function MedicalHistory() {
         <button
           key={i}
           onClick={() => handlePageChange(i)}
-          className={`px-3 py-1 mx-1 rounded ${
-            currentPage === i
-              ? "bg-blue-500 text-white"
-              : "bg-gray-100 hover:bg-gray-200"
-          }`}>
+          className={`px-3 py-1 mx-1 rounded ${currentPage === i
+            ? "bg-blue-500 text-white"
+            : "bg-gray-100 hover:bg-gray-200"
+            }`}
+        >
           {i}
         </button>
       );
     }
 
-    // Nút Next
     pageButtons.push(
       <button
         key="next"
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`px-3 py-1 mx-1 rounded ${
-          currentPage === totalPages
-            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-            : "bg-gray-100 hover:bg-gray-200"
-        }`}>
-        &raquo;
+        className={`px-3 py-1 mx-1 rounded ${currentPage === totalPages
+          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+          : "bg-gray-100 hover:bg-gray-200"
+          }`}
+      >
+        »
       </button>
     );
 
     return pageButtons;
   };
 
-  if (loading && currentPage === 1) {
-    return (
-      <div className="text-center py-10">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="p-4 text-red-600">{error}</div>;
-  }
-
   return (
     <div className="w-full h-screen">
       <div className="grid grid-cols-4 grid-rows-1">
         {/* Phần 1: Danh sách hồ sơ y tế đã hoàn thành */}
-        <div className=" h-fit overflow-y-auto py-6">
+        <div className="h-fit overflow-y-auto py-6">
           {medicalRecords.length === 0 ? (
             <div className="p-4">No medical profiles have been completed.</div>
           ) : (
@@ -223,16 +210,13 @@ export default function MedicalHistory() {
                   <div
                     key={record.id}
                     onClick={() =>
-                      handleViewPatientDetails(
-                        record.patientProfileId,
-                        record.id
-                      )
+                      handleViewPatientDetails(record.patientProfileId, record.id)
                     }
-                    className={`border-l-4 cursor-pointer hover:bg-gray-50 ${
-                      activeRecord === record.id
-                        ? "border-green-600 bg-green-50"
-                        : "border-transparent"
-                    }`}>
+                    className={`border-l-4 cursor-pointer hover:bg-gray-50 ${activeRecord === record.id
+                      ? "border-green-600 bg-green-50"
+                      : "border border-transparent"
+                      }`}
+                  >
                     <div className="p-4 border-b border-gray-200">
                       <div className="flex justify-between mb-2">
                         <div className="font-medium text-green-600">
@@ -242,16 +226,32 @@ export default function MedicalHistory() {
                           {formatDate(record.createdAt)}
                         </div>
                       </div>
-                      <div className="mb-1">ID: {truncateId(record.id)}</div>
-                      <div className="text-gray-600 text-sm line-clamp-2">
-                        {record.notes || "Treatment completed successfully."}
+                      {/* <div className="mb-1">ID: {truncateId(record.id)}</div> */}
+                      <div className="text-gray-500 text-xs mt-1 font-bold">
+                        {record.bookingCode}
+                      </div>
+
+                      <div className="text-gray-700 text-xs mt-1">
+                        Patient: {record.patientName}
+                      </div>
+
+                      {/* <div className="text-gray-500 text-xs mt-1">
+                        Doctor: {record.doctorName}
+                      </div> */}
+
+                      {record.mentalDisorders && (
+                        <div className="text-gray-500 text-xs mt-1">
+                          Disorders: {record.mentalDisorders}
+                        </div>
+                      )}
+                      <div className="text-gray-500 text-xs line-clamp-2">
+                        {record.notes}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Phân trang - chỉ hiển thị khi có nhiều hơn 1 trang */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center p-4 border-t border-gray-200">
                   {renderPagination()}

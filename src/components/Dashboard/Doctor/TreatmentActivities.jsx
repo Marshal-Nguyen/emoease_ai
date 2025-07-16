@@ -1,64 +1,53 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import CreateWeeklyPlanner from "./CreateWeeklyPlanner";
 
 export default function TreatmentActivities({ profileId }) {
   const [medicalRecords, setMedicalRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [activeRecord, setActiveRecord] = useState(null);
 
+  // Hardcoded medical records data
+  const hardcodedMedicalRecords = [
+    {
+      id: "rec1",
+      patientProfileId: "patient1",
+      status: "Processing",
+      createdAt: "2025-07-10T09:00:00Z",
+      notes: "Patient diagnosed with anxiety, ongoing therapy sessions.",
+    },
+    {
+      id: "rec2",
+      patientProfileId: "patient2",
+      status: "Processing",
+      createdAt: "2025-07-11T14:30:00Z",
+      notes: "Patient with depression, prescribed medication and therapy.",
+    },
+    {
+      id: "rec3",
+      patientProfileId: "patient3",
+      status: "Done",
+      createdAt: "2025-07-12T11:15:00Z",
+      notes: "Patient completed physical therapy program.",
+    },
+  ];
+
   useEffect(() => {
-    const fetchMedicalRecords = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(
-          `https://anhtn.id.vn/profile-service/medical-records`,
-          {
-            params: {
-              PageIndex: 1,
-              PageSize: 10,
-              SortBy: "CreatedAt",
-              SortOrder: "desc",
-              DoctorId: profileId,
-            },
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        console.log("response", response.data);
+    // Set hardcoded medical records
+    const processedRecords = hardcodedMedicalRecords.filter(
+      (record) => getStatusBadge(record.status) === "Processing"
+    );
 
-        // Lọc chỉ lấy hồ sơ có status là "Processing"
-        const processedRecords = response.data.medicalRecords.data.filter(
-          (record) => getStatusBadge(record.status) === "Processing"
-        );
+    setMedicalRecords(processedRecords);
 
-        setMedicalRecords(processedRecords);
-
-        // Nếu có hồ sơ, tự động chọn hồ sơ đầu tiên
-        if (processedRecords.length > 0) {
-          const firstRecord = processedRecords[0];
-          setSelectedPatientId(firstRecord.patientProfileId);
-          setActiveRecord(firstRecord.id);
-        }
-        setLoading(false);
-      } catch (err) {
-        setError("Không thể tải dữ liệu hồ sơ y tế");
-        setLoading(false);
-        console.error("Error fetching medical records:", err);
-      }
-    };
-
-    fetchMedicalRecords();
+    // Automatically select the first processing record
+    if (processedRecords.length > 0) {
+      const firstRecord = processedRecords[0];
+      setSelectedPatientId(firstRecord.patientProfileId);
+      setActiveRecord(firstRecord.id);
+    }
   }, [profileId]);
 
   const handleViewPatientDetails = (patientId, recordId) => {
-    console.log("patientId", patientId);
-    console.log("recordId", recordId);
-
     setSelectedPatientId(patientId);
     setActiveRecord(recordId);
   };
@@ -91,34 +80,16 @@ export default function TreatmentActivities({ profileId }) {
     return new Date(dateString).toLocaleString("en-GB", options);
   };
 
-  // Truncate ID to first 8 characters
   const truncateId = (id) => {
     if (!id) return "";
     return id.substring(0, 8) + "...";
   };
-
-  if (loading) {
-    return (
-      <div className="text-center py-10">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="p-4 text-red-600">{error}</div>;
-  }
 
   return (
     <div className="w-full h-screen">
       <div className="grid grid-cols-3 h-full gap-2">
         {/* Phần 1: Danh sách hồ sơ y tế */}
         <div className="col-span-1 h-fit overflow-y-auto py-6">
-          {/* <h2 className="px-4 py-2 text-lg font-serif border-b border-gray-200">
-            Currently Under Treatment Profile
-          </h2> */}
-
           {medicalRecords.length === 0 ? (
             <div className="p-4">
               No medical records are currently being processed.
@@ -131,11 +102,11 @@ export default function TreatmentActivities({ profileId }) {
                   onClick={() =>
                     handleViewPatientDetails(record.patientProfileId, record.id)
                   }
-                  className={`border-l-4 cursor-pointer hover:bg-gray-50 ${
-                    activeRecord === record.id
+                  className={`border-l-4 cursor-pointer hover:bg-gray-50 ${activeRecord === record.id
                       ? "border-blue-600 bg-blue-50"
                       : "border-transparent"
-                  }`}>
+                    }`}
+                >
                   <div className="p-4 border-b border-gray-200">
                     <div className="flex justify-between mb-2">
                       <div className="font-medium">

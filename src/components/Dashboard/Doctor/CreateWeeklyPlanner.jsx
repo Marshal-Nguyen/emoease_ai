@@ -1,22 +1,91 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+
 const CreateWeeklyPlanner = ({ profileId }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activities, setActivities] = useState([]);
   const [taskStatus, setTaskStatus] = useState({});
   const [selectedTask, setSelectedTask] = useState(null);
   const [showTaskDetail, setShowTaskDetail] = useState(false);
-  const [loading, setLoading] = useState(false); // Loading cho việc tải dữ liệu ban đầu
-  const [taskLoading, setTaskLoading] = useState({}); // Loading cho từng task
   const [sessions, setSessions] = useState([]);
   const [sessionsForDate, setSessionsForDate] = useState(null);
 
-  // API endpoints
-  const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API_SCHEDULE_URL;
-  const SCHEDULES_ENDPOINT = `${VITE_API_SCHEDULE_URL}/schedules`;
-  const ACTIVITIES_ENDPOINT = `${VITE_API_SCHEDULE_URL}/schedule-activities`;
+  // Hardcoded sessions data
+  const hardcodedSessions = [
+    {
+      id: "session1",
+      startDate: "2025-07-14T00:00:00Z",
+    },
+    {
+      id: "session2",
+      startDate: "2025-07-15T00:00:00Z",
+    },
+    {
+      id: "session3",
+      startDate: "2025-07-16T00:00:00Z",
+    },
+  ];
+
+  // Hardcoded activities data
+  const hardcodedActivities = {
+    session1: [
+      {
+        id: "act1",
+        timeRange: "2025-07-14T08:00:00Z",
+        duration: "30 minutes",
+        status: "Pending",
+        foodActivity: {
+          name: "Breakfast",
+          description: "Healthy oatmeal with fruits",
+          mealTime: "Morning",
+          foodNutrients: ["Fiber", "Vitamin C"],
+          intensityLevel: "Low",
+        },
+      },
+      {
+        id: "act2",
+        timeRange: "2025-07-14T10:00:00Z",
+        duration: "45 minutes",
+        status: "Pending",
+        physicalActivity: {
+          name: "Morning Walk",
+          description: "Brisk walking in the park",
+          intensityLevel: "Moderate",
+          impactLevel: "Low",
+        },
+      },
+    ],
+    session2: [
+      {
+        id: "act3",
+        timeRange: "2025-07-15T09:00:00Z",
+        duration: "30 minutes",
+        status: "Pending",
+        foodActivity: {
+          name: "Lunch",
+          description: "Grilled chicken with vegetables",
+          mealTime: "Noon",
+          foodNutrients: ["Protein", "Vitamin A"],
+          intensityLevel: "Low",
+        },
+      },
+    ],
+    session3: [
+      {
+        id: "act4",
+        timeRange: "2025-07-16T14:00:00Z",
+        duration: "60 minutes",
+        status: "Pending",
+        therapeuticActivity: {
+          name: "Physical Therapy",
+          description: "Rehabilitation exercises",
+          intensityLevel: "Moderate",
+          impactLevel: "Medium",
+          instructions: "Follow therapist guidance",
+        },
+      },
+    ],
+  };
 
   // Format date to use as object key (YYYY-MM-DD)
   const formatDateKey = (date) => {
@@ -26,39 +95,16 @@ const CreateWeeklyPlanner = ({ profileId }) => {
       .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`;
   };
 
-  // Fetch sessions once when component mounts
+  // Set sessions on component mount
   useEffect(() => {
-    const fetchSessions = async () => {
-      try {
-        console.log("Fetching sessions data...");
-        const scheduleResponse = await axios.get(
-          `${SCHEDULES_ENDPOINT}?PageIndex=1&PageSize=10&SortBy=startDate&SortOrder=asc&PatientId=${profileId}`
-        );
-        console.log("Schedule Response:", scheduleResponse.data);
+    setSessions(hardcodedSessions);
+  }, []);
 
-        const sessionsData =
-          scheduleResponse.data.schedules.data[0]?.sessions || [];
-        setSessions(sessionsData);
-      } catch (error) {
-        console.error("Error fetching sessions:", error);
-        toast.error(
-          "Có lỗi xảy ra khi tải dữ liệu sessions. Vui lòng thử lại!"
-        );
-      }
-    };
-
-    fetchSessions();
-  }, [profileId]);
-
-  // Fetch activities only for the selected date
+  // Fetch activities for selected date
   useEffect(() => {
-    const fetchActivitiesForDate = async () => {
+    const fetchActivitiesForDate = () => {
       try {
-        setLoading(true);
         const dateKey = formatDateKey(selectedDate);
-        console.log(`Fetching activities for date: ${dateKey}`);
-
-        // Find session for the selected date
         const sessionForDate = sessions.find((session) => {
           const sessionDate = new Date(session.startDate);
           return formatDateKey(sessionDate) === dateKey;
@@ -68,48 +114,26 @@ const CreateWeeklyPlanner = ({ profileId }) => {
 
         if (sessionForDate) {
           setSessionsForDate(sessionForDate.id);
-          console.log(
-            `Found session ID: ${sessionForDate.id} for date: ${dateKey}`
-          );
-          const activityResponse = await axios.get(
-            `${ACTIVITIES_ENDPOINT}/${sessionForDate.id}`
-          );
-          console.log(
-            `Activities for session ${sessionForDate.id}:`,
-            activityResponse.data
-          );
-
-          activitiesForDate = activityResponse.data.scheduleActivities.map(
-            (activity) => {
-              return createActivityObject(
-                activity,
-                new Date(activity.timeRange),
-                sessionForDate.id
-              );
-            }
-          );
-        } else {
-          console.log(
-            `No session found for date: ${dateKey}, using default activities`
+          const sessionActivities = hardcodedActivities[sessionForDate.id] || [];
+          activitiesForDate = sessionActivities.map((activity) =>
+            createActivityObject(
+              activity,
+              new Date(activity.timeRange),
+              sessionForDate.id
+            )
           );
         }
 
         setActivities(activitiesForDate);
 
-        // Initialize task status based on activity status
         const initialTaskStatus = {};
         activitiesForDate.forEach((activity) => {
           initialTaskStatus[activity.id] = activity.status === "Completed";
         });
         setTaskStatus(initialTaskStatus);
-
-        setLoading(false);
       } catch (error) {
-        console.error("Error fetching activities for date:", error);
-        toast.error(
-          "Có lỗi xảy ra khi tải dữ liệu activities. Vui lòng thử lại!"
-        );
-        setLoading(false);
+        console.error("Error processing activities:", error);
+        toast.error("Có lỗi xảy ra khi tải dữ liệu activities. Vui lòng thử lại!");
       }
     };
 
@@ -118,7 +142,7 @@ const CreateWeeklyPlanner = ({ profileId }) => {
     }
   }, [selectedDate, sessions]);
 
-  // Create a standardized activity object from API data
+  // Create a standardized activity object
   const createActivityObject = (activity, time, sessionId) => {
     let title = "Activity";
     let description = "No description available";
@@ -166,7 +190,6 @@ const CreateWeeklyPlanner = ({ profileId }) => {
       ":" +
       time.getUTCMinutes().toString().padStart(2, "0");
 
-    // Calculate end time based on duration
     const endTime = new Date(time);
     const durationMinutes = parseInt(activity.duration?.split(" ")[0] || "30");
     endTime.setMinutes(endTime.getUTCMinutes() + durationMinutes);
@@ -188,80 +211,30 @@ const CreateWeeklyPlanner = ({ profileId }) => {
     };
   };
 
-  // Toggle task status with API call
+  // Toggle task status
   const toggleTaskStatus = useCallback(
-    async (taskId) => {
-      console.log("SessionsForDate:", sessionsForDate);
-      console.log("taskId:", taskId);
+    (taskId) => {
       const currentStatus = taskStatus[taskId] || false;
-      const activity = activities.find((act) => act.id === taskId);
-      console.log("activity:", activity);
-
       const newStatus = !currentStatus;
       const apiStatus = newStatus ? "Completed" : "Pending";
 
-      // Nếu trạng thái hiện tại của activity đã khớp với hành động, chỉ cập nhật taskStatus
-      if (
-        (apiStatus === "Completed" && activity.status === "Completed") ||
-        (apiStatus === "Pending" && activity.status !== "Completed")
-      ) {
-        setTaskStatus((prevStatus) => ({
-          ...prevStatus,
-          [taskId]: newStatus,
-        }));
-        return;
-      }
+      setTaskStatus((prevStatus) => ({
+        ...prevStatus,
+        [taskId]: newStatus,
+      }));
 
-      // Gửi API để cập nhật trạng thái
-      setTaskLoading((prev) => ({ ...prev, [taskId]: true }));
-      try {
-        const response = await fetch(
-          `${VITE_API_SCHEDULE_URL}/schedule-activities/${taskId}/${sessionsForDate}/status`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            body: JSON.stringify({ status: apiStatus }),
-          }
-        );
+      setActivities((prevActivities) =>
+        prevActivities.map((act) =>
+          act.id === taskId ? { ...act, status: apiStatus } : act
+        )
+      );
 
-        if (!response.ok) {
-          throw new Error("Failed to update activity status");
-        }
-
-        // Cập nhật taskStatus
-        setTaskStatus((prevStatus) => ({
-          ...prevStatus,
-          [taskId]: newStatus,
-        }));
-
-        // Cập nhật activities với trạng thái mới
-        setActivities((prevActivities) =>
-          prevActivities.map((act) =>
-            act.id === taskId ? { ...act, status: apiStatus } : act
-          )
-        );
-
-        // Thông báo thành công
-        toast.success(
-          `Đã cập nhật trạng thái thành ${
-            apiStatus === "Completed" ? "Hoàn thành" : "Chờ xử lý"
-          }!`
-        );
-      } catch (error) {
-        console.error("Error updating activity status:", error);
-        toast.error("Có lỗi xảy ra khi cập nhật trạng thái. Vui lòng thử lại!");
-        setTaskStatus((prevStatus) => ({
-          ...prevStatus,
-          [taskId]: currentStatus,
-        }));
-      } finally {
-        setTaskLoading((prev) => ({ ...prev, [taskId]: false }));
-      }
+      toast.success(
+        `Đã cập nhật trạng thái thành ${apiStatus === "Completed" ? "Hoàn thành" : "Chờ xử lý"
+        }!`
+      );
     },
-    [taskStatus, activities, sessionsForDate]
+    [taskStatus]
   );
 
   // Check if a date is today
@@ -274,11 +247,9 @@ const CreateWeeklyPlanner = ({ profileId }) => {
     );
   };
 
-  // Format day name - MODIFIED to start with Monday
+  // Format day name - starts with Monday
   const formatDayName = (date) => {
-    // Reordered array to make Monday the first day
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    // Get day index (0-6), where 0 is Monday, 6 is Sunday
     const dayIndex = (date.getDay() + 6) % 7;
     return days[dayIndex];
   };
@@ -287,6 +258,7 @@ const CreateWeeklyPlanner = ({ profileId }) => {
   const getMonthName = (date) => {
     const months = [
       "Jan",
+      "Feb",
       "Mar",
       "Apr",
       "May",
@@ -301,25 +273,15 @@ const CreateWeeklyPlanner = ({ profileId }) => {
     return months[date.getMonth()];
   };
 
-  // Generate dates for TWO weeks (14 days) navigation - MODIFIED to start with Monday
-  // Update the generateTwoWeekDates function to start from the first session date
+  // Generate dates for two weeks
   const generateTwoWeekDates = () => {
-    // Find the earliest session date from the API
-    let startDate;
+    let startDate =
+      sessions.length > 0
+        ? new Date(
+          [...sessions].sort((a, b) => new Date(a.startDate) - new Date(b.startDate))[0].startDate
+        )
+        : new Date();
 
-    if (sessions && sessions.length > 0) {
-      // Sort sessions by startDate to find the earliest one
-      const sortedSessions = [...sessions].sort((a, b) => {
-        return new Date(a.startDate) - new Date(b.startDate);
-      });
-
-      startDate = new Date(sortedSessions[0].startDate);
-    } else {
-      // If no sessions available, use the current date
-      startDate = new Date();
-    }
-
-    // Generate 14 days starting from the first session date
     return Array.from({ length: 14 }, (_, i) => {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
@@ -342,15 +304,12 @@ const CreateWeeklyPlanner = ({ profileId }) => {
   // Calculate progress percentage
   const calculateProgress = () => {
     if (activities.length === 0) return 0;
-
     const completedTasks = activities.filter(
       (task) => task.status === "Completed" || taskStatus[task.id] || false
     ).length;
-
     return Math.round((completedTasks / activities.length) * 100);
   };
 
-  // Using the new two week dates function
   const twoWeekDates = generateTwoWeekDates();
 
   return (
@@ -363,20 +322,17 @@ const CreateWeeklyPlanner = ({ profileId }) => {
             {twoWeekDates.map((date) => (
               <button
                 key={formatDateKey(date)}
-                className={`flex flex-col items-center p-3 min-w-16 rounded-lg ${
-                  formatDateKey(date) === formatDateKey(selectedDate)
+                className={`flex flex-col items-center p-3 min-w-16 rounded-lg ${formatDateKey(date) === formatDateKey(selectedDate)
                     ? "bg-purple-600 text-white"
                     : "bg-white border"
-                } ${
-                  isToday(date) &&
-                  formatDateKey(date) !== formatDateKey(selectedDate)
+                  } ${isToday(date) &&
+                    formatDateKey(date) !== formatDateKey(selectedDate)
                     ? "border-purple-500"
                     : "border-gray-200"
-                }`}
-                onClick={() => setSelectedDate(date)}>
-                <span className="text-xs font-medium">
-                  {formatDayName(date)}
-                </span>
+                  }`}
+                onClick={() => setSelectedDate(date)}
+              >
+                <span className="text-xs font-medium">{formatDayName(date)}</span>
                 <span className="text-lg font-bold">{date.getDate()}</span>
                 <span className="text-xs">{getMonthName(date)}</span>
               </button>
@@ -400,7 +356,8 @@ const CreateWeeklyPlanner = ({ profileId }) => {
           </div>
           <button
             className="text-purple-600 border border-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50"
-            onClick={() => setSelectedDate(new Date())}>
+            onClick={() => setSelectedDate(new Date())}
+          >
             Today
           </button>
         </div>
@@ -412,8 +369,7 @@ const CreateWeeklyPlanner = ({ profileId }) => {
           <span className="text-sm text-gray-500">
             {
               activities.filter(
-                (task) =>
-                  task.status === "Completed" || taskStatus[task.id] || false
+                (task) => task.status === "Completed" || taskStatus[task.id] || false
               ).length
             }
             /{activities.length} activities
@@ -422,23 +378,15 @@ const CreateWeeklyPlanner = ({ profileId }) => {
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div
             className="bg-purple-600 h-2.5 rounded-full"
-            style={{ width: `${calculateProgress()}%` }}></div>
+            style={{ width: `${calculateProgress()}%` }}
+          ></div>
         </div>
       </div>
       {/* Activities list */}
       <div className="space-y-4">
-        {/* <h3 className="font-serif text-lg">Activities of the day</h3> */}
-
-        {loading ? (
-          <div className="text-center py-10">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading...</p>
-          </div>
-        ) : activities.length === 0 ? (
+        {activities.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <p className="text-gray-500">
-              No activities scheduled for this day
-            </p>
+            <p className="text-gray-500">No activities scheduled for this day</p>
           </div>
         ) : (
           activities
@@ -450,30 +398,29 @@ const CreateWeeklyPlanner = ({ profileId }) => {
             .map((activity) => (
               <div
                 key={activity.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+                className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200"
+              >
                 <div className="flex items-center px-8 py-3">
                   <div className="flex-grow">
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-medium">{activity.title}</h4>
-                        <p className="text-sm text-gray-500">
-                          {activity.duration}
-                        </p>
+                        <p className="text-sm text-gray-500">{activity.duration}</p>
                       </div>
                       <div>
                         <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            activity.status === "Completed"
+                          className={`px-2 py-1 rounded-full text-xs ${activity.status === "Completed"
                               ? "bg-green-100 text-green-800"
                               : activity.status === "Missed"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}>
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                        >
                           {activity.status === "Completed"
                             ? "Completed"
                             : activity.status === "Missed"
-                            ? "Missed"
-                            : "Waiting"}
+                              ? "Missed"
+                              : "Waiting"}
                         </span>
                       </div>
                     </div>
@@ -485,7 +432,8 @@ const CreateWeeklyPlanner = ({ profileId }) => {
                 <div className="border-t border-gray-200 px-4 py-3 bg-gray-50">
                   <button
                     className="text-purple-600 text-sm font-medium"
-                    onClick={() => showTaskDetails(activity)}>
+                    onClick={() => showTaskDetails(activity)}
+                  >
                     Xem chi tiết
                   </button>
                 </div>
@@ -500,18 +448,18 @@ const CreateWeeklyPlanner = ({ profileId }) => {
             {/* Header */}
             <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-white to-gray-50">
               <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-gray-800">
-                  {selectedTask.title}
-                </h3>
+                <h3 className="text-xl font-semibold text-gray-800">{selectedTask.title}</h3>
                 <button
                   onClick={closeTaskDetail}
-                  className="text-gray-500 hover:text-red-500 transition-colors duration-200">
+                  className="text-gray-500 hover:text-red-500 transition-colors duration-200"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-6 w-6"
                     fill="none"
                     viewBox="0 0 24 24"
-                    stroke="currentColor">
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -522,48 +470,38 @@ const CreateWeeklyPlanner = ({ profileId }) => {
                 </button>
               </div>
             </div>
-
             {/* Body */}
             <div className="p-6 space-y-5">
               <div className="mb-4">
-                <p className="text-xs text-gray-400 uppercase tracking-wide">
-                  Thời gian
-                </p>
-                <p className="text-md font-medium text-gray-700">
-                  {selectedTask.duration}
-                </p>
+                <p className="text-xs text-gray-400 uppercase tracking-wide">Thời gian</p>
+                <p className="text-md font-medium text-gray-700">{selectedTask.duration}</p>
               </div>
               <div className="mb-4">
-                <p className="text-xs text-gray-400 uppercase tracking-wide">
-                  Mô tả
-                </p>
-                <p className="text-gray-600 leading-relaxed">
-                  {selectedTask.description}
-                </p>
+                <p className="text-xs text-gray-400 uppercase tracking-wide">Mô tả</p>
+                <p className="text-gray-600 leading-relaxed">{selectedTask.description}</p>
               </div>
               <div className="mb-4">
-                <p className="text-xs text-gray-400 uppercase tracking-wide">
-                  Lợi ích
-                </p>
+                <p className="text-xs text-gray-400 uppercase tracking-wide">Lợi ích</p>
                 <ul className="list-disc list-inside space-y-2 text-gray-600">
                   {selectedTask.benefits.map((benefit, index) => (
-                    <li key={index} className="text-sm">
-                      {benefit}
-                    </li>
+                    <li key={index} className="text-sm">{benefit}</li>
                   ))}
                 </ul>
               </div>
             </div>
-
             {/* Footer */}
             <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end space-x-3">
               <button
                 onClick={closeTaskDetail}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200"
+              >
                 Đóng
               </button>
-              <button className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200">
-                Lưu thay đổi
+              <button
+                onClick={() => toggleTaskStatus(selectedTask.id)}
+                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200"
+              >
+                {taskStatus[selectedTask.id] ? "Đánh dấu chưa hoàn thành" : "Đánh dấu hoàn thành"}
               </button>
             </div>
           </div>

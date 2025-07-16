@@ -2,40 +2,124 @@ import React, { useState, useEffect } from "react";
 
 const PatientMedicalRecord = ({ patientId }) => {
   const [patient, setPatient] = useState(null);
+  const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("overview");
-  const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
+
+  // Fetch patient data from APIs
   useEffect(() => {
     const fetchPatientData = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        setLoading(true);
-        const response = await fetch(
-          `${VITE_API_PROFILE_URL}/patients/${patientId}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
+        // Fetch medical records
+        const medicalRecordsResponse = await fetch(
+          `http://localhost:3000/api/medical-records/${patientId}`
         );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!medicalRecordsResponse.ok) {
+          throw new Error("Failed to fetch medical records");
         }
+        const medicalRecordsData = await medicalRecordsResponse.json();
 
-        const data = await response.json();
-        setPatient(data.patientProfileDto);
-        setLoading(false);
+        // Fetch patient profile
+        const patientProfileResponse = await fetch(
+          `http://localhost:3000/api/patient-profiles/${patientId}`
+        );
+        if (!patientProfileResponse.ok) {
+          throw new Error("Failed to fetch patient profile");
+        }
+        const patientProfileData = await patientProfileResponse.json();
+
+        // Map API data to the expected patient structure
+        const patientData = {
+          id: patientProfileData.Id,
+          fullName: patientProfileData.FullName,
+          birthDate: patientProfileData.BirthDate, // May be null
+          gender: patientProfileData.Gender,
+          allergies: patientProfileData.Allergies,
+          personalityTraits: patientProfileData.PersonalityTraits,
+          contactInfo: {
+            email: patientProfileData.Email,
+            phone: patientProfileData.PhoneNumber,
+            address: patientProfileData.Address,
+          },
+          emergencyContact: null, // Not provided in API
+          careTeam: [], // Not provided in API
+          medicalHistory: {
+            diagnosedAt: patientProfileData.MedicalHistories?.[0]?.DiagnosedAt,
+            physicalSymptoms:
+              patientProfileData.MedicalHistories?.[0]?.MedicalHistoryPhysicalSymptom?.map(
+                (sym) => ({
+                  id: sym.PhysicalSymptoms.Id,
+                  name: sym.PhysicalSymptoms.Name,
+                  severity: sym.PhysicalSymptoms.Description.includes("High")
+                    ? "Severe"
+                    : "Mild", // Derive severity based on description
+                })
+              ) || [],
+            psychologicalSymptoms:
+              patientProfileData.MedicalHistories?.[0]?.MedicalHistorySpecificMentalDisorder?.map(
+                (dis) => ({
+                  id: dis.MentalDisorders.Id,
+                  name: dis.MentalDisorders.Name,
+                  severity: dis.MentalDisorders.Description.includes("Mild")
+                    ? "Mild"
+                    : "Moderate", // Derive severity based on description
+                })
+              ) || [],
+            symptomTrackingData: [], // Not provided in API
+          },
+          medicalRecords: medicalRecordsData.map((record) => ({
+            id: record.Id,
+            status: "Done", // Default status as per hardcoded data
+            createdAt: record.CreatedAt,
+            updatedAt: record.LastModified,
+            notes: record.Description,
+            specificMentalDisorders: record.MedicalRecordSpecificMentalDisorder?.map(
+              (dis) => ({
+                id: dis.SpecificMentalDisordersId,
+                name: dis.MentalDisorders.Name,
+                description: dis.MentalDisorders.Description,
+              })
+            ) || [],
+            psychologicalAssessment:
+              patientProfileData.MedicalHistories?.[0]?.Description ||
+              "No psychological assessment available",
+            treatments: [], // Not provided in API
+          })),
+        };
+
+        setPatient(patientData);
       } catch (err) {
-        console.error("Error fetching patient data:", err);
-        setError("Failed to fetch patient data. Please try again later.");
+        setError(err.message);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchPatientData();
+    if (patientId) {
+      fetchPatientData();
+    }
   }, [patientId]);
+
+  // Status badge function
+  const getStatusBadge = (status) => {
+    switch (status?.toLowerCase()) {
+      case "active":
+      case "đang điều trị":
+        return "Processing";
+      case "completed":
+      case "hoàn thành":
+      case "done":
+        return "Done";
+      case "pending":
+      case "chờ xử lý":
+        return "Processing";
+      default:
+        return status || "Processing";
+    }
+  };
 
   // Format date
   const formatDate = (dateString) => {
@@ -77,31 +161,25 @@ const PatientMedicalRecord = ({ patientId }) => {
     return age;
   };
 
+  // Render loading state
   if (loading) {
     return (
-      <div className="text-center py-10">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500 text-lg">Loading patient information...</p>
       </div>
     );
   }
 
+  // Render error state
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
-          <div className="text-red-500 text-xl mb-4">⚠️ Error</div>
-          <p className="text-gray-700 mb-6">{error}</p>
-          <button
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
-            onClick={() => window.location.reload()}>
-            Try again
-          </button>
-        </div>
+        <p className="text-red-500 text-lg">Error: {error}</p>
       </div>
     );
   }
 
+  // Render patient not found
   if (!patient) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -112,8 +190,9 @@ const PatientMedicalRecord = ({ patientId }) => {
     );
   }
 
+  // Original rendering logic (unchanged)
   return (
-    <div className="w-full bg-[#ffffff] overflow-y-auto py-2 px-4 rounded-2xl">
+    <div className="w-full h-full bg-[#fff] flex flex-col rounded-2xl overflow-hidden py-2 px-4">
       {/* Header */}
       <div className="bg-white rounded-t-xl shadow-md p-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -130,12 +209,11 @@ const PatientMedicalRecord = ({ patientId }) => {
                 <h1 className="text-2xl font-bold text-gray-800">
                   {patient.fullName}
                 </h1>
-                {patient.medicalRecords &&
-                  patient.medicalRecords.length > 0 && (
-                    <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                      {patient.medicalRecords[0].status || "Active"}
-                    </span>
-                  )}
+                {patient.medicalRecords && patient.medicalRecords.length > 0 && (
+                  <span className="ml-3 px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    {getStatusBadge(patient.medicalRecords[0]?.status)}
+                  </span>
+                )}
               </div>
               <p className="text-gray-500">
                 {patient.gender || "N/A"} • {calculateAge(patient.birthDate)}{" "}
@@ -151,7 +229,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                 className="h-4 w-4 mr-1"
                 fill="none"
                 viewBox="0 0 24 24"
-                stroke="currentColor">
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -167,7 +246,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                 className="h-4 w-4 mr-1"
                 fill="none"
                 viewBox="0 0 24 24"
-                stroke="currentColor">
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -185,58 +265,59 @@ const PatientMedicalRecord = ({ patientId }) => {
       <div className="bg-white border-t border-gray-200 shadow-md">
         <div className="flex overflow-x-auto scrollbar-hide">
           <button
-            className={`px-6 py-4 font-medium text-sm ${
-              activeTab === "overview"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-800"
-            }`}
-            onClick={() => setActiveTab("overview")}>
+            className={`px-6 py-4 font-medium text-sm ${activeTab === "overview"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-gray-500 hover:text-gray-800"
+              }`}
+            onClick={() => setActiveTab("overview")}
+          >
             Overview
           </button>
           <button
-            className={`px-6 py-4 font-medium text-sm ${
-              activeTab === "medical"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-800"
-            }`}
-            onClick={() => setActiveTab("medical")}>
+            className={`px-6 py-4 font-medium text-sm ${activeTab === "medical"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-gray-500 hover:text-gray-800"
+              }`}
+            onClick={() => setActiveTab("medical")}
+          >
             Medical Information
           </button>
           <button
-            className={`px-6 py-4 font-medium text-sm ${
-              activeTab === "mental"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-800"
-            }`}
-            onClick={() => setActiveTab("mental")}>
+            className={`px-6 py-4 font-medium text-sm ${activeTab === "mental"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-gray-500 hover:text-gray-800"
+              }`}
+            onClick={() => setActiveTab("mental")}
+          >
             Mental Health
           </button>
           <button
-            className={`px-6 py-4 font-medium text-sm ${
-              activeTab === "symptoms"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-800"
-            }`}
-            onClick={() => setActiveTab("symptoms")}>
+            className={`px-6 py-4 font-medium text-sm ${activeTab === "symptoms"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-gray-500 hover:text-gray-800"
+              }`}
+            onClick={() => setActiveTab("symptoms")}
+          >
             Symptoms
           </button>
           <button
-            className={`px-6 py-4 font-medium text-sm ${
-              activeTab === "contact"
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-800"
-            }`}
-            onClick={() => setActiveTab("contact")}>
+            className={`px-6 py-4 font-medium text-sm ${activeTab === "contact"
+              ? "text-blue-600 border-b-2 border-blue-600"
+              : "text-gray-500 hover:text-gray-800"
+              }`}
+            onClick={() => setActiveTab("contact")}
+          >
             Contact Information
           </button>
         </div>
       </div>
 
       {/* Content Area */}
-      <div className="bg-white rounded-b-xl shadow-md p-6">
+      <div className="flex-1 overflow-y-auto bg-white rounded-b-xl shadow-md p-6">
         {/* Overview Tab */}
         {activeTab === "overview" && (
-          <div className="space-y-6">
+          <div className="space-y-2">
+
             {/* Summary Card */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <InfoCard
@@ -246,7 +327,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                     className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
-                    stroke="currentColor">
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -266,7 +348,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                     className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
-                    stroke="currentColor">
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -288,7 +371,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                     className="h-5 w-5"
                     fill="none"
                     viewBox="0 0 24 24"
-                    stroke="currentColor">
+                    stroke="currentColor"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -301,9 +385,9 @@ const PatientMedicalRecord = ({ patientId }) => {
                 value={
                   patient.medicalRecords && patient.medicalRecords.length > 0
                     ? formatDateTime(
-                        patient.medicalRecords[0].createdAt ||
-                          patient.medicalRecords[0].updatedAt
-                      )
+                      patient.medicalRecords[0].createdAt ||
+                      patient.medicalRecords[0].updatedAt
+                    )
                     : "N/A"
                 }
                 description="Update Date"
@@ -318,7 +402,7 @@ const PatientMedicalRecord = ({ patientId }) => {
               <div className="bg-white rounded p-4 border border-gray-200">
                 {patient.medicalRecords && patient.medicalRecords.length > 0 ? (
                   <p className="text-gray-600">
-                    {patient.medicalRecords[0].notes || "No notes available"}
+                    {patient.medicalRecords[0]?.notes || "No notes available"}
                   </p>
                 ) : (
                   <p className="text-gray-500 italic">No notes available</p>
@@ -335,17 +419,16 @@ const PatientMedicalRecord = ({ patientId }) => {
                 </h3>
                 <div className="bg-white rounded p-4 border border-gray-200">
                   {patient.medicalHistory?.physicalSymptoms &&
-                  patient.medicalHistory.physicalSymptoms.length > 0 ? (
+                    patient.medicalHistory.physicalSymptoms.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {patient.medicalHistory.physicalSymptoms.map(
-                        (symptom) => (
-                          <span
-                            key={symptom.id}
-                            className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
-                            {symptom.name}
-                          </span>
-                        )
-                      )}
+                      {patient.medicalHistory.physicalSymptoms.map((symptom) => (
+                        <span
+                          key={symptom.id}
+                          className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                        >
+                          {symptom.name}
+                        </span>
+                      ))}
                     </div>
                   ) : (
                     <p className="text-gray-500 italic">No physical symptoms</p>
@@ -360,16 +443,16 @@ const PatientMedicalRecord = ({ patientId }) => {
                 </h3>
                 <div className="bg-white rounded p-4 border border-gray-200">
                   {patient.medicalRecords &&
-                  patient.medicalRecords.length > 0 &&
-                  patient.medicalRecords[0].specificMentalDisorders &&
-                  patient.medicalRecords[0].specificMentalDisorders.length >
-                    0 ? (
+                    patient.medicalRecords.length > 0 &&
+                    patient.medicalRecords[0]?.specificMentalDisorders &&
+                    patient.medicalRecords[0].specificMentalDisorders.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
                       {patient.medicalRecords[0].specificMentalDisorders.map(
                         (disorder) => (
                           <span
                             key={disorder.id}
-                            className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm">
+                            className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm"
+                          >
                             {disorder.name}
                           </span>
                         )
@@ -402,15 +485,13 @@ const PatientMedicalRecord = ({ patientId }) => {
                 />
                 <InfoRow
                   label="Personality Traits"
-                  value={
-                    patient.personalityTraits || "No information available"
-                  }
+                  value={patient.personalityTraits || "No information available"}
                 />
                 <InfoRow
                   label="Current Condition"
                   value={
                     patient.medicalRecords && patient.medicalRecords.length > 0
-                      ? patient.medicalRecords[0].status || "Unspecified"
+                      ? getStatusBadge(patient.medicalRecords[0]?.status)
                       : "No information available"
                   }
                 />
@@ -427,13 +508,14 @@ const PatientMedicalRecord = ({ patientId }) => {
                     {patient.medicalRecords.map((record, index) => (
                       <div
                         key={record.id || index}
-                        className={`${index > 0 ? "border-t pt-4" : ""}`}>
+                        className={`${index > 0 ? "border-t pt-4" : ""}`}
+                      >
                         <div className="flex justify-between items-center">
                           <h4 className="font-medium text-gray-800">
                             {formatDate(record.createdAt || record.updatedAt)}
                           </h4>
                           <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                            {record.status || "Unspecified"}
+                            {getStatusBadge(record.status)}
                           </span>
                         </div>
                         <p className="text-gray-600 mt-2">
@@ -461,15 +543,16 @@ const PatientMedicalRecord = ({ patientId }) => {
               </h3>
               <div className="bg-white rounded p-4 border border-gray-200">
                 {patient.medicalRecords &&
-                patient.medicalRecords.length > 0 &&
-                patient.medicalRecords[0].specificMentalDisorders &&
-                patient.medicalRecords[0].specificMentalDisorders.length > 0 ? (
+                  patient.medicalRecords.length > 0 &&
+                  patient.medicalRecords[0]?.specificMentalDisorders &&
+                  patient.medicalRecords[0].specificMentalDisorders.length > 0 ? (
                   <div className="space-y-4">
                     {patient.medicalRecords[0].specificMentalDisorders.map(
                       (disorder) => (
                         <div
                           key={disorder.id}
-                          className="p-3 bg-red-50 rounded-lg">
+                          className="p-3 bg-red-50 rounded-lg"
+                        >
                           <h4 className="font-medium text-red-800">
                             {disorder.name}
                           </h4>
@@ -494,8 +577,8 @@ const PatientMedicalRecord = ({ patientId }) => {
               <div className="bg-white rounded p-4 border border-gray-200">
                 <p className="text-gray-600">
                   {patient.medicalRecords &&
-                  patient.medicalRecords.length > 0 &&
-                  patient.medicalRecords[0].psychologicalAssessment
+                    patient.medicalRecords.length > 0 &&
+                    patient.medicalRecords[0]?.psychologicalAssessment
                     ? patient.medicalRecords[0].psychologicalAssessment
                     : "No Psychological Assessment Available"}
                 </p>
@@ -503,40 +586,35 @@ const PatientMedicalRecord = ({ patientId }) => {
             </div>
 
             <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-2">
-                Psychotherapy
-              </h3>
+              <h3 className="font-semibold text-gray-800 mb-2">Psychotherapy</h3>
               <div className="bg-white rounded p-4 border border-gray-200">
                 {patient.medicalRecords &&
-                patient.medicalRecords.length > 0 &&
-                patient.medicalRecords[0].treatments &&
-                patient.medicalRecords[0].treatments.length > 0 ? (
+                  patient.medicalRecords.length > 0 &&
+                  patient.medicalRecords[0]?.treatments &&
+                  patient.medicalRecords[0].treatments.length > 0 ? (
                   <div className="space-y-3">
-                    {patient.medicalRecords[0].treatments.map(
-                      (treatment, index) => (
-                        <div
-                          key={treatment.id || index}
-                          className="p-3 bg-green-50 rounded-lg">
-                          <h4 className="font-medium text-green-800">
-                            {treatment.name}
-                          </h4>
-                          <p className="text-gray-600 text-sm mt-1">
-                            {treatment.description ||
-                              "No detailed description available"}
+                    {patient.medicalRecords[0].treatments.map((treatment, index) => (
+                      <div
+                        key={treatment.id || index}
+                        className="p-3 bg-green-50 rounded-lg"
+                      >
+                        <h4 className="font-medium text-green-800">
+                          {treatment.name}
+                        </h4>
+                        <p className="text-gray-600 text-sm mt-1">
+                          {treatment.description ||
+                            "No detailed description available"}
+                        </p>
+                        {treatment.startDate && (
+                          <p className="text-gray-500 text-xs mt-1">
+                            Start: {formatDate(treatment.startDate)}
+                            {treatment.endDate
+                              ? ` - End: ${formatDate(treatment.endDate)}`
+                              : ""}
                           </p>
-                          {treatment.startDate && (
-                            <p className="text-gray-500 text-xs mt-1">
-                              Bắt đầu: {formatDate(treatment.startDate)}
-                              {treatment.endDate
-                                ? ` - End Date: ${formatDate(
-                                    treatment.endDate
-                                  )}`
-                                : ""}
-                            </p>
-                          )}
-                        </div>
-                      )
-                    )}
+                        )}
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <p className="text-gray-500 italic">
@@ -557,12 +635,13 @@ const PatientMedicalRecord = ({ patientId }) => {
               </h3>
               <div className="bg-white rounded p-4 border border-gray-200">
                 {patient.medicalHistory?.physicalSymptoms &&
-                patient.medicalHistory.physicalSymptoms.length > 0 ? (
+                  patient.medicalHistory.physicalSymptoms.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {patient.medicalHistory.physicalSymptoms.map((symptom) => (
                       <div
                         key={symptom.id}
-                        className="flex items-center p-3 border border-blue-100 rounded-lg bg-blue-50">
+                        className="flex items-center p-3 border border-blue-100 rounded-lg bg-blue-50"
+                      >
                         <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
                           <span className="text-blue-800 text-lg">
                             {symptom.name.charAt(0)}
@@ -593,13 +672,14 @@ const PatientMedicalRecord = ({ patientId }) => {
               </h3>
               <div className="bg-white rounded p-4 border border-gray-200">
                 {patient.medicalHistory?.psychologicalSymptoms &&
-                patient.medicalHistory.psychologicalSymptoms.length > 0 ? (
+                  patient.medicalHistory.psychologicalSymptoms.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {patient.medicalHistory.psychologicalSymptoms.map(
                       (symptom) => (
                         <div
                           key={symptom.id}
-                          className="flex items-center p-3 border border-purple-100 rounded-lg bg-purple-50">
+                          className="flex items-center p-3 border border-purple-100 rounded-lg bg-purple-50"
+                        >
                           <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center mr-3">
                             <span className="text-purple-800 text-lg">
                               {symptom.name.charAt(0)}
@@ -631,7 +711,7 @@ const PatientMedicalRecord = ({ patientId }) => {
               </h3>
               <div className="bg-white rounded p-4 border border-gray-200">
                 {patient.medicalHistory?.symptomTrackingData &&
-                patient.medicalHistory.symptomTrackingData.length > 0 ? (
+                  patient.medicalHistory.symptomTrackingData.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead>
@@ -664,21 +744,19 @@ const PatientMedicalRecord = ({ patientId }) => {
                                 <div className="flex items-center">
                                   <div className="w-24 h-2 bg-gray-200 rounded-full mr-2">
                                     <div
-                                      className={`h-full rounded-full ${
-                                        entry.severity < 4
-                                          ? "bg-green-500"
-                                          : entry.severity < 7
+                                      className={`h-full rounded-full ${(entry.severity || 0) < 4
+                                        ? "bg-green-500"
+                                        : (entry.severity || 0) < 7
                                           ? "bg-yellow-500"
                                           : "bg-red-500"
-                                      }`}
+                                        }`}
                                       style={{
-                                        width: `${
-                                          (entry.severity / 10) * 100
-                                        }%`,
-                                      }}></div>
+                                        width: `${((entry.severity || 0) / 10) * 100}%`,
+                                      }}
+                                    ></div>
                                   </div>
                                   <span className="text-sm text-gray-600">
-                                    {entry.severity}/10
+                                    {(entry.severity || 0)}/10
                                   </span>
                                 </div>
                               </td>
@@ -718,7 +796,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                           className="h-5 w-5 text-blue-600"
                           fill="none"
                           viewBox="0 0 24 24"
-                          stroke="currentColor">
+                          stroke="currentColor"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -742,7 +821,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                           className="h-5 w-5 text-blue-600"
                           fill="none"
                           viewBox="0 0 24 24"
-                          stroke="currentColor">
+                          stroke="currentColor"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -767,7 +847,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                           className="h-5 w-5 text-blue-600"
                           fill="none"
                           viewBox="0 0 24 24"
-                          stroke="currentColor">
+                          stroke="currentColor"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -775,6 +856,7 @@ const PatientMedicalRecord = ({ patientId }) => {
                             d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
                           />
                           <path
+                            className="h-5 w-5 text-blue-600"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
@@ -809,7 +891,7 @@ const PatientMedicalRecord = ({ patientId }) => {
                     <div className="flex justify-between">
                       <div>
                         <h4 className="font-medium text-gray-800">
-                          {patient.emergencyContact.name || "Không có tên"}
+                          {patient.emergencyContact.name || "No name available"}
                         </h4>
                         <p className="text-gray-500 text-sm">
                           {patient.emergencyContact.relationship ||
@@ -819,13 +901,15 @@ const PatientMedicalRecord = ({ patientId }) => {
                       {patient.emergencyContact.phone && (
                         <a
                           href={`tel:${patient.emergencyContact.phone}`}
-                          className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 flex items-center text-sm">
+                          className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 flex items-center text-sm"
+                        >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             className="h-4 w-4 mr-1"
                             fill="none"
                             viewBox="0 0 24 24"
-                            stroke="currentColor">
+                            stroke="currentColor"
+                          >
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -833,7 +917,7 @@ const PatientMedicalRecord = ({ patientId }) => {
                               d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                             />
                           </svg>
-                          Gọi
+                          Call
                         </a>
                       )}
                     </div>
@@ -874,9 +958,9 @@ const PatientMedicalRecord = ({ patientId }) => {
                     {patient.careTeam.map((provider, index) => (
                       <div
                         key={provider.id || index}
-                        className={`flex justify-between items-center ${
-                          index > 0 ? "border-t pt-4" : ""
-                        }`}>
+                        className={`flex justify-between items-center ${index > 0 ? "border-t pt-4" : ""
+                          }`}
+                      >
                         <div className="flex items-center">
                           <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3 text-green-800 font-medium">
                             {provider.name
@@ -898,13 +982,15 @@ const PatientMedicalRecord = ({ patientId }) => {
                           {provider.phone && (
                             <a
                               href={`tel:${provider.phone}`}
-                              className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-200">
+                              className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-200"
+                            >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 className="h-4 w-4"
                                 fill="none"
                                 viewBox="0 0 24 24"
-                                stroke="currentColor">
+                                stroke="currentColor"
+                              >
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
@@ -917,13 +1003,15 @@ const PatientMedicalRecord = ({ patientId }) => {
                           {provider.email && (
                             <a
                               href={`mailto:${provider.email}`}
-                              className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-200">
+                              className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition duration-200"
+                            >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 className="h-4 w-4"
                                 fill="none"
                                 viewBox="0 0 24 24"
-                                stroke="currentColor">
+                                stroke="currentColor"
+                              >
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
@@ -939,7 +1027,7 @@ const PatientMedicalRecord = ({ patientId }) => {
                   </div>
                 ) : (
                   <p className="text-gray-500 italic">
-                    No information available về nhóm chăm sóc
+                    No care team information available
                   </p>
                 )}
               </div>
