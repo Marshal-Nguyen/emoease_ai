@@ -28,7 +28,7 @@ const Navigation = () => {
     {
       icon: <Brain size={20} strokeWidth={1.5} />,
       text: "Treatment Plan",
-      to: "RoadmapCreate",
+      to: "MedicalRecordsCreate",
     },
     {
       icon: <ClipboardList size={20} strokeWidth={1.5} />,
@@ -58,11 +58,10 @@ const Navigation = () => {
     return (
       <Link
         to={to}
-        className={`flex items-center gap-3 cursor-pointer transition duration-300 font-medium ${
-          isActive
+        className={`flex items-center gap-3 cursor-pointer transition duration-300 font-medium ${isActive
             ? "text-white text-[15px] font-serif bg-gradient-to-r from-[#9284e0] to-[#6d5fbe] px-4 py-2.5 rounded-[11px] shadow-sm"
             : "text-[#554d4ddc] font-serif text-[15px] hover:text-[#5D4DB8] hover:bg-white/10 px-4 py-2.5 rounded-xl"
-        }`}
+          }`}
       >
         {icon}
         <span className="tracking-wide">{text}</span>

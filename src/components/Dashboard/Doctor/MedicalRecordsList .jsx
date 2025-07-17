@@ -8,21 +8,14 @@ export default function MedicalRecordsList({ profileId }) {
   const [error, setError] = useState(null);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [activeRecord, setActiveRecord] = useState(null);
-  const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
+
   useEffect(() => {
     const fetchMedicalRecords = async () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${VITE_API_PROFILE_URL}/medical-records`,
+          `http://localhost:3000/api/medical-records/doctor/${profileId}`,
           {
-            params: {
-              PageIndex: 1,
-              PageSize: 10,
-              SortBy: "CreatedAt",
-              SortOrder: "desc",
-              DoctorId: profileId,
-            },
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -31,18 +24,20 @@ export default function MedicalRecordsList({ profileId }) {
         );
         console.log("response", response.data);
 
-        // Lọc chỉ lấy hồ sơ có status là "Processing"
-        const processedRecords = response.data.medicalRecords.data.filter(
-          (record) => getStatusBadge(record.status) === "Processing"
+        // Filter records to simulate "Processing" status (e.g., DiagnosedAt within last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const processedRecords = response.data.filter(
+          (record) => new Date(record.DiagnosedAt) >= thirtyDaysAgo
         );
 
         setMedicalRecords(processedRecords);
 
-        // Nếu có hồ sơ, tự động chọn hồ sơ đầu tiên
+        // If there are records, automatically select the first one
         if (processedRecords.length > 0) {
           const firstRecord = processedRecords[0];
-          setSelectedPatientId(firstRecord.patientProfileId);
-          setActiveRecord(firstRecord.id);
+          setSelectedPatientId(firstRecord.PatientId);
+          setActiveRecord(firstRecord.Id);
         }
 
         setLoading(false);
@@ -64,21 +59,10 @@ export default function MedicalRecordsList({ profileId }) {
     setActiveRecord(recordId);
   };
 
-  const getStatusBadge = (status) => {
-    switch (status.toLowerCase()) {
-      case "active":
-      case "đang điều trị":
-        return "Processing";
-      case "completed":
-      case "hoàn thành":
-      case "done":
-        return "Done";
-      case "pending":
-      case "chờ xử lý":
-        return "Processing";
-      default:
-        return status;
-    }
+  const getStatusBadge = (diagnosedAt) => {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return new Date(diagnosedAt) >= thirtyDaysAgo ? "Processing" : "Done";
   };
 
   const formatDate = (dateString) => {
@@ -123,27 +107,27 @@ export default function MedicalRecordsList({ profileId }) {
             <div className="overflow-y-auto max-h-[460px]">
               {medicalRecords.map((record) => (
                 <div
-                  key={record.id}
+                  key={record.Id}
                   onClick={() =>
-                    handleViewPatientDetails(record.patientProfileId, record.id)
+                    handleViewPatientDetails(record.PatientId, record.Id)
                   }
-                  className={`border-l-4 cursor-pointer hover:bg-gray-50 ${
-                    activeRecord === record.id
+                  className={`border-l-4 cursor-pointer hover:bg-gray-50 ${activeRecord === record.Id
                       ? "border-blue-600 bg-blue-50"
                       : "border-transparent"
-                  }`}>
+                    }`}
+                >
                   <div className="p-4 border-b border-gray-200">
                     <div className="flex justify-between mb-2">
                       <div className="font-medium">
-                        {getStatusBadge(record.status)}
+                        {getStatusBadge(record.DiagnosedAt)}
                       </div>
                       <div className="text-gray-500 text-sm">
-                        {formatDate(record.createdAt)}
+                        {formatDate(record.CreatedAt)}
                       </div>
                     </div>
-                    <div className="mb-1">ID: {truncateId(record.id)}</div>
+                    <div className="mb-1">ID: {truncateId(record.Id)}</div>
                     <div className="text-gray-600 text-sm line-clamp-2">
-                      {record.notes ||
+                      {record.Description ||
                         "Patient diagnosed with depression, ongoing therapy."}
                     </div>
                   </div>

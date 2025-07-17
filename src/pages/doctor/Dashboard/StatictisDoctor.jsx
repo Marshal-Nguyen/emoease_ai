@@ -4,6 +4,7 @@ import axios from "axios";
 import DoctorScheduleViewer from "../../../components/Dashboard/Doctor/DoctorScheduleViewer";
 import MedicalRecordsList from "../../../components/Dashboard/Doctor/MedicalRecordsList ";
 
+
 const StatictisDoctor = () => {
   const [currentDate, setCurrentDate] = useState("");
   const profileId = useSelector((state) => state.auth.profileId);
@@ -12,8 +13,7 @@ const StatictisDoctor = () => {
   const [error, setError] = useState("");
   const [newPatientsCount, setNewPatientsCount] = useState(0);
   const [oldPatientsCount, setOldPatientsCount] = useState(0);
-  const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
-  const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API_SCHEDULE_URL;
+
   useEffect(() => {
     const date = new Date();
     const options = { year: "numeric", month: "long", day: "numeric" };
@@ -23,13 +23,13 @@ const StatictisDoctor = () => {
   useEffect(() => {
     if (!profileId) return;
 
-    const fetchAllMedicalRecords = async () => {
+    const fetchDoctorData = async () => {
       try {
         setLoading(true);
+
         // Fetch doctor profile
-        console.log("Get toke to fix bug", localStorage.getItem("token"));
         const profileResponse = await axios.get(
-          `${VITE_API_PROFILE_URL}/doctors/${profileId}`,
+          `http://localhost:3000/api/doctor-profiles/${profileId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -37,11 +37,11 @@ const StatictisDoctor = () => {
             },
           }
         );
-        setName(profileResponse.data.doctorProfileDto.fullName);
+        setName(profileResponse.data.FullName);
 
-        // Fetch total number of pages
-        const initialResponse = await axios.get(
-          `${VITE_API_PROFILE_URL}/medical-records?PageIndex=1&PageSize=10&SortBy=CreatedAt&SortOrder=desc&DoctorId=${profileId}`,
+        // Fetch medical records
+        const medicalRecordsResponse = await axios.get(
+          `http://localhost:3000/api/medical-records/doctor/${profileId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -50,40 +50,17 @@ const StatictisDoctor = () => {
           }
         );
 
-        const totalPages = initialResponse.data.medicalRecords.totalPages;
-        const totalCount = initialResponse.data.medicalRecords.totalCount;
+        const allRecords = medicalRecordsResponse.data;
 
-        // Fetch all pages
-        const allRecords = [];
-        for (let page = 1; page <= totalPages; page++) {
-          const response = await axios.get(
-            `${VITE_API_PROFILE_URL}/medical-records?PageIndex=${page}&PageSize=10&SortBy=CreatedAt&SortOrder=desc&DoctorId=${profileId}`,
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
-              },
-            }
-          );
-
-          allRecords.push(...response.data.medicalRecords.data);
-        }
-
-        // Count unique patients by status
-        const processingPatientIds = new Set(
-          allRecords
-            .filter((record) => record.status === "Processing")
-            .map((record) => record.patientProfileId)
+        // Count unique patients
+        // Since the API doesn't provide a status field, we'll assume all records are "new" patients
+        // Alternatively, we could use DiagnosedAt or other criteria to differentiate
+        const uniquePatientIds = new Set(
+          allRecords.map((record) => record.PatientId)
         );
 
-        const donePatientIds = new Set(
-          allRecords
-            .filter((record) => record.status === "Done")
-            .map((record) => record.patientProfileId)
-        );
-
-        setNewPatientsCount(processingPatientIds.size);
-        setOldPatientsCount(donePatientIds.size);
+        setNewPatientsCount(uniquePatientIds.size);
+        setOldPatientsCount(0); // Adjust based on your logic for "old" patients
       } catch (err) {
         setError("Error fetching doctor data. Please try again.");
         console.error("Error fetching doctor data:", err);
@@ -92,7 +69,7 @@ const StatictisDoctor = () => {
       }
     };
 
-    fetchAllMedicalRecords();
+    fetchDoctorData();
   }, [profileId]);
 
   return (
@@ -107,19 +84,19 @@ const StatictisDoctor = () => {
           <p className="text-sm opacity-75 text-white italic">
             Always stay updated in your student portal
           </p>
-          <div className=" bottom-6 absolute flex w-[350px] h-[85px] gap-4 mt-12">
+          <div className="bottom-6 absolute flex w-[350px] h-[85px] gap-4 mt-12">
             <div className="bg-[#ffffffb6] relative w-1/2 text-black p-3 rounded-lg shadow-md">
               <p className="text-sm font-semibold">New Patients</p>
               <p className="text-4xl font-serif">{newPatientsCount}</p>
               <span className="text-green-600 absolute bottom-2 right-2 bg-[#d3fdd0] px-3 py-1 rounded-md text-[13px] font-mono">
-                51% &#x2197;
+                51% ↗
               </span>
             </div>
             <div className="bg-[#ffffffb6] relative w-1/2 text-black p-3 rounded-lg shadow-md">
               <p className="text-sm font-semibold">Old Patients</p>
               <p className="text-4xl font-serif">{oldPatientsCount}</p>
               <span className="text-red-600 absolute bottom-2 right-2 bg-red-200 px-3 py-1 rounded-md text-[13px] font-mono">
-                20% &#x2198;
+                20% ↘
               </span>
             </div>
           </div>
@@ -138,10 +115,10 @@ const StatictisDoctor = () => {
           </p>
         </div>
       </div>
-      <div className=" col-span-2 row-span-5 col-start-5">
+      <div className="col-span-2 row-span-5 col-start-5">
         <DoctorScheduleViewer doctorId={profileId} />
       </div>
-      <div className=" col-span-4 row-span-3 row-start-3 text-red">
+      <div className="col-span-4 row-span-3 row-start-3 text-red">
         <MedicalRecordsList profileId={profileId} />
       </div>
     </div>

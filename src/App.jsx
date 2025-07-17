@@ -155,7 +155,7 @@ function App() {
             <Route path="/DashboardDoctor" element={<DashboarDoctor />}>
               <Route index element={<Navigate to="StatictisDoctor" />} />
               <Route path="StatictisDoctor" element={<StatictisDoctor />} />
-              <Route path="RoadmapCreate" element={<RoadMapCreate />} />
+              <Route path="MedicalRecordsCreate" element={<RoadMapCreate />} />
               <Route path="ProfileDoctor" element={<ProfileDoctor />} />
               <Route path="Chat" element={<Chat />} />
               <Route path="PatientBooking" element={<PatientBooking />} />

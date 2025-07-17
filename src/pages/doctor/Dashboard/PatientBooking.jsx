@@ -14,16 +14,18 @@ const PatientBooking = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState("Date");
+  const [sortOrder, setSortOrder] = useState("asc");
   const profileId = "26205c9d-c1d0-4ba2-bd90-edcfe2ce7b52";
 
   const [patientDetailsData, setPatientDetailsData] = useState({});
 
-  const fetchBookings = async (pageIndex = 1, pageSize = 10, search = "") => {
+  const fetchBookings = async (pageIndex = 1, pageSize = 10, search = "", sortBy = "Date", sortOrder = "asc") => {
     setLoading(true);
     setError(null);
     try {
       const response = await fetch(
-        `http://localhost:3000/api/bookings?doctorId=${profileId}&pageIndex=${pageIndex}&pageSize=${pageSize}&Search=${encodeURIComponent(search)}`
+        `http://localhost:3000/api/bookings?doctorId=${profileId}&pageIndex=${pageIndex}&pageSize=${pageSize}&Search=${encodeURIComponent(search)}&SortBy=${sortBy}&SortOrder=${sortOrder}`
       );
       if (!response.ok) throw new Error("Failed to fetch bookings");
       const data = await response.json();
@@ -79,8 +81,8 @@ const PatientBooking = () => {
   };
 
   useEffect(() => {
-    fetchBookings(pagination.pageIndex, pagination.pageSize, searchTerm);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    fetchBookings(pagination.pageIndex, pagination.pageSize, searchTerm, sortBy, sortOrder);
+  }, [pagination.pageIndex, pagination.pageSize, sortBy, sortOrder]);
 
   const handleSelectPatient = (patient) => {
     setSelectedPatient(patient);
@@ -94,7 +96,17 @@ const PatientBooking = () => {
   };
 
   const handleSearch = () => {
-    fetchBookings(1, pagination.pageSize, searchTerm);
+    fetchBookings(1, pagination.pageSize, searchTerm, sortBy, sortOrder);
+  };
+
+  const handleSort = (column) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortOrder("asc");
+    }
+    fetchBookings(pagination.pageIndex, pagination.pageSize, searchTerm, column, sortOrder === "asc" ? "desc" : "asc");
   };
 
   return (
@@ -139,11 +151,17 @@ const PatientBooking = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Code
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Date
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        onClick={() => handleSort("Date")}
+                      >
+                        Date {sortBy === "Date" && (sortOrder === "asc" ? "↑" : "↓")}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Time
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                        onClick={() => handleSort("StartTime")}
+                      >
+                        Time {sortBy === "StartTime" && (sortOrder === "asc" ? "↑" : "↓")}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -183,26 +201,28 @@ const PatientBooking = () => {
                 </table>
               </div>
 
-              <div className="float-end my-2 mx-2">
-                <button
-                  className="px-4 py-2 flex items-center text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => handlePageChange(pagination.pageIndex - 1)}
-                  disabled={pagination.pageIndex === 1}
-                >
-                  <ChevronLeft className="w-4 h-4 mr-2" />
-                  Pre
-                </button>
-                <span className="text-sm text-gray-700 mx-2">
-                  Page {pagination.pageIndex} / {pagination.totalPages}
-                </span>
-                <button
-                  className="px-4 py-2 flex items-center text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => handlePageChange(pagination.pageIndex + 1)}
-                  disabled={pagination.pageIndex === pagination.totalPages}
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-2" />
-                </button>
+              <div className="flex justify-between items-center my-2 mx-2">
+                <div className="flex items-center space-x-2">
+                  <button
+                    className="px-4 py-2 flex items-center text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => handlePageChange(pagination.pageIndex - 1)}
+                    disabled={pagination.pageIndex === 1}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-2" />
+                    Pre
+                  </button>
+                  <span className="text-sm text-gray-700">
+                    Page {pagination.pageIndex} / {pagination.totalPages}
+                  </span>
+                  <button
+                    className="px-4 py-2 flex items-center text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => handlePageChange(pagination.pageIndex + 1)}
+                    disabled={pagination.pageIndex === pagination.totalPages}
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </button>
+                </div>
               </div>
             </>
           )}

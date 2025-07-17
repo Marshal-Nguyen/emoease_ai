@@ -31,6 +31,7 @@
     "chillbot": "file:",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
+    "docx": "^9.5.1",
     "dotenv": "^16.4.7",
     "file-saver": "^2.0.5",
     "firebase": "^11.3.1",
