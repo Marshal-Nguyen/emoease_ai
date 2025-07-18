@@ -29,13 +29,14 @@ const ProfileDoctor = () => {
     import.meta.env.VITE_SUPABASE_URL,
     import.meta.env.VITE_SUPABASE_ANON_KEY
   );
-  // Fetch dữ liệu khi trang tải
+
+  // Fetch data when the page loads
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // Fetch ảnh đại diện
+        // Fetch profile image
         const avatarResponse = await axios.get(
           `${VITE_API_PROFILE_URL}/profile/${id}/image`,
           {
@@ -46,7 +47,7 @@ const ProfileDoctor = () => {
         );
         setAvatarUrl(avatarResponse.data.data.publicUrl || null);
 
-        // Fetch dữ liệu bác sĩ
+        // Fetch doctor profile data
         const doctorResponse = await axios.get(
           `${VITE_API_PROFILE_URL}/doctor-profiles/${id}`,
           {
@@ -72,7 +73,7 @@ const ProfileDoctor = () => {
           Status: doctorProfile.Status || "",
         });
 
-        // Fetch danh sách chuyên môn
+        // Fetch specialties list
         const specialtiesResponse = await axios.get(
           `${VITE_API_PROFILE_URL}/specialties`,
           {
@@ -83,24 +84,9 @@ const ProfileDoctor = () => {
         );
         setSpecialtiesList(specialtiesResponse.data);
       } catch (err) {
-        setError("Lỗi khi lấy dữ liệu. Vui lòng thử lại.");
-        console.error("Lỗi fetch dữ liệu:", err);
-        setSpecialtiesList([
-          {
-            Id: "4064c495-80af-4f54-8bd2-151cebf029a6",
-            Name: "Liệu pháp nghiện",
-          },
-          { Id: "cac4f120-834f-41f8-859d-dd1de7883609", Name: "Tâm lý trẻ em" },
-          {
-            Id: "8704cf2c-e7ec-4ece-a057-883653578ae6",
-            Name: "Liệu pháp hành vi",
-          },
-          { Id: "ddf4b47a-65d1-451f-a297-41606caacfe2", Name: "Thần kinh học" },
-          {
-            Id: "e09aa07d-6313-4e21-919c-f17f3497b6ff",
-            Name: "Chuyên môn mới 3",
-          },
-        ]);
+        setError("Error fetching data. Please try again.");
+        console.error("Data fetch error:", err);
+
       } finally {
         setLoading(false);
       }
@@ -109,13 +95,13 @@ const ProfileDoctor = () => {
     fetchData();
   }, [id]);
 
-  // Xử lý thay đổi input
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Xử lý thay đổi thông tin liên hệ
+  // Handle contact info changes
   const handleContactInfoChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -124,7 +110,7 @@ const ProfileDoctor = () => {
     }));
   };
 
-  // Xử lý chọn chuyên môn
+  // Handle specialty selection
   const handleSpecialtyChange = (e) => {
     const specialtyId = e.target.value;
     const isChecked = e.target.checked;
@@ -136,19 +122,19 @@ const ProfileDoctor = () => {
     }));
   };
 
-  // Xử lý tải ảnh đại diện
+  // Handle avatar upload
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Kích thước file vượt quá 5MB!");
+      toast.error("File size exceeds 5MB!");
       return;
     }
 
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("Không tìm thấy token. Vui lòng đăng nhập lại!");
+      toast.error("Token not found. Please log in again!");
       return;
     }
 
@@ -163,9 +149,7 @@ const ProfileDoctor = () => {
       const isUpdate = !!avatarUrl;
       const response = await axios({
         method: isUpdate ? "PUT" : "POST",
-        url: `${VITE_API_PROFILE_URL}/profile/${id}/${
-          isUpdate ? "update" : "upload"
-        }?token=${token}`,
+        url: `${VITE_API_PROFILE_URL}/profile/${id}/${isUpdate ? "update" : "upload"}?token=${token}`,
         data: formData,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -174,21 +158,19 @@ const ProfileDoctor = () => {
       });
 
       toast.success(
-        `Ảnh đại diện đã được ${isUpdate ? "cập nhật" : "tải lên"} thành công!`
+        `Profile picture ${isUpdate ? "updated" : "uploaded"} successfully!`
       );
     } catch (err) {
-      toast.error(
-        `Lỗi khi ${avatarUrl ? "cập nhật" : "tải lên"} ảnh đại diện!`
-      );
-      console.error("Lỗi xử lý ảnh:", err.response?.data || err.message || err);
+      toast.error(`Error ${avatarUrl ? "updating" : "uploading"} profile picture!`);
+      console.error("Avatar processing error:", err.response?.data || err.message || err);
     } finally {
       setAvatarLoading(false);
     }
   };
 
-  // Xử lý xóa ảnh đại diện
+  // Handle avatar deletion
   const handleAvatarDelete = async () => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa ảnh đại diện?")) return;
+    if (!window.confirm("Are you sure you want to delete the profile picture?")) return;
 
     setAvatarLoading(true);
     try {
@@ -196,16 +178,16 @@ const ProfileDoctor = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setAvatarUrl(null);
-      toast.success("Ảnh đại diện đã được xóa thành công!");
+      toast.success("Profile picture deleted successfully!");
     } catch (err) {
-      toast.error("Lỗi khi xóa ảnh đại diện!");
-      console.error("Lỗi xóa ảnh:", err.response?.data || err.message);
+      toast.error("Error deleting profile picture!");
+      console.error("Avatar deletion error:", err.response?.data || err.message);
     } finally {
       setAvatarLoading(false);
     }
   };
 
-  // Xử lý submit form
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -232,10 +214,10 @@ const ProfileDoctor = () => {
         }
       );
 
-      toast.success("Hồ sơ bác sĩ đã được cập nhật thành công!");
+      toast.success("Doctor profile updated successfully!");
     } catch (err) {
-      toast.error("Lỗi khi cập nhật hồ sơ bác sĩ!");
-      console.error("Lỗi cập nhật:", err.response?.data || err.message);
+      toast.error("Error updating doctor profile!");
+      console.error("Update error:", err.response?.data || err.message);
     } finally {
       setLoading(false);
     }
@@ -245,7 +227,7 @@ const ProfileDoctor = () => {
     return (
       <div className="text-center py-10">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Đang tải...</p>
+        <p className="mt-2 text-gray-600">Loading...</p>
       </div>
     );
 
@@ -265,7 +247,7 @@ const ProfileDoctor = () => {
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
-                      alt="Ảnh đại diện"
+                      alt="Profile picture"
                       className="w-full h-full object-cover object-center rounded-full cursor-pointer"
                     />
                   ) : (
@@ -275,7 +257,7 @@ const ProfileDoctor = () => {
                   )}
                 </div>
 
-                {/* Nút delete nằm ngoài vòng tròn */}
+                {/* Delete button outside the circle */}
                 <button
                   type="button"
                   onClick={handleAvatarDelete}
@@ -294,21 +276,20 @@ const ProfileDoctor = () => {
               </div>
 
               <p className="mt-4 text-sm text-gray-500 font-medium">
-                Nhấn vào ảnh để {avatarUrl ? "thay đổi" : "tải lên"} ảnh đại
-                diện
+                Click on the image to {avatarUrl ? "change" : "upload"} profile picture
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                Định dạng hỗ trợ: JPEG, PNG, GIF (tối đa 5MB)
+                Supported formats: JPEG, PNG, GIF (max 5MB)
               </p>
             </div>
           </div>
 
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Thông tin cá nhân</h2>
+            <h2 className="text-xl font-semibold mb-4 text-purple-700">Personal Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Họ và tên
+                  Full Name
                 </label>
                 <input
                   type="text"
@@ -321,7 +302,7 @@ const ProfileDoctor = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Giới tính
+                  Gender
                 </label>
                 <select
                   name="Gender"
@@ -330,22 +311,60 @@ const ProfileDoctor = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   required
                 >
-                  <option value="">Chọn giới tính</option>
-                  <option value="Male">Nam</option>
-                  <option value="Female">Nữ</option>
-                  <option value="Non-binary">Không xác định</option>
-                  <option value="Prefer not to say">Không muốn tiết lộ</option>
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Non-binary">Non-binary</option>
                 </select>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4 text-purple-700">Contact Information</h2>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <span className="px-3 py-2 text-gray-600">
+                  {formData.contactInfo.Email}
+                </span>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="PhoneNumber"
+                  value={formData.contactInfo.PhoneNumber}
+                  onChange={handleContactInfoChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Address
+                </label>
+                <textarea
+                  name="Address"
+                  value={formData.contactInfo.Address}
+                  onChange={handleContactInfoChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  rows="3"
+                  required
+                />
               </div>
             </div>
           </div>
 
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Thông tin chuyên môn</h2>
+            <h2 className="text-xl font-semibold mb-4 text-purple-700">Professional Information</h2>
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Trình độ chuyên môn
+                  Qualifications
                 </label>
                 <input
                   type="text"
@@ -353,13 +372,13 @@ const ProfileDoctor = () => {
                   value={formData.Qualifications}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="VD: MD, Tiến sĩ Tâm lý học"
+                  placeholder="e.g., MD, PhD in Psychology"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Số năm kinh nghiệm
+                  Years of Experience
                 </label>
                 <input
                   type="number"
@@ -374,7 +393,7 @@ const ProfileDoctor = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tiểu sử
+                  Biography
                 </label>
                 <textarea
                   name="Bio"
@@ -382,7 +401,7 @@ const ProfileDoctor = () => {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   rows="4"
-                  placeholder="Mô tả ngắn về kinh nghiệm và chuyên môn"
+                  placeholder="Brief description of experience and expertise"
                   required
                 />
               </div>
@@ -390,7 +409,7 @@ const ProfileDoctor = () => {
           </div>
 
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Chuyên môn</h2>
+            <h2 className="text-xl font-semibold mb-4 text-purple-700">Specialties</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {specialtiesList.map((specialty) => (
                 <div key={specialty.Id} className="flex items-center">
@@ -413,45 +432,7 @@ const ProfileDoctor = () => {
             </div>
           </div>
 
-          <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Thông tin liên hệ</h2>
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
-                <span className="px-3 py-2 text-gray-600">
-                  {formData.contactInfo.Email}
-                </span>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Số điện thoại
-                </label>
-                <input
-                  type="tel"
-                  name="PhoneNumber"
-                  value={formData.contactInfo.PhoneNumber}
-                  onChange={handleContactInfoChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Địa chỉ
-                </label>
-                <textarea
-                  name="Address"
-                  value={formData.contactInfo.Address}
-                  onChange={handleContactInfoChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  rows="3"
-                  required
-                />
-              </div>
-            </div>
-          </div>
+
 
           <div className="flex justify-end space-x-4">
             <button
@@ -459,7 +440,7 @@ const ProfileDoctor = () => {
               className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:bg-gray-400"
               disabled={loading}
             >
-              {loading ? "Đang lưu..." : "Lưu thay đổi"}
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
