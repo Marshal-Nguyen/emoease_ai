@@ -18,14 +18,27 @@ const Chat = () => {
   const sendMessage = async () => {
     if (!messageInput.trim() || !selectedUser || !selectedUser.Id) return;
 
-    const { error } = await supabase.from("ManageChat").insert({
+    const messageData = {
       senderid: myId,
       receiverid: selectedUser.Id,
       content: messageInput,
-    });
+    };
 
-    if (!error) setMessageInput("");
-    else console.error("Send message error:", error);
+    const { data, error } = await supabase
+      .from("ManageChat")
+      .insert(messageData)
+      .select();
+
+    if (!error && data && data[0]) {
+      setMessages((prev) => [...prev, data[0]]);
+      setMessageInput("");
+    } else {
+      console.error("Send message error:", error);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setMessageInput(suggestion);
   };
 
   const fetchMessages = async (selectedUserId) => {
@@ -52,7 +65,9 @@ const Chat = () => {
     const fetchChatUsers = async () => {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API}/chat-users/${userRole}/${localStorage.getItem("profileId")}`
+          `${
+            import.meta.env.VITE_API
+          }/chat-users/${userRole}/${localStorage.getItem("profileId")}`
         );
         const usersData = await res.json();
 
@@ -108,8 +123,18 @@ const Chat = () => {
             (newMessage.senderid === selectedUser.Id &&
               newMessage.receiverid === myId);
 
-          if (isCurrentChat) {
-            setMessages((prev) => [...prev, newMessage]);
+          // Chỉ thêm tin nhắn từ người khác, không thêm tin nhắn của chính mình
+          // vì tin nhắn của mình đã được thêm ngay khi gửi
+          if (isCurrentChat && newMessage.senderid !== myId) {
+            setMessages((prev) => {
+              const messageExists = prev.some(
+                (msg) => msg.id === newMessage.id
+              );
+              if (!messageExists) {
+                return [...prev, newMessage];
+              }
+              return prev;
+            });
           }
         }
       )
@@ -137,8 +162,6 @@ const Chat = () => {
         backgroundRepeat: "no-repeat",
       }}
     >
-
-
       {/* Sidebar */}
       <div className="w-1/4 relative z-20   rounded-2xl shadow-2xl">
         <div className="p-6">
@@ -168,10 +191,9 @@ const Chat = () => {
                 <div
                   key={user.Id}
                   onClick={() => loadMessages(user.Id)}
-                  className={`group flex items-center p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:bg-white/20 ${selectedUser?.Id === user.Id
-                    ? "bg-white/10 text-white"
-                    : ""
-                    }`}
+                  className={`group flex items-center p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:bg-white/20 ${
+                    selectedUser?.Id === user.Id ? "bg-white/10 text-white" : ""
+                  }`}
                 >
                   <div className="relative">
                     {user.avatarUrl ? (
@@ -188,10 +210,11 @@ const Chat = () => {
                   </div>
                   <div className="ml-4 flex-grow">
                     <p
-                      className={`font-semibold ${selectedUser?.Id === user.Id
-                        ? "text-white"
-                        : "text-[#ffffff]/80"
-                        }`}
+                      className={`font-semibold ${
+                        selectedUser?.Id === user.Id
+                          ? "text-white"
+                          : "text-[#ffffff]/80"
+                      }`}
                     >
                       {user.fullName}
                     </p>
@@ -203,7 +226,9 @@ const Chat = () => {
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#C8A2C8] to-[#6B728E] flex items-center justify-center mx-auto mb-3">
                   <User className="w-8 h-8 text-white" />
                 </div>
-                <p className="text-[#ffffff]/80 font-medium">No users available</p>
+                <p className="text-[#ffffff]/80 font-medium">
+                  No users available
+                </p>
                 <p className="text-[#ffffff]/60 text-sm">Check back later</p>
               </div>
             )}
@@ -243,21 +268,111 @@ const Chat = () => {
 
           <div className="flex-grow overflow-y-auto p-6 space-y-4 bg-[#6b728e00] rounded-2xl">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-[#ffffff]/80">
-                <div className="w-20 h-20 bg-gradient-to-br from-[#EBDCF1]/40 to-[#FDF2F8]/30 rounded-full flex items-center justify-center mb-4">
-                  <MessageCircle className="w-10 h-10 text-[#C8A2C8]" />
+              <div className="flex flex-col justify-start h-full">
+                {/* Tin nhắn chào mừng từ bác sĩ */}
+                <div className="flex justify-start mb-6 mt-4">
+                  <div className="flex items-end space-x-2 max-w-md">
+                    {selectedUser.avatarUrl ? (
+                      <img
+                        src={selectedUser.avatarUrl}
+                        alt={`${selectedUser.fullName}'s avatar`}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gradient-to-br from-[#C8A2C8] to-[#6B728E] rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                    )}
+                    <div className="relative">
+                      <div className="bg-white/20 backdrop-blur-sm text-white p-4 rounded-xl shadow-lg border border-white/20">
+                        {/* <div className="flex items-center mb-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                          <span className="text-xs font-medium text-green-200">
+                            {userRole === "Doctor" ? "Bệnh nhân" : "Bác sĩ"} đang online
+                          </span>
+                        </div> */}
+                        <p className="leading-relaxed text-sm">
+                          {userRole === "Doctor"
+                            ? `Chào bạn! Tôi là bệnh nhân ${selectedUser.fullName}. Bạn có thể nhắn tin trao đổi với tôi tại đây. 💬`
+                            : `Chào bạn! Tôi là bác sĩ ${selectedUser.fullName}. Bạn có thể nhắn tin trao đổi với tôi về tình trạng sức khỏe của bạn tại đây. 🩺💬`}
+                        </p>
+                        <div className="flex items-center mt-3 text-xs text-white/80">
+                          <MessageCircle className="w-3 h-3 mr-1" />
+                          <span>Hãy bắt đầu cuộc trò chuyện...</span>
+                        </div>
+                      </div>
+                      {/* Speech bubble tail */}
+                      <div className="absolute bottom-0 left-0 transform -translate-x-1 translate-y-1">
+                        <div className="w-3 h-3 transform rotate-45 bg-white/20 border-r border-b border-white/20"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-lg font-medium">Start a conversation</p>
-                <p className="text-sm">Send a message to begin chatting</p>
+
+                {/* Gợi ý câu hỏi */}
+                <div className="flex flex-wrap gap-2 px-4">
+                  {userRole !== "Doctor" && (
+                    <>
+                      <div
+                        onClick={() =>
+                          handleSuggestionClick("Tôi cần tư vấn về...")
+                        }
+                        className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-full border border-white/20 cursor-pointer hover:bg-white/10 transition-all duration-200 hover:scale-105"
+                      >
+                        "Tôi cần tư vấn về..."
+                      </div>
+                      <div
+                        onClick={() =>
+                          handleSuggestionClick("Triệu chứng của tôi là...")
+                        }
+                        className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-full border border-white/20 cursor-pointer hover:bg-white/10 transition-all duration-200 hover:scale-105"
+                      >
+                        "Triệu chứng của tôi là..."
+                      </div>
+                      <div
+                        onClick={() =>
+                          handleSuggestionClick("Tôi muốn hỏi về...")
+                        }
+                        className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-full border border-white/20 cursor-pointer hover:bg-white/10 transition-all duration-200 hover:scale-105"
+                      >
+                        "Tôi muốn hỏi về..."
+                      </div>
+                    </>
+                  )}
+                  {userRole === "Doctor" && (
+                    <>
+                      <div
+                        onClick={() =>
+                          handleSuggestionClick("Bạn có triệu chứng gì?")
+                        }
+                        className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-full border border-white/20 cursor-pointer hover:bg-white/10 transition-all duration-200 hover:scale-105"
+                      >
+                        "Bạn có triệu chứng gì?"
+                      </div>
+                      <div
+                        onClick={() =>
+                          handleSuggestionClick(
+                            "Khi nào bạn bắt đầu cảm thấy..."
+                          )
+                        }
+                        className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-full border border-white/20 cursor-pointer hover:bg-white/10 transition-all duration-200 hover:scale-105"
+                      >
+                        "Khi nào bạn bắt đầu cảm thấy..."
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             ) : (
               messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex ${msg.senderid === userId ? "justify-end" : "justify-start"}`}
+                  className={`flex ${
+                    msg.senderid === myId ? "justify-end" : "justify-start"
+                  }`}
                 >
                   <div className="flex items-end space-x-2 max-w-md">
-                    {msg.senderid !== userId && (
+                    {msg.senderid !== myId && (
                       <>
                         {selectedUser.avatarUrl ? (
                           <img
@@ -273,30 +388,33 @@ const Chat = () => {
                       </>
                     )}
                     <div
-                      className={`relative p-4 rounded-xl shadow-lg ${msg.senderid === userId
-                        ? "bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-300 text-gray-800"
-                        : "bg-white/10 text-gray-700"
-                        }`}
+                      className={`relative p-4 rounded-xl shadow-lg ${
+                        msg.senderid === myId
+                          ? "bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-300 text-gray-800"
+                          : "bg-white/10 text-gray-700"
+                      }`}
                     >
                       <p className="leading-relaxed">{msg.content}</p>
                       <span className="block text-xs mt-2 text-[#ffffff]/110">
                         {new Date(msg.created_at).toLocaleTimeString()}
                       </span>
                       <div
-                        className={`absolute bottom-0 ${msg.senderid === userId
-                          ? "right-0 transform translate-x-1 translate-y-1"
-                          : "left-0 transform -translate-x-1 translate-y-1"
-                          }`}
+                        className={`absolute bottom-0 ${
+                          msg.senderid === myId
+                            ? "right-0 transform translate-x-1 translate-y-1"
+                            : "left-0 transform -translate-x-1 translate-y-1"
+                        }`}
                       >
                         <div
-                          className={`w-3 h-3 transform rotate-45 ${msg.senderid === userId
-                            ? "bg-gradient-to-r from-pink-200 to-indigo-300"
-                            : "bg-white/90 border-r border-b border-[#C8A2C8]/40"
-                            }`}
+                          className={`w-3 h-3 transform rotate-45 ${
+                            msg.senderid === myId
+                              ? "bg-gradient-to-r from-pink-200 to-indigo-300"
+                              : "bg-white/90 border-r border-b border-[#C8A2C8]/40"
+                          }`}
                         ></div>
                       </div>
                     </div>
-                    {msg.senderid === userId && (
+                    {msg.senderid === myId && (
                       <>
                         {selectedUser.avatarUrl ? (
                           <img
