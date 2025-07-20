@@ -222,9 +222,9 @@ const HistoryBooking = () => {
                     {sortBy === "StartTime" &&
                       (sortOrder === "asc" ? "↑" : "↓")}
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                  {/* <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Duration
-                  </th>
+                  </th> */}
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
                     Price (VND)
                   </th>
@@ -272,9 +272,9 @@ const HistoryBooking = () => {
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                           {booking.StartTime}
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {/* <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                           {booking.Duration} min
-                        </td>
+                        </td> */}
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
                           {booking.Price.toLocaleString()}
                         </td>
