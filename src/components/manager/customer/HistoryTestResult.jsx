@@ -3,6 +3,8 @@ import { Info } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import supabase from "../../../Supabase/supabaseClient";
+import ReactMarkdown from "react-markdown";
+
 const HistoryTestResult = () => {
   const [testResults, setTestResults] = useState([]);
   const [selectedTestIndex, setSelectedTestIndex] = useState(0);
@@ -208,6 +210,41 @@ const HistoryTestResult = () => {
 
   const selectedTest = testResults[selectedTestIndex];
 
+  let recommendations = [];
+
+  if (selectedTest.recommendation) {
+    try {
+      const raw = selectedTest.recommendation;
+
+      if (typeof raw === "string") {
+        const parsed = JSON.parse(raw);
+
+        if (Array.isArray(parsed)) {
+          recommendations = parsed;
+        } else if (typeof parsed === "string") {
+          recommendations = [parsed];
+        } else if (parsed?.raw && typeof parsed.raw === "string") {
+          recommendations = [parsed.raw];
+        } else {
+          recommendations = [String(parsed)];
+        }
+      } else {
+        recommendations = [String(raw)];
+      }
+    } catch (error) {
+      // Nếu recommendation là markdown hoặc text thường thì vẫn fallback an toàn
+      recommendations = [selectedTest.recommendation];
+    }
+  }
+
+  if (recommendations.length === 0) {
+    recommendations = [
+      "Engage in relaxation techniques (deep breathing, meditation, light physical activities)",
+      "Adjust lifestyle habits, focusing on sleep and nutrition",
+      "If symptoms persist or worsen, seeking professional psychological support is advised",
+    ];
+  }
+
   return (
     <div className="flex h-full overflow-y-auto bg-[#ffffff]">
       {/* Test History Panel */}
@@ -359,9 +396,13 @@ const HistoryTestResult = () => {
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-1">Important Note</h3>
-              <p className="text-gray-700">
-                {selectedTest.recommendation || "No recommendation provided."}
-              </p>
+              <div className="space-y-4 text-gray-700">
+                {recommendations.map((text, index) => (
+                  <div key={index} className="prose max-w-none">
+                    <ReactMarkdown>{text}</ReactMarkdown>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

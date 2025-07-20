@@ -189,10 +189,10 @@ export default function Dashboard() {
         // Fetch bookings data
         try {
           const statuses = [
-            "Completed",
-            "AwaitMeeting",
+            "Booking Success",
+            "CheckIn",
+            "Checkout",
             "Cancelled",
-            "Confirmed",
           ];
           const bookingsData = await Promise.all(
             statuses.map(async (status) => {
