@@ -2,35 +2,120 @@ import React, { useState, useEffect } from "react";
 import { Info } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
+import supabase from "../../../Supabase/supabaseClient";
 const HistoryTestResult = () => {
   const [testResults, setTestResults] = useState([]);
   const [selectedTestIndex, setSelectedTestIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { id } = useParams();
+  const profileId = id; // Use id from params as profileId
+
   useEffect(() => {
     const fetchTestResults = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
-          `https://anhtn.id.vn/test-service/test-results/${id}?PageIndex=0&PageSize=10&SortBy=TakenAt&SortOrder=desc`
-        );
+        setError(null);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+        if (!profileId) {
+          throw new Error("Profile ID is required");
         }
 
-        const data = await response.json();
-        setTestResults(data.testResults.data || []);
+        // First, let's check if we can connect to Supabase and see what tables exist
+        const { data: tableCheck, error: tableError } = await supabase
+          .from("TestResults")
+          .select("Id, PatientId")
+          .limit(1);
+
+        console.log("Table connection test:", { tableCheck, tableError });
+
+        // Query Supabase directly for ALL TestResults of this patient
+        const { data, error: supabaseError } = await supabase
+          .from("TestResults")
+          .select("*")
+          .eq("PatientId", profileId)
+          .not("TakenAt", "is", null)
+          .order("TakenAt", { ascending: false });
+
+        console.log("Supabase query result:", { data, error: supabaseError });
+
+        if (supabaseError) {
+          console.error("Supabase error:", supabaseError);
+          throw new Error(`Supabase Error: ${supabaseError.message}`);
+        }
+
+        if (data && data.length > 0) {
+          console.log("Test results found:", data.length, "records");
+
+          // Transform Supabase data to match the expected format
+          const transformedData = data.map((test) => {
+            let recommendation = "No recommendation provided.";
+
+            if (test.RecommendationJson) {
+              try {
+                if (typeof test.RecommendationJson === "string") {
+                  const parsed = JSON.parse(test.RecommendationJson);
+                  if (Array.isArray(parsed)) {
+                    recommendation = parsed.join(". ");
+                  } else if (typeof parsed === "string") {
+                    recommendation = parsed;
+                  } else if (parsed?.raw && typeof parsed.raw === "string") {
+                    recommendation = parsed.raw;
+                  } else {
+                    recommendation = String(parsed);
+                  }
+                } else if (Array.isArray(test.RecommendationJson)) {
+                  recommendation = test.RecommendationJson.join(". ");
+                } else {
+                  recommendation = String(test.RecommendationJson);
+                }
+              } catch (error) {
+                console.error("Error parsing RecommendationJson:", error);
+                recommendation = String(test.RecommendationJson);
+              }
+            }
+
+            return {
+              id: test.Id,
+              patientId: test.PatientId,
+              testId: test.TestId,
+              takenAt: test.TakenAt,
+              depressionScore: {
+                value: test.DepressionScore || 0,
+              },
+              anxietyScore: {
+                value: test.AnxietyScore || 0,
+              },
+              stressScore: {
+                value: test.StressScore || 0,
+              },
+              severityLevel: test.SeverityLevel || "Normal",
+              recommendation: recommendation,
+              createdAt: test.CreatedAt,
+              createdBy: test.CreatedBy,
+            };
+          });
+
+          setTestResults(transformedData);
+        } else {
+          console.log("No test results found for this patient");
+          setTestResults([]);
+        }
       } catch (err) {
+        console.error("Error fetching test results:", err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTestResults();
-  }, []);
+    if (profileId) {
+      fetchTestResults();
+    } else {
+      setLoading(false);
+      setError("No profile ID available");
+    }
+  }, [profileId]);
 
   const formatDate = (dateString) => {
     try {
@@ -105,8 +190,19 @@ const HistoryTestResult = () => {
     );
   if (!testResults || testResults.length === 0)
     return (
-      <div className="flex justify-center items-center h-screen">
-        No test results found.
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
+        <div className="text-center p-8 bg-white rounded-lg shadow-md">
+          <div className="mb-4">
+            <Info size={48} className="text-gray-400 mx-auto" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            Chưa có kết quả test nào
+          </h3>
+          <p className="text-gray-500">
+            Người dùng này chưa thực hiện bài test nào. Kết quả test sẽ hiển thị
+            ở đây khi có.
+          </p>
+        </div>
       </div>
     );
 
