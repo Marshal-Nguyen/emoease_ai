@@ -72,6 +72,7 @@ const Chat = () => {
     const selected = users.find((u) => u.Id === id);
     if (!selected) return;
     setSelectedUser(selected);
+    console.log("Selected user:", selected);
     await fetchMessages(id);
   };
 
@@ -88,7 +89,7 @@ const Chat = () => {
           usersData.map(async (user) => {
             try {
               const avatarRes = await fetch(
-                `http://localhost:3000/api/profile/${user.Id}/image`
+                `http://localhost:3000/api/profile/${user.avatarId}/image`
               );
               const avatarData = await avatarRes.json();
               return {

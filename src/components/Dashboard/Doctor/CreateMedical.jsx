@@ -78,7 +78,7 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
       patientId: patientDetails.id,
       doctorId: profileId,
       bookingId: selectedPatient.Id,
-      description: notes || "Khám ban đầu",
+      description: notes || "Bệnh án không có mô tả",
       diagnosedAt: new Date().toISOString().split("T")[0], // Current date in YYYY-MM-DD format
       mentalDisorders: [...selectedMentalDisorders, ...newMentalDisorders],
     };

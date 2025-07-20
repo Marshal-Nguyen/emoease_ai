@@ -30,6 +30,7 @@ const CustomerDetail = () => {
     const fetchCustomerData = async () => {
       try {
         setLoading(true);
+
         // Fetch patient profile
         const profileResponse = await fetch(
           `${import.meta.env.VITE_API}/patient-profiles/${id}`
@@ -48,6 +49,24 @@ const CustomerDetail = () => {
         }
         const imageData = await imageResponse.json();
 
+        // Fetch medical history
+        const medicalHistoryResponse = await fetch(
+          `http://localhost:3000/api/medical-histories/patient/${id}`
+        );
+        if (!medicalHistoryResponse.ok) {
+          throw new Error("Failed to fetch medical history");
+        }
+        const medicalHistoryData = await medicalHistoryResponse.json();
+
+        // Fetch medical records
+        const medicalRecordsResponse = await fetch(
+          `http://localhost:3000/api/medical-records/${id}`
+        );
+        if (!medicalRecordsResponse.ok) {
+          throw new Error("Failed to fetch medical records");
+        }
+        const medicalRecordsData = await medicalRecordsResponse.json();
+
         // Map API data to the expected customer structure
         const mappedCustomer = {
           fullName: profileData.FullName || "Unknown Name",
@@ -58,61 +77,50 @@ const CustomerDetail = () => {
             email: profileData.Email || "N/A",
             address: profileData.Address || "N/A",
           },
-          // Hardcode medical history and records since MedicalHistoryId is null
-          medicalHistory: {
-            diagnosedAt: profileData.CreatedAt || "2023-01-15T00:00:00Z", // Fallback
-            specificMentalDisorders: [
-              {
-                id: 1,
-                name: "Anxiety",
-                description: "Generalized anxiety disorder",
-              },
-              {
-                id: 2,
-                name: "Depression",
-                description: "Mild depressive symptoms",
-              },
-            ],
-            physicalSymptoms: [
-              {
-                id: 1,
-                name: "Headache",
-                description: "Frequent tension headaches",
-              },
-              { id: 2, name: "Fatigue", description: "Chronic tiredness" },
-            ],
+          medicalHistory: medicalHistoryData.length > 0 ? {
+            diagnosedAt: medicalHistoryData[0].DiagnosedAt || medicalHistoryData[0].CreatedAt || "N/A",
+            specificMentalDisorders: medicalHistoryData[0].MedicalHistorySpecificMentalDisorder?.map(
+              (disorder, index) => ({
+                id: index + 1,
+                name: disorder.MentalDisorders.Name,
+                description: disorder.MentalDisorders.Description,
+              })
+            ) || [],
+            physicalSymptoms: medicalHistoryData[0].MedicalHistoryPhysicalSymptom?.map(
+              (symptom, index) => ({
+                id: index + 1,
+                name: symptom.PhysicalSymptoms.Name,
+                description: symptom.PhysicalSymptoms.Description,
+              })
+            ) || [],
+            allergies: profileData.Allergies || "N/A",
+          } : {
+            diagnosedAt: "N/A",
+            specificMentalDisorders: [],
+            physicalSymptoms: [],
             allergies: profileData.Allergies || "N/A",
           },
-          medicalRecords: [
-            {
-              id: 1,
-              notes: "Patient reported improved mood after therapy.",
-              status: "Processing",
-              createdAt: "2023-06-10T00:00:00Z",
-              specificMentalDisorders: [
-                {
-                  id: 1,
-                  name: "Anxiety",
-                  description: "Generalized anxiety disorder",
-                },
-              ],
-            },
-            {
-              id: 2,
-              notes: "Patient started new medication regimen.",
-              status: "Completed",
-              createdAt: "2023-07-20T00:00:00Z",
-              specificMentalDisorders: [],
-            },
-          ],
+          medicalRecords: medicalRecordsData.map((record, index) => ({
+            id: index + 1,
+            notes: record.Description || "No notes available",
+            status: record.LastModified ? "Completed" : "Processing", // Assuming status based on LastModified
+            createdAt: record.CreatedAt || "N/A",
+            specificMentalDisorders: record.MedicalRecordSpecificMentalDisorder?.map(
+              (disorder, index) => ({
+                id: index + 1,
+                name: disorder.MentalDisorders.Name,
+                description: disorder.MentalDisorders.Description,
+              })
+            ) || [],
+          })),
         };
 
         setCustomer(mappedCustomer);
         setProfileImage(
           imageData.data.publicUrl ||
-            "https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100"
+          "https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100"
         ); // Fallback image
-        setPurchasedPackageName("Premium Care Package"); // Hardcoded as per original code
+        setPurchasedPackageName("Premium Care Package"); // Keep as per original
         setLoading(false);
       } catch (err) {
         setError(err.message);
@@ -123,6 +131,7 @@ const CustomerDetail = () => {
     fetchCustomerData();
   }, [id]);
 
+  // Rest of the component remains unchanged
   if (loading) return <Loader />;
   if (error)
     return (
@@ -249,11 +258,10 @@ const CustomerDetail = () => {
               <div className="mt-6 flex justify-center gap-4">
                 <motion.button
                   onClick={() => setActiveTab("profile")}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                    activeTab === "profile"
-                      ? "bg-purple-600 text-white shadow-md"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === "profile"
+                    ? "bg-purple-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -261,11 +269,10 @@ const CustomerDetail = () => {
                 </motion.button>
                 <motion.button
                   onClick={() => setActiveTab("history")}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
-                    activeTab === "history"
-                      ? "bg-purple-600 text-white shadow-md"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === "history"
+                    ? "bg-purple-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -294,9 +301,11 @@ const CustomerDetail = () => {
                         <FaCalendarAlt className="text-purple-500" />
                         <span className="font-medium">
                           Diagnosed:{" "}
-                          {new Date(
-                            customer.medicalHistory.diagnosedAt
-                          ).toLocaleDateString()}
+                          {customer.medicalHistory.diagnosedAt !== "N/A"
+                            ? new Date(
+                              customer.medicalHistory.diagnosedAt
+                            ).toLocaleDateString()
+                            : "N/A"}
                         </span>
                       </p>
                       <div className="grid gap-1">
@@ -334,7 +343,7 @@ const CustomerDetail = () => {
                             Physical Symptoms:
                           </p>
                           {customer.medicalHistory.physicalSymptoms?.length >
-                          0 ? (
+                            0 ? (
                             customer.medicalHistory.physicalSymptoms.map(
                               (symptom) => (
                                 <motion.div
@@ -404,20 +413,18 @@ const CustomerDetail = () => {
                           </p>
                           <p className="flex items-center gap-2 text-gray-800 mb-2">
                             <FaHeartbeat
-                              className={`text-${
-                                record.status === "Processing"
-                                  ? "yellow"
-                                  : "green"
-                              }-500`}
+                              className={`text-${record.status === "Processing"
+                                ? "yellow"
+                                : "green"
+                                }-500`}
                             />
                             <span className="font-medium">
-                              <strong>Status:</strong>
+                              <strong>Status: </strong>
                               <span
-                                className={`text-${
-                                  record.status === "Processing"
-                                    ? "yellow"
-                                    : "green"
-                                }-600`}
+                                className={`text-${record.status === "Processing"
+                                  ? "yellow"
+                                  : "green"
+                                  }-600`}
                               >
                                 {record.status}
                               </span>
@@ -427,7 +434,9 @@ const CustomerDetail = () => {
                             <FaCalendarAlt className="text-purple-500" />
                             <span className="font-medium">
                               Created:{" "}
-                              {new Date(record.createdAt).toLocaleDateString()}
+                              {record.createdAt !== "N/A"
+                                ? new Date(record.createdAt).toLocaleDateString()
+                                : "N/A"}
                             </span>
                           </p>
                           {record.specificMentalDisorders?.length > 0 && (

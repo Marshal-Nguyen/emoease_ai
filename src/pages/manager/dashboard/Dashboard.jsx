@@ -191,15 +191,14 @@ export default function Dashboard() {
           const statuses = [
             "Booking Success",
             "CheckIn",
-            "Checkout",
+            "CheckOut",
             "Cancelled",
           ];
           const bookingsData = await Promise.all(
             statuses.map(async (status) => {
               try {
                 const res = await fetch(
-                  `${import.meta.env.VITE_API}/bookings?StartDate=${
-                    dates.start
+                  `${import.meta.env.VITE_API}/bookings?StartDate=${dates.start
                   }&EndDate=${dates.end}&Status=${status}`
                 );
                 const data = await res.json();
@@ -248,8 +247,7 @@ export default function Dashboard() {
         // Fetch daily revenue data
         try {
           const res = await fetch(
-            `${import.meta.env.VITE_API}/payment-zalo/daily-total?StartDate=${
-              dates.start
+            `${import.meta.env.VITE_API}/payment-zalo/daily-total?StartDate=${dates.start
             }&EndDate=${dates.end}`
           );
           const dailyRevenueData = await res.json();
@@ -279,9 +277,9 @@ export default function Dashboard() {
             const data =
               d <= currentDate
                 ? dailyRevenueMap.get(dateStr) || {
-                    totalRevenue: 0,
-                    totalPayment: 0,
-                  }
+                  totalRevenue: 0,
+                  totalPayment: 0,
+                }
                 : { totalRevenue: null, totalPayment: null };
             dailySalesData.push({
               name: dateStr,
@@ -356,8 +354,7 @@ export default function Dashboard() {
       [
         "Total Users",
         state.totalUsers,
-        `Gender Breakdown - Male: ${state.users.male}, Female: ${
-          state.users.female
+        `Gender Breakdown - Male: ${state.users.male}, Female: ${state.users.female
         }, Other: ${state.users.else} (Total: ${getGenderTotalUsers()})`,
       ],
       ["Total Doctors", state.totalDoctors, ""],
@@ -477,10 +474,10 @@ export default function Dashboard() {
         status === "Active"
           ? COLORS.success
           : status === "AwaitPayment"
-          ? COLORS.warning
-          : status === "Expired"
-          ? COLORS.danger
-          : COLORS.secondary,
+            ? COLORS.warning
+            : status === "Expired"
+              ? COLORS.danger
+              : COLORS.secondary,
     })
   );
 
