@@ -20,8 +20,6 @@ const HistoryTestResult = () => {
           throw new Error("Profile ID is required");
         }
 
-        console.log("Fetching test results for profileId:", profileId);
-
         // First, let's check if we can connect to Supabase and see what tables exist
         const { data: tableCheck, error: tableError } = await supabase
           .from("TestResults")
@@ -100,63 +98,7 @@ const HistoryTestResult = () => {
           setTestResults(transformedData);
         } else {
           console.log("No test results found for this patient");
-
-          // For testing purposes, let's create mock data with multiple test results
-          const mockTestResults = [
-            {
-              id: "mock-test-id-1",
-              patientId: profileId,
-              testId: "mock-assessment-id-1",
-              takenAt: new Date().toISOString(),
-              depressionScore: { value: 12 },
-              anxietyScore: { value: 8 },
-              stressScore: { value: 15 },
-              severityLevel: "Mild",
-              recommendation:
-                "Practice regular meditation and mindfulness exercises. Maintain a consistent sleep schedule of 7-8 hours per night. Engage in regular physical activity such as walking or light exercise.",
-              createdAt: new Date().toISOString(),
-              createdBy: "System",
-            },
-            {
-              id: "mock-test-id-2",
-              patientId: profileId,
-              testId: "mock-assessment-id-2",
-              takenAt: new Date(
-                Date.now() - 7 * 24 * 60 * 60 * 1000
-              ).toISOString(), // 7 days ago
-              depressionScore: { value: 18 },
-              anxietyScore: { value: 14 },
-              stressScore: { value: 22 },
-              severityLevel: "Moderate",
-              recommendation:
-                "Consider talking to a mental health professional. Practice stress reduction techniques. Maintain social connections and support systems.",
-              createdAt: new Date(
-                Date.now() - 7 * 24 * 60 * 60 * 1000
-              ).toISOString(),
-              createdBy: "System",
-            },
-            {
-              id: "mock-test-id-3",
-              patientId: profileId,
-              testId: "mock-assessment-id-3",
-              takenAt: new Date(
-                Date.now() - 14 * 24 * 60 * 60 * 1000
-              ).toISOString(), // 14 days ago
-              depressionScore: { value: 6 },
-              anxietyScore: { value: 4 },
-              stressScore: { value: 8 },
-              severityLevel: "Normal",
-              recommendation:
-                "Continue current healthy lifestyle practices. Regular exercise and good sleep hygiene are beneficial.",
-              createdAt: new Date(
-                Date.now() - 14 * 24 * 60 * 60 * 1000
-              ).toISOString(),
-              createdBy: "System",
-            },
-          ];
-
-          console.log("Using mock data:", mockTestResults);
-          setTestResults(mockTestResults);
+          setTestResults([]);
         }
       } catch (err) {
         console.error("Error fetching test results:", err);
@@ -247,8 +189,19 @@ const HistoryTestResult = () => {
     );
   if (!testResults || testResults.length === 0)
     return (
-      <div className="flex justify-center items-center h-screen">
-        No test results found.
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
+        <div className="text-center p-8 bg-white rounded-lg shadow-md">
+          <div className="mb-4">
+            <Info size={48} className="text-gray-400 mx-auto" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            Bạn chưa làm bài test nào
+          </h3>
+          <p className="text-gray-500">
+            Bạn chưa thực hiện bài test nào. Kết quả test sẽ hiển thị ở đây khi
+            bạn hoàn thành.
+          </p>
+        </div>
       </div>
     );
 
