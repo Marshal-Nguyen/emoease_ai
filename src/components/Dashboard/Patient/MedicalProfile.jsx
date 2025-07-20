@@ -3,6 +3,7 @@ import axios from "axios";
 
 const MedicalProfile = ({ patientId }) => {
   const [patient, setPatient] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -10,7 +11,9 @@ const MedicalProfile = ({ patientId }) => {
     const fetchPatientData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
+
+        // Fetch patient profile data
+        const profileResponse = await axios.get(
           `http://localhost:3000/api/patient-profiles/${patientId}`,
           {
             headers: {
@@ -20,7 +23,19 @@ const MedicalProfile = ({ patientId }) => {
           }
         );
 
-        setPatient(response.data);
+        // Fetch avatar image
+        const imageResponse = await axios.get(
+          `http://localhost:3000/api/profile/${patientId}/image`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        setPatient(profileResponse.data);
+        setAvatarUrl(imageResponse.data.data.publicUrl);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching patient data:", err);
@@ -76,10 +91,18 @@ const MedicalProfile = ({ patientId }) => {
   return (
     <div className="bg-white rounded-2xl shadow-md px-6 py-6 w-full mx-auto">
       <div className="flex items-center relative">
-        <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mr-4 border-2 border-teal-100">
-          <span className="text-teal-800 text-xl font-bold">
-            {getInitials(patient.FullName)}
-          </span>
+        <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center mr-4 border-2 border-teal-100 overflow-hidden">
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Patient Avatar"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-teal-800 text-xl font-bold">
+              {getInitials(patient.FullName)}
+            </span>
+          )}
         </div>
 
         <div className="flex-1">

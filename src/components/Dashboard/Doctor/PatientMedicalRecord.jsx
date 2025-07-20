@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import { saveAs } from "file-saver";
+import axios from "axios";
 
 const PatientMedicalRecord = ({ patientId }) => {
   const [patient, setPatient] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(null);
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -29,6 +31,16 @@ const PatientMedicalRecord = ({ patientId }) => {
           throw new Error("Failed to fetch patient profile");
         }
         const patientProfileData = await patientProfileResponse.json();
+        const imageResponse = await axios.get(
+          `http://localhost:3000/api/profile/${patientId}/image`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setAvatarUrl(imageResponse.data.data.publicUrl);
 
         const patientData = {
           id: patientProfileData.Id,
@@ -408,12 +420,18 @@ const PatientMedicalRecord = ({ patientId }) => {
         <div className="p-8 bg-gradient-to-r from-blue-50 to-blue-100">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-full bg-blue-500 text-white flex items-center justify-center text-2xl font-bold shadow-md">
-                {patient.fullName
-                  .split(" ")
-                  .map((word) => word[0])
-                  .join("")
-                  .toUpperCase()}
+              <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center mr-4 border-2 border-teal-100 overflow-hidden">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Patient Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-teal-800 text-xl font-bold">
+                    {getInitials(patient.fullName)}
+                  </span>
+                )}
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-800">

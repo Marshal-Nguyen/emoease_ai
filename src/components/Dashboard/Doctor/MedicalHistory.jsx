@@ -8,13 +8,15 @@ export default function MedicalHistory({ profileId }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const doctorId = localStorage.getItem("profileId");
+
   const pageSize = 10;
 
   useEffect(() => {
     const fetchMedicalRecords = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3000/api/medical-records/doctor/26205c9d-c1d0-4ba2-bd90-edcfe2ce7b52"
+          `http://localhost:3000/api/medical-records/doctor/${doctorId}`
         );
         const medicalData = await response.json();
 

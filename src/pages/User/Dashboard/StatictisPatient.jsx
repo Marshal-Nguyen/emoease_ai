@@ -139,7 +139,7 @@ const StatictisPatient = () => {
                     />
                   </svg>
                 </div>
-                <h2 className="text-lg font-semibold text-white">Notes</h2>
+                <h2 className="text-lg font-semibold text-white">Medical Record</h2>
               </div>
             </div>
             <div className="p-6">
