@@ -8,13 +8,27 @@ const Chat = () => {
   const [messageInput, setMessageInput] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const messagesEndRef = useRef(null);
-
+  const [myAvatarUrl, setMyAvatarUrl] = useState(null);
   const userRole = localStorage.getItem("userRole");
   const userId = localStorage.getItem("userId");
   const [myId, setMyId] = useState(localStorage.getItem("userId"));
+  const [profileId, setProfileId] = useState(localStorage.getItem("profileId"));
 
   const realtimeChannelRef = useRef(null);
-
+  // Hàm lấy avatar của myId
+  const fetchMyAvatar = async () => {
+    try {
+      const avatarRes = await fetch(
+        `http://localhost:3000/api/profile/${profileId}/image`
+      );
+      const avatarData = await avatarRes.json();
+      setMyAvatarUrl(avatarData.data?.publicUrl || null);
+      console.log("My avatar URL:", avatarData.data?.publicUrl);
+    } catch (err) {
+      console.error(`Error fetching avatar for myId ${myId}:`, err);
+      setMyAvatarUrl(null);
+    }
+  };
   const sendMessage = async () => {
     if (!messageInput.trim() || !selectedUser || !selectedUser.Id) return;
 
@@ -95,7 +109,8 @@ const Chat = () => {
     };
 
     fetchChatUsers();
-  }, [userRole]);
+    fetchMyAvatar();
+  }, [userRole, profileId]);
 
   useEffect(() => {
     if (!selectedUser || !myId) return;
@@ -407,12 +422,12 @@ const Chat = () => {
                         ></div>
                       </div>
                     </div>
-                    {/* avatar doctor */}
+                    {/* avatar myId */}
                     {msg.senderid === myId && (
                       <>
-                        {selectedUser.avatarUrl ? (
+                        {myAvatarUrl ? (
                           <img
-                            src={selectedUser.avatarUrl}
+                            src={myAvatarUrl}
                             alt="Your avatar"
                             className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                           />
