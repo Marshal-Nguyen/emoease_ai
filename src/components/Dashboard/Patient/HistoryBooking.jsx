@@ -142,7 +142,7 @@ const HistoryBooking = () => {
     const minutesDiff = timeDiff / 60000;
 
     // Trả về true nếu thời gian đến lịch hẹn còn hơn 30 phút
-    return minutesDiff > 30;
+    return minutesDiff > 24 * 60;
   };
 
   // Tính toán thông tin hoàn tiền
@@ -255,7 +255,7 @@ const HistoryBooking = () => {
     // Kiểm tra thời gian có thể hủy không
     if (!canCancelByTime(booking.Date, booking.StartTime)) {
       toast.error(
-        "Chỉ có thể hủy lịch hẹn trước thời gian diễn ra ít nhất 30 phút."
+        "Chỉ có thể hủy lịch hẹn trước thời gian diễn ra ít nhất 1 ngày."
       );
       return;
     }
@@ -497,18 +497,20 @@ const HistoryBooking = () => {
               {/* Thông tin hoàn tiền */}
               {refundInfo && (
                 <div
-                  className={`mb-4 p-4 rounded-lg border-l-4 ${refundInfo.willRefund
-                    ? "bg-green-50 border-green-400"
-                    : "bg-orange-50 border-orange-400"
-                    }`}
+                  className={`mb-4 p-4 rounded-lg border-l-4 ${
+                    refundInfo.willRefund
+                      ? "bg-green-50 border-green-400"
+                      : "bg-orange-50 border-orange-400"
+                  }`}
                 >
                   <div className="flex">
                     <div className="flex-shrink-0">
                       <svg
-                        className={`h-5 w-5 ${refundInfo.willRefund
-                          ? "text-green-400"
-                          : "text-orange-400"
-                          }`}
+                        className={`h-5 w-5 ${
+                          refundInfo.willRefund
+                            ? "text-green-400"
+                            : "text-orange-400"
+                        }`}
                         viewBox="0 0 20 20"
                         fill="currentColor"
                       >
@@ -529,18 +531,20 @@ const HistoryBooking = () => {
                     </div>
                     <div className="ml-3">
                       <h4
-                        className={`text-sm font-medium ${refundInfo.willRefund
-                          ? "text-green-800"
-                          : "text-orange-800"
-                          }`}
+                        className={`text-sm font-medium ${
+                          refundInfo.willRefund
+                            ? "text-green-800"
+                            : "text-orange-800"
+                        }`}
                       >
                         Refund Information
                       </h4>
                       <p
-                        className={`text-sm ${refundInfo.willRefund
-                          ? "text-green-700"
-                          : "text-orange-700"
-                          }`}
+                        className={`text-sm ${
+                          refundInfo.willRefund
+                            ? "text-green-700"
+                            : "text-orange-700"
+                        }`}
                       >
                         {refundInfo.message}
                       </p>
@@ -857,10 +861,11 @@ const HistoryBooking = () => {
                       </span>
                     )}
                     <button
-                      className={`px-3 py-1 rounded-md text-sm font-medium ${pageIndex === page
-                        ? "bg-blue-500 text-white"
-                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                        }`}
+                      className={`px-3 py-1 rounded-md text-sm font-medium ${
+                        pageIndex === page
+                          ? "bg-blue-500 text-white"
+                          : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                      }`}
                       onClick={() => handlePageChange(page)}
                     >
                       {page}
