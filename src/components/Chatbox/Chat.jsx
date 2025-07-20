@@ -8,13 +8,27 @@ const Chat = () => {
   const [messageInput, setMessageInput] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const messagesEndRef = useRef(null);
-
+  const [myAvatarUrl, setMyAvatarUrl] = useState(null);
   const userRole = localStorage.getItem("userRole");
   const userId = localStorage.getItem("userId");
   const [myId, setMyId] = useState(localStorage.getItem("userId"));
+  const [profileId, setProfileId] = useState(localStorage.getItem("profileId"));
 
   const realtimeChannelRef = useRef(null);
-
+  // Hàm lấy avatar của myId
+  const fetchMyAvatar = async () => {
+    try {
+      const avatarRes = await fetch(
+        `http://localhost:3000/api/profile/${profileId}/image`
+      );
+      const avatarData = await avatarRes.json();
+      setMyAvatarUrl(avatarData.data?.publicUrl || null);
+      console.log("My avatar URL:", avatarData.data?.publicUrl);
+    } catch (err) {
+      console.error(`Error fetching avatar for myId ${myId}:`, err);
+      setMyAvatarUrl(null);
+    }
+  };
   const sendMessage = async () => {
     if (!messageInput.trim() || !selectedUser || !selectedUser.Id) return;
 
@@ -65,8 +79,7 @@ const Chat = () => {
     const fetchChatUsers = async () => {
       try {
         const res = await fetch(
-          `${
-            import.meta.env.VITE_API
+          `${import.meta.env.VITE_API
           }/chat-users/${userRole}/${localStorage.getItem("profileId")}`
         );
         const usersData = await res.json();
@@ -96,7 +109,8 @@ const Chat = () => {
     };
 
     fetchChatUsers();
-  }, [userRole]);
+    fetchMyAvatar();
+  }, [userRole, profileId]);
 
   useEffect(() => {
     if (!selectedUser || !myId) return;
@@ -191,9 +205,8 @@ const Chat = () => {
                 <div
                   key={user.Id}
                   onClick={() => loadMessages(user.Id)}
-                  className={`group flex items-center p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:bg-white/20 ${
-                    selectedUser?.Id === user.Id ? "bg-white/10 text-white" : ""
-                  }`}
+                  className={`group flex items-center p-4 rounded-xl cursor-pointer transition-all duration-300 transform hover:bg-white/20 ${selectedUser?.Id === user.Id ? "bg-white/10 text-white" : ""
+                    }`}
                 >
                   <div className="relative">
                     {user.avatarUrl ? (
@@ -210,11 +223,10 @@ const Chat = () => {
                   </div>
                   <div className="ml-4 flex-grow">
                     <p
-                      className={`font-semibold ${
-                        selectedUser?.Id === user.Id
-                          ? "text-white"
-                          : "text-[#ffffff]/80"
-                      }`}
+                      className={`font-semibold ${selectedUser?.Id === user.Id
+                        ? "text-white"
+                        : "text-[#ffffff]/80"
+                        }`}
                     >
                       {user.fullName}
                     </p>
@@ -367,9 +379,8 @@ const Chat = () => {
               messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex ${
-                    msg.senderid === myId ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${msg.senderid === myId ? "justify-end" : "justify-start"
+                    }`}
                 >
                   <div className="flex items-end space-x-2 max-w-md">
                     {msg.senderid !== myId && (
@@ -388,37 +399,35 @@ const Chat = () => {
                       </>
                     )}
                     <div
-                      className={`relative p-4 rounded-xl shadow-lg ${
-                        msg.senderid === myId
-                          ? "bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-300 text-gray-800"
-                          : "bg-white/10 text-gray-700"
-                      }`}
+                      className={`relative p-4 rounded-xl shadow-lg ${msg.senderid === myId
+                        ? "bg-gradient-to-r from-pink-200 via-purple-200 to-indigo-300 text-gray-800"
+                        : "bg-gradient-to-r from-purple-200 via-pink-200 to-pink-300 text-gray-800"
+                        }`}
                     >
                       <p className="leading-relaxed">{msg.content}</p>
                       <span className="block text-xs mt-2 text-[#ffffff]/110">
                         {new Date(msg.created_at).toLocaleTimeString()}
                       </span>
                       <div
-                        className={`absolute bottom-0 ${
-                          msg.senderid === myId
-                            ? "right-0 transform translate-x-1 translate-y-1"
-                            : "left-0 transform -translate-x-1 translate-y-1"
-                        }`}
+                        className={`absolute bottom-0 ${msg.senderid === myId
+                          ? "right-0 transform translate-x-1 translate-y-1"
+                          : "left-0 transform -translate-x-1 translate-y-1"
+                          }`}
                       >
                         <div
-                          className={`w-3 h-3 transform rotate-45 ${
-                            msg.senderid === myId
-                              ? "bg-gradient-to-r from-pink-200 to-indigo-300"
-                              : "bg-white/90 border-r border-b border-[#C8A2C8]/40"
-                          }`}
+                          className={`w-3 h-3 transform rotate-45 ${msg.senderid === myId
+                            ? "bg-gradient-to-r from-pink-200 to-indigo-300"
+                            : "bg-white/90 border-r border-b border-[#C8A2C8]/40"
+                            }`}
                         ></div>
                       </div>
                     </div>
+                    {/* avatar myId */}
                     {msg.senderid === myId && (
                       <>
-                        {selectedUser.avatarUrl ? (
+                        {myAvatarUrl ? (
                           <img
-                            src={selectedUser.avatarUrl}
+                            src={myAvatarUrl}
                             alt="Your avatar"
                             className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                           />
@@ -444,7 +453,7 @@ const Chat = () => {
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
                   placeholder="Type your message..."
-                  className="w-full p-4 pr-12 bg-white/60 border border-pink-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#C8A2C8] focus:border-transparent transition-all duration-200 placeholder-[#ffffff]/80"
+                  className="w-full p-4 pr-12 bg-white/30 border border-pink-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#C8A2C8] focus:border-transparent transition-all duration-200 placeholder-[#ffffff]/80"
                   onKeyPress={(e) => e.key === "Enter" && sendMessage()}
                 />
               </div>
