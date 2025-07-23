@@ -14,7 +14,7 @@ const MedicalProfile = ({ patientId }) => {
 
         // Fetch patient profile data
         const profileResponse = await axios.get(
-          `http://localhost:3000/api/patient-profiles/${patientId}`,
+          `https://mental-care-server-nodenet.onrender.com/api/patient-profiles/${patientId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -25,7 +25,7 @@ const MedicalProfile = ({ patientId }) => {
 
         // Fetch avatar image
         const imageResponse = await axios.get(
-          `http://localhost:3000/api/profile/${patientId}/image`,
+          `https://mental-care-server-nodenet.onrender.com/api/profile/${patientId}/image`,
           {
             headers: {
               "Content-Type": "application/json",

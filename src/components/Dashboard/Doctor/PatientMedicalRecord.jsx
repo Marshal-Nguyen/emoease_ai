@@ -17,7 +17,7 @@ const PatientMedicalRecord = ({ patientId }) => {
 
       try {
         const medicalRecordsResponse = await fetch(
-          `http://localhost:3000/api/medical-records/${patientId}`
+          `https://mental-care-server-nodenet.onrender.com/api/medical-records/${patientId}`
         );
         if (!medicalRecordsResponse.ok) {
           throw new Error("Failed to fetch medical records");
@@ -25,14 +25,14 @@ const PatientMedicalRecord = ({ patientId }) => {
         const medicalRecordsData = await medicalRecordsResponse.json();
 
         const patientProfileResponse = await fetch(
-          `http://localhost:3000/api/patient-profiles/${patientId}`
+          `https://mental-care-server-nodenet.onrender.com/api/patient-profiles/${patientId}`
         );
         if (!patientProfileResponse.ok) {
           throw new Error("Failed to fetch patient profile");
         }
         const patientProfileData = await patientProfileResponse.json();
         const imageResponse = await axios.get(
-          `http://localhost:3000/api/profile/${patientId}/image`,
+          `https://mental-care-server-nodenet.onrender.com/api/profile/${patientId}/image`,
           {
             headers: {
               "Content-Type": "application/json",

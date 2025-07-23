@@ -15,7 +15,7 @@ const NotionPatient = () => {
           throw new Error("Profile ID not found");
         }
         const response = await fetch(
-          `http://localhost:3000/api/medical-records/${profileId}`
+          `https://mental-care-server-nodenet.onrender.com/api/medical-records/${profileId}`
         );
         if (!response.ok) {
           throw new Error("Failed to fetch medical record");

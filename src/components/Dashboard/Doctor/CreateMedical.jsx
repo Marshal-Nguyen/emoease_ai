@@ -13,7 +13,7 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
 
   // Fetch mental disorders from API
   useEffect(() => {
-    fetch("http://localhost:3000/special-disorders")
+    fetch("https://mental-care-server-nodenet.onrender.com/special-disorders")
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
@@ -84,17 +84,19 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
     };
 
     try {
-      const response = await fetch("http://localhost:3000/api/medical-records", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      toast.success("Medical record created and booking status updated successfully!");
-
-
-
+      const response = await fetch(
+        "https://mental-care-server-nodenet.onrender.com/api/medical-records",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      toast.success(
+        "Medical record created and booking status updated successfully!"
+      );
     } catch (error) {
       console.error("Error submitting medical record:", error);
       toast.error("Error submitting medical record");

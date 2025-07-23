@@ -57,19 +57,34 @@ const EditProfileForm = () => {
       }
 
       try {
-        setState((prev) => ({ ...prev, loading: true, medicalHistoryLoading: true }));
+        setState((prev) => ({
+          ...prev,
+          loading: true,
+          medicalHistoryLoading: true,
+        }));
 
-        const [profileResponse, avatarResponse, medicalResponse] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API}/patient-profiles/${profileId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${import.meta.env.VITE_API}/profile/${profileId}/image`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => ({ data: { publicUrl: null } })),
-          axios.get(`http://localhost:3000/api/medical-histories/patient/${profileId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => ({ data: [] })),
-        ]);
+        const [profileResponse, avatarResponse, medicalResponse] =
+          await Promise.all([
+            axios.get(
+              `${import.meta.env.VITE_API}/patient-profiles/${profileId}`,
+              {
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            ),
+            axios
+              .get(`${import.meta.env.VITE_API}/profile/${profileId}/image`, {
+                headers: { Authorization: `Bearer ${token}` },
+              })
+              .catch(() => ({ data: { publicUrl: null } })),
+            axios
+              .get(
+                `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${profileId}`,
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              )
+              .catch(() => ({ data: [] })),
+          ]);
 
         setState((prev) => ({
           ...prev,
@@ -85,14 +100,20 @@ const EditProfileForm = () => {
           avatarUrl: avatarResponse.data.data.publicUrl || null,
           medicalHistory: {
             description: medicalResponse.data[0]?.Description || "",
-            physicalSymptoms: medicalResponse.data[0]?.MedicalHistoryPhysicalSymptom?.map((s) => ({
-              name: s.PhysicalSymptoms?.Name || "",
-              description: s.PhysicalSymptoms?.Description || "",
-            })) || [],
-            mentalDisorders: medicalResponse.data[0]?.MedicalHistorySpecificMentalDisorder?.map((d) => ({
-              name: d.MentalDisorders?.Name || "",
-              description: d.MentalDisorders?.Description || "",
-            })) || [],
+            physicalSymptoms:
+              medicalResponse.data[0]?.MedicalHistoryPhysicalSymptom?.map(
+                (s) => ({
+                  name: s.PhysicalSymptoms?.Name || "",
+                  description: s.PhysicalSymptoms?.Description || "",
+                })
+              ) || [],
+            mentalDisorders:
+              medicalResponse.data[0]?.MedicalHistorySpecificMentalDisorder?.map(
+                (d) => ({
+                  name: d.MentalDisorders?.Name || "",
+                  description: d.MentalDisorders?.Description || "",
+                })
+              ) || [],
           },
         }));
       } catch (err) {
@@ -103,7 +124,11 @@ const EditProfileForm = () => {
         }));
         console.error("Fetch error:", err);
       } finally {
-        setState((prev) => ({ ...prev, loading: false, medicalHistoryLoading: false }));
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          medicalHistoryLoading: false,
+        }));
       }
     };
 
@@ -131,13 +156,22 @@ const EditProfileForm = () => {
       formData.append("image", file);
       await axios({
         method: state.avatarUrl ? "PUT" : "POST",
-        url: `${import.meta.env.VITE_API}/profile/${profileId}/${state.avatarUrl ? "update" : "upload"}`,
+        url: `${import.meta.env.VITE_API}/profile/${profileId}/${
+          state.avatarUrl ? "update" : "upload"
+        }`,
         data: formData,
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
       });
-      toast.success(`Profile picture ${state.avatarUrl ? "updated" : "uploaded"}!`);
+      toast.success(
+        `Profile picture ${state.avatarUrl ? "updated" : "uploaded"}!`
+      );
     } catch (err) {
-      toast.error(`Error ${state.avatarUrl ? "updating" : "uploading"} picture!`);
+      toast.error(
+        `Error ${state.avatarUrl ? "updating" : "uploading"} picture!`
+      );
       console.error("Avatar error:", err.response?.data || err.message);
     } finally {
       setState((prev) => ({ ...prev, avatarLoading: false }));
@@ -145,12 +179,18 @@ const EditProfileForm = () => {
   };
 
   const handleAvatarDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete your profile picture?")) return;
+    if (
+      !window.confirm("Are you sure you want to delete your profile picture?")
+    )
+      return;
     setState((prev) => ({ ...prev, avatarLoading: true }));
     try {
-      await axios.delete(`${import.meta.env.VITE_API}/profile/${profileId}/delete`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(
+        `${import.meta.env.VITE_API}/profile/${profileId}/delete`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setState((prev) => ({ ...prev, avatarUrl: null }));
       toast.success("Profile picture deleted!");
     } catch (err) {
@@ -195,7 +235,10 @@ const EditProfileForm = () => {
       ...prev,
       medicalHistory: {
         ...prev.medicalHistory,
-        [section]: [...prev.medicalHistory[section], { name: "", description: "" }],
+        [section]: [
+          ...prev.medicalHistory[section],
+          { name: "", description: "" },
+        ],
       },
     }));
   };
@@ -218,9 +261,14 @@ const EditProfileForm = () => {
         diagnosedAt: new Date().toISOString(), // Add current date and time
       };
       await axios.put(
-        `http://localhost:3000/api/medical-histories/patient/${profileId}`,
+        `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${profileId}`,
         updatedMedicalHistory,
-        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
       toast.success("Medical history saved successfully!");
     } catch (err) {

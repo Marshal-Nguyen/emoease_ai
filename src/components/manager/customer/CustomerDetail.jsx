@@ -51,7 +51,7 @@ const CustomerDetail = () => {
 
         // Fetch medical history
         const medicalHistoryResponse = await fetch(
-          `http://localhost:3000/api/medical-histories/patient/${id}`
+          `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${id}`
         );
         if (!medicalHistoryResponse.ok) {
           throw new Error("Failed to fetch medical history");
@@ -60,7 +60,7 @@ const CustomerDetail = () => {
 
         // Fetch medical records
         const medicalRecordsResponse = await fetch(
-          `http://localhost:3000/api/medical-records/${id}`
+          `https://mental-care-server-nodenet.onrender.com/api/medical-records/${id}`
         );
         if (!medicalRecordsResponse.ok) {
           throw new Error("Failed to fetch medical records");
