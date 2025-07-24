@@ -22,7 +22,7 @@ const BookingDetail = () => {
   const [patientImage, setPatientImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  const token = localStorage.getItem("token");
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
@@ -38,10 +38,17 @@ const BookingDetail = () => {
         const doctorData = doctorResponse.data;
         setDoctor(doctorData);
 
-        const patientResponse = await axios.get(
-          `${import.meta.env.VITE_API}/patient-profiles/${
-            bookingData.PatientId
-          }`
+
+        const patientResponse = await fetch(
+          `${import.meta.env.VITE_API}/patient-profiles/${bookingData.PatientId
+          }`,
+          {
+            method: "GET", // Assuming GET since no method was specified; change if needed
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          }
         );
         const patientData = patientResponse.data;
         setPatient(patientData);
@@ -175,11 +182,10 @@ const BookingDetail = () => {
                 <InfoItem
                   label="Status"
                   value={booking.Status}
-                  className={`font-semibold ${
-                    booking.Status === "Confirmed"
-                      ? "text-green-600"
-                      : "text-orange-500"
-                  }`}
+                  className={`font-semibold ${booking.Status === "Confirmed"
+                    ? "text-green-600"
+                    : "text-orange-500"
+                    }`}
                 />
               </div>
             </div>

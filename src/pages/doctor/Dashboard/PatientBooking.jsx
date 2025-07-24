@@ -60,8 +60,16 @@ const PatientBooking = () => {
 
   const fetchPatientDetails = async (patientId) => {
     try {
+
       const response = await fetch(
-        `https://mental-care-server-nodenet.onrender.com/api/patient-profiles/${patientId}`
+        `https://mental-care-server-nodenet.onrender.com/api/patient-profiles/${patientId}`,
+        {
+          method: "GET", // Assuming GET since no method was specified; change if needed
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        }
       );
       if (!response.ok) throw new Error("Failed to fetch patient details");
       const data = await response.json();

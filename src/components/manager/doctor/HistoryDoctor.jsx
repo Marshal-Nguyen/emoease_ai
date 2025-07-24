@@ -66,8 +66,16 @@ const HistoryBooking = () => {
       const patientsData = { ...patients };
       for (const patientId of patientIds) {
         if (!patientsData[patientId]) {
-          const response = await axios.get(
-            `${import.meta.env.VITE_API}/patient-profiles/${patientId}`
+
+          const response = await fetch(
+            `${import.meta.env.VITE_API}/patient-profiles/${patientId}`,
+            {
+              method: "GET", // Assuming GET since no method was specified; change if needed
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              }
+            }
           );
           patientsData[patientId] = response.data;
         }

@@ -156,9 +156,8 @@ const EditProfileForm = () => {
       formData.append("image", file);
       await axios({
         method: state.avatarUrl ? "PUT" : "POST",
-        url: `${import.meta.env.VITE_API}/profile/${profileId}/${
-          state.avatarUrl ? "update" : "upload"
-        }`,
+        url: `${import.meta.env.VITE_API}/profile/${profileId}/${state.avatarUrl ? "update" : "upload"
+          }`,
         data: formData,
         headers: {
           Authorization: `Bearer ${token}`,

@@ -33,8 +33,16 @@ const CustomerDetail = () => {
         setLoading(true);
 
         // Fetch patient profile
+
         const profileResponse = await fetch(
-          `${import.meta.env.VITE_API}/patient-profiles/${id}`
+          `${import.meta.env.VITE_API}/patient-profiles/${id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          }
         );
         if (!profileResponse.ok) {
           throw new Error("Failed to fetch patient profile");
@@ -51,8 +59,16 @@ const CustomerDetail = () => {
         const imageData = await imageResponse.json();
 
         // Fetch medical history
+
         const medicalHistoryResponse = await fetch(
-          `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${id}`
+          `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${id}`,
+          {
+            method: "GET", // Assuming GET since no method was specified; change if needed
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          }
         );
         if (!medicalHistoryResponse.ok) {
           throw new Error("Failed to fetch medical history");

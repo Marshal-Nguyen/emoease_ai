@@ -29,9 +29,14 @@ const PatientMedicalRecord = ({ patientId }) => {
         }
         const medicalRecordsData = await medicalRecordsResponse.json();
 
-        const patientProfileResponse = await fetch(
-          `https://mental-care-server-nodenet.onrender.com/api/patient-profiles/${patientId}`
-        );
+
+        const patientProfileResponse = await fetch(`https://mental-care-server-nodenet.onrender.com/api/patient-profiles/${patientId}`, {
+          method: "GET", // Assuming GET since no method was specified; change if needed
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
         if (!patientProfileResponse.ok) {
           throw new Error("Failed to fetch patient profile");
         }
