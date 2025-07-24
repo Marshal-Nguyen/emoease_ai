@@ -7,6 +7,7 @@ const NotionPatient = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const profileId = localStorage.getItem("profileId");
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchMedicalRecord = async () => {
@@ -14,9 +15,14 @@ const NotionPatient = () => {
         if (!profileId) {
           throw new Error("Profile ID not found");
         }
-        const response = await fetch(
-          `http://localhost:3000/api/medical-records/${profileId}`
-        );
+
+        const response = await fetch(`http://localhost:3000/api/medical-records/${profileId}`, {
+          method: "GET", // Assuming GET since no method was specified; change if needed
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch medical record");
         }

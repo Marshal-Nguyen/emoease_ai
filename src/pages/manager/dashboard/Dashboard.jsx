@@ -53,6 +53,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const [error, setError] = useState(null);
+  const token = localStorage.getItem('token');
   const [loading, setLoading] = useState(true);
   const [dates, setDates] = useState({
     month: new Date().getMonth() + 1,
@@ -198,8 +199,14 @@ export default function Dashboard() {
             statuses.map(async (status) => {
               try {
                 const res = await fetch(
-                  `${import.meta.env.VITE_API}/bookings?StartDate=${dates.start
-                  }&EndDate=${dates.end}&Status=${status}`
+                  `${import.meta.env.VITE_API}/bookings?StartDate=${dates.start}&EndDate=${dates.end}&Status=${status}`,
+                  {
+                    method: "GET", // Assuming GET since no method was specified; change if needed
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${token}`
+                    }
+                  }
                 );
                 const data = await res.json();
                 return [status, data.totalCount.toLocaleString()];
@@ -228,7 +235,14 @@ export default function Dashboard() {
         // Fetch top doctors data
         try {
           const res = await fetch(
-            `https://anhtn.id.vn/scheduling-service/bookings/top-doctors?StartDate=${dates.start}&EndDate=${dates.end}`
+            `https://anhtn.id.vn/scheduling-service/bookings/top-doctors?StartDate=${dates.start}&EndDate=${dates.end}`,
+            {
+              method: "GET", // Assuming GET since no method was specified; change if needed
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              }
+            }
           );
           const data = await res.json();
           newState.topDoctors = {

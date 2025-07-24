@@ -25,6 +25,7 @@ const CustomerDetail = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
   const [purchasedPackageName, setPurchasedPackageName] = useState(null);
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchCustomerData = async () => {
@@ -59,9 +60,14 @@ const CustomerDetail = () => {
         const medicalHistoryData = await medicalHistoryResponse.json();
 
         // Fetch medical records
-        const medicalRecordsResponse = await fetch(
-          `http://localhost:3000/api/medical-records/${id}`
-        );
+
+        const medicalRecordsResponse = await fetch(`http://localhost:3000/api/medical-records/${id}`, {
+          method: "GET", // Assuming GET since no method was specified; change if needed
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
         if (!medicalRecordsResponse.ok) {
           throw new Error("Failed to fetch medical records");
         }

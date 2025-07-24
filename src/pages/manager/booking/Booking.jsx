@@ -24,6 +24,7 @@ const BookingList = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [hasMoreData, setHasMoreData] = useState(true);
   const [inputValue, setInputValue] = useState("");
+  const token = localStorage.getItem('token');
 
   const navigate = useNavigate();
 
@@ -66,6 +67,10 @@ const BookingList = () => {
           StartDate: dateFilter || undefined,
           EndDate: dateFilter || undefined,
         },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
       });
 
       const bookingData = response.data.data || [];

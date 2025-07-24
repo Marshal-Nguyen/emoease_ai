@@ -10,7 +10,7 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("Processing");
   const [newDisorders, setNewDisorders] = useState([{ Name: "", Description: "" }]);
-
+  const token = localStorage.getItem('token');
   // Fetch mental disorders from API
   useEffect(() => {
     fetch("http://localhost:3000/special-disorders")
@@ -88,6 +88,7 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify(payload),
       });

@@ -9,6 +9,7 @@ const PatientMedicalRecord = ({ patientId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -16,9 +17,14 @@ const PatientMedicalRecord = ({ patientId }) => {
       setError(null);
 
       try {
-        const medicalRecordsResponse = await fetch(
-          `http://localhost:3000/api/medical-records/${patientId}`
-        );
+
+        const medicalRecordsResponse = await fetch(`http://localhost:3000/api/medical-records/${patientId}`, {
+          method: "GET", // Assuming GET since no method was specified; change if needed
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
         if (!medicalRecordsResponse.ok) {
           throw new Error("Failed to fetch medical records");
         }

@@ -17,6 +17,7 @@ const PatientBooking = () => {
   const [sortBy, setSortBy] = useState("Date");
   const [sortOrder, setSortOrder] = useState("asc");
   const profileId = "26205c9d-c1d0-4ba2-bd90-edcfe2ce7b52";
+  const token = localStorage.getItem('token');
 
   const [patientDetailsData, setPatientDetailsData] = useState({});
 
@@ -25,7 +26,14 @@ const PatientBooking = () => {
     setError(null);
     try {
       const response = await fetch(
-        `http://localhost:3000/api/bookings?doctorId=${profileId}&pageIndex=${pageIndex}&pageSize=${pageSize}&Search=${encodeURIComponent(search)}&SortBy=${sortBy}&SortOrder=${sortOrder}`
+        `http://localhost:3000/api/bookings?doctorId=${profileId}&pageIndex=${pageIndex}&pageSize=${pageSize}&Search=${encodeURIComponent(search)}&SortBy=${sortBy}&SortOrder=${sortOrder}`,
+        {
+          method: "GET", // Assuming GET since no method was specified; change if needed
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        }
       );
       if (!response.ok) throw new Error("Failed to fetch bookings");
       const data = await response.json();
