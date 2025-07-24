@@ -19,7 +19,7 @@ const Chat = () => {
   const fetchMyAvatar = async () => {
     try {
       const avatarRes = await fetch(
-        `http://localhost:3000/api/profile/${profileId}/image`
+        `https://mental-care-server-nodenet.onrender.com/api/profile/${profileId}/image`
       );
       const avatarData = await avatarRes.json();
       setMyAvatarUrl(avatarData.data?.publicUrl || null);
@@ -80,7 +80,8 @@ const Chat = () => {
     const fetchChatUsers = async () => {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API
+          `${
+            import.meta.env.VITE_API
           }/chat-users/${userRole}/${localStorage.getItem("profileId")}`
         );
         const usersData = await res.json();
@@ -89,7 +90,7 @@ const Chat = () => {
           usersData.map(async (user) => {
             try {
               const avatarRes = await fetch(
-                `http://localhost:3000/api/profile/${user.avatarId}/image`
+                `https://mental-care-server-nodenet.onrender.com/api/profile/${user.avatarId}/image`
               );
               const avatarData = await avatarRes.json();
               return {

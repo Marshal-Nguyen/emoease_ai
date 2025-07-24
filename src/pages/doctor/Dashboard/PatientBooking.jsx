@@ -21,7 +21,13 @@ const PatientBooking = () => {
 
   const [patientDetailsData, setPatientDetailsData] = useState({});
 
-  const fetchBookings = async (pageIndex = 1, pageSize = 10, search = "", sortBy = "Date", sortOrder = "asc") => {
+  const fetchBookings = async (
+    pageIndex = 1,
+    pageSize = 10,
+    search = "",
+    sortBy = "Date",
+    sortOrder = "asc"
+  ) => {
     setLoading(true);
     setError(null);
     try {
@@ -34,6 +40,7 @@ const PatientBooking = () => {
             "Authorization": `Bearer ${token}`
           }
         }
+
       );
       if (!response.ok) throw new Error("Failed to fetch bookings");
       const data = await response.json();
@@ -53,7 +60,9 @@ const PatientBooking = () => {
 
   const fetchPatientDetails = async (patientId) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/patient-profiles/${patientId}`);
+      const response = await fetch(
+        `https://mental-care-server-nodenet.onrender.com/api/patient-profiles/${patientId}`
+      );
       if (!response.ok) throw new Error("Failed to fetch patient details");
       const data = await response.json();
 
@@ -63,24 +72,29 @@ const PatientBooking = () => {
         gender: data.Gender || "Unknown",
         contactInfo: { phoneNumber: data.PhoneNumber || "Unknown" },
         medicalHistory: {
-          mentalDisorders: data.MedicalHistories?.[0]?.MedicalHistorySpecificMentalDisorder?.map(
-            (disorder) => ({
-              id: disorder.MentalDisorders.Id,
-              name: disorder.MentalDisorders.Name,
-              description: disorder.MentalDisorders.Description,
-            })
-          ) || [],
-          physicalSymptoms: data.MedicalHistories?.[0]?.MedicalHistoryPhysicalSymptom?.map(
-            (symptom) => ({
-              id: symptom.PhysicalSymptoms.Id,
-              name: symptom.PhysicalSymptoms.Name,
-              description: symptom.PhysicalSymptoms.Description,
-            })
-          ) || [],
+          mentalDisorders:
+            data.MedicalHistories?.[0]?.MedicalHistorySpecificMentalDisorder?.map(
+              (disorder) => ({
+                id: disorder.MentalDisorders.Id,
+                name: disorder.MentalDisorders.Name,
+                description: disorder.MentalDisorders.Description,
+              })
+            ) || [],
+          physicalSymptoms:
+            data.MedicalHistories?.[0]?.MedicalHistoryPhysicalSymptom?.map(
+              (symptom) => ({
+                id: symptom.PhysicalSymptoms.Id,
+                name: symptom.PhysicalSymptoms.Name,
+                description: symptom.PhysicalSymptoms.Description,
+              })
+            ) || [],
         },
       };
 
-      setPatientDetailsData((prev) => ({ ...prev, [patientId]: patientDetails }));
+      setPatientDetailsData((prev) => ({
+        ...prev,
+        [patientId]: patientDetails,
+      }));
       setSelectedPatientDetails(patientDetails);
     } catch (err) {
       setError("Failed to fetch patient details");

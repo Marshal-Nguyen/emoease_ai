@@ -29,7 +29,7 @@ const StatictisDoctor = () => {
 
         // Fetch doctor profile
         const profileResponse = await axios.get(
-          `http://localhost:3000/api/doctor-profiles/${profileId}`,
+          `https://mental-care-server-nodenet.onrender.com/api/doctor-profiles/${profileId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -41,7 +41,7 @@ const StatictisDoctor = () => {
 
         // Fetch medical records
         const medicalRecordsResponse = await axios.get(
-          `http://localhost:3000/api/medical-records/doctor/${profileId}`,
+          `https://mental-care-server-nodenet.onrender.com/api/medical-records/doctor/${profileId}`,
           {
             headers: {
               "Content-Type": "application/json",

@@ -14,7 +14,7 @@ export default function MedicalRecordsList({ profileId }) {
       try {
         setLoading(true);
         const response = await axios.get(
-          `http://localhost:3000/api/medical-records/doctor/${profileId}`,
+          `https://mental-care-server-nodenet.onrender.com/api/medical-records/doctor/${profileId}`,
           {
             headers: {
               "Content-Type": "application/json",

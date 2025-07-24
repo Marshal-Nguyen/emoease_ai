@@ -15,7 +15,6 @@ const NotionPatient = () => {
         if (!profileId) {
           throw new Error("Profile ID not found");
         }
-
         const response = await fetch(`http://localhost:3000/api/medical-records/${profileId}`, {
           method: "GET", // Assuming GET since no method was specified; change if needed
           headers: {

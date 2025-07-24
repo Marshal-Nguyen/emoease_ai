@@ -13,7 +13,7 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
   const token = localStorage.getItem('token');
   // Fetch mental disorders from API
   useEffect(() => {
-    fetch("http://localhost:3000/special-disorders")
+    fetch("https://mental-care-server-nodenet.onrender.com/special-disorders")
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
@@ -93,8 +93,6 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
         body: JSON.stringify(payload),
       });
       toast.success("Medical record created and booking status updated successfully!");
-
-
 
     } catch (error) {
       console.error("Error submitting medical record:", error);

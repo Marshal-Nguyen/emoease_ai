@@ -52,7 +52,7 @@ const CustomerDetail = () => {
 
         // Fetch medical history
         const medicalHistoryResponse = await fetch(
-          `http://localhost:3000/api/medical-histories/patient/${id}`
+          `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${id}`
         );
         if (!medicalHistoryResponse.ok) {
           throw new Error("Failed to fetch medical history");
@@ -68,6 +68,7 @@ const CustomerDetail = () => {
             "Authorization": `Bearer ${token}`
           }
         });
+
         if (!medicalRecordsResponse.ok) {
           throw new Error("Failed to fetch medical records");
         }

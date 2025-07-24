@@ -40,7 +40,7 @@ const ProfileDoctor = () => {
         bio: "",
     });
     const [avatarUrl, setAvatarUrl] = useState(null);
-    const API_URL = "http://localhost:3000";
+    const API_URL = "https://mental-care-server-nodenet.onrender.com";
 
     // Helper to get cached data from localStorage
     const getCachedData = (key, defaultData) =>

@@ -51,7 +51,7 @@ const Intro = () => {
   const [selectedJobId, setSelectedJobId] = useState(null);
   const BASE_URL = import.meta.env.VITE_API_LIFESTYLE_URL;
 
-  const PROFILE_URL = "http://localhost:3000";
+  const PROFILE_URL = "https://mental-care-server-nodenet.onrender.com";
   const { currentStep, formData, goToNext, goToPrevious, updateFormData } =
     useMultiStepForm(15);
   const {

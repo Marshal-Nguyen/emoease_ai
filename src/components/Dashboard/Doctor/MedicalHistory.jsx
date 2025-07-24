@@ -31,6 +31,7 @@ export default function MedicalHistory({ profileId }) {
             let bookingDetails = {};
             try {
 
+
               const bookingResponse = await fetch(`http://localhost:3000/api/bookings?Id=${record.BookingId}`, {
                 method: "GET",
                 headers: {
@@ -38,11 +39,14 @@ export default function MedicalHistory({ profileId }) {
                   "Authorization": `Bearer ${token}`
                 }
               });
+
               const bookingData = await bookingResponse.json();
               bookingDetails = bookingData.data[0] || {};
-
             } catch (error) {
-              console.error(`Error fetching booking for ID ${record.BookingId}:`, error);
+              console.error(
+                `Error fetching booking for ID ${record.BookingId}:`,
+                error
+              );
             }
 
             return {
@@ -51,12 +55,13 @@ export default function MedicalHistory({ profileId }) {
               status: record.DiagnosedAt ? "Done" : "Processing",
               createdAt: record.CreatedAt,
               notes: record.Description || "No description provided",
-              mentalDisorders: record.MedicalRecordSpecificMentalDisorder?.map(
-                m => m.MentalDisorders.Name
-              ).join(", ") || "No disorders specified",
+              mentalDisorders:
+                record.MedicalRecordSpecificMentalDisorder?.map(
+                  (m) => m.MentalDisorders.Name
+                ).join(", ") || "No disorders specified",
               patientName: bookingDetails.patientName || "Unknown",
               doctorName: bookingDetails.doctorName || "Unknown",
-              bookingCode: bookingDetails.BookingCode || "N/A"
+              bookingCode: bookingDetails.BookingCode || "N/A",
             };
           })
         );
