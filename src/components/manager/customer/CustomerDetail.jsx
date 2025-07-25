@@ -25,6 +25,7 @@ const CustomerDetail = () => {
   const [profileImage, setProfileImage] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
   const [purchasedPackageName, setPurchasedPackageName] = useState(null);
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchCustomerData = async () => {
@@ -32,8 +33,16 @@ const CustomerDetail = () => {
         setLoading(true);
 
         // Fetch patient profile
+
         const profileResponse = await fetch(
-          `${import.meta.env.VITE_API}/patient-profiles/${id}`
+          `${import.meta.env.VITE_API}/patient-profiles/${id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          }
         );
         if (!profileResponse.ok) {
           throw new Error("Failed to fetch patient profile");
@@ -50,8 +59,16 @@ const CustomerDetail = () => {
         const imageData = await imageResponse.json();
 
         // Fetch medical history
+
         const medicalHistoryResponse = await fetch(
-          `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${id}`
+          `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${id}`,
+          {
+            method: "GET", // Assuming GET since no method was specified; change if needed
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          }
         );
         if (!medicalHistoryResponse.ok) {
           throw new Error("Failed to fetch medical history");
@@ -59,9 +76,15 @@ const CustomerDetail = () => {
         const medicalHistoryData = await medicalHistoryResponse.json();
 
         // Fetch medical records
-        const medicalRecordsResponse = await fetch(
-          `https://mental-care-server-nodenet.onrender.com/api/medical-records/${id}`
-        );
+
+        const medicalRecordsResponse = await fetch(`http://localhost:3000/api/medical-records/${id}`, {
+          method: "GET", // Assuming GET since no method was specified; change if needed
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
         if (!medicalRecordsResponse.ok) {
           throw new Error("Failed to fetch medical records");
         }

@@ -22,6 +22,7 @@ const PsychologistList = () => {
   const [sortOrder, setSortOrder] = useState("desc");
   const [searchQuery, setSearchQuery] = useState("");
   const [hasMoreData, setHasMoreData] = useState(true);
+  const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
   const fetchCustomers = async () => {
@@ -33,6 +34,10 @@ const PsychologistList = () => {
           params: searchQuery
             ? { fullName: searchQuery, pageIndex, pageSize, sortBy, sortOrder }
             : { pageIndex, pageSize, sortBy, sortOrder },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
         }
       );
 
@@ -72,7 +77,7 @@ const PsychologistList = () => {
       setCustomers(customersWithImagesAndPackages);
       setHasMoreData(
         customersWithImagesAndPackages.length === pageSize &&
-          response.data.pageIndex < response.data.totalPages
+        response.data.pageIndex < response.data.totalPages
       );
     } catch (error) {
       setError("Failed to load customers. Please try again.");
@@ -223,7 +228,7 @@ const PsychologistList = () => {
                     </td>
                     <td className="px-6 py-7 flex items-center gap-2 text-gray-600">
                       {customer.gender === "Male" ||
-                      customer.gender === "male" ? (
+                        customer.gender === "male" ? (
                         <FaMars className="text-blue-600" size={18} />
                       ) : customer.gender === "female" ||
                         customer.gender === "Female" ? (
@@ -239,13 +244,12 @@ const PsychologistList = () => {
                       {customer.phoneNumber || "N/A"}
                     </td>
                     <td
-                      className={`px-6 py-4 italic ${
-                        customer.personalityTraits === "Introversion"
-                          ? "text-blue-600"
-                          : customer.personalityTraits === "Extroversion"
+                      className={`px-6 py-4 italic ${customer.personalityTraits === "Introversion"
+                        ? "text-blue-600"
+                        : customer.personalityTraits === "Extroversion"
                           ? "text-red-600"
                           : "text-gray-600"
-                      }`}
+                        }`}
                     >
                       {customer.personalityTraits || "N/A"}
                     </td>

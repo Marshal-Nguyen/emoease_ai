@@ -15,7 +15,7 @@ const HistoryBooking = () => {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("StartTime");
   const [sortOrder, setSortOrder] = useState("desc");
-
+  const token = localStorage.getItem('token');
   const { id } = useParams();
   // Fetch bookings from API
   const fetchBookings = async () => {
@@ -32,8 +32,11 @@ const HistoryBooking = () => {
           SortOrder: sortOrder,
           patientId: id,
         },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
       });
-
       const bookingsData = response.data.data || [];
       setBookings(bookingsData);
       setTotalCount(response.data.totalCount || 0);
@@ -345,11 +348,10 @@ const HistoryBooking = () => {
                     )}
                     <button
                       onClick={() => handlePageChange(page)}
-                      className={`px-4 py-2 border rounded-full text-sm font-semibold ${
-                        pageIndex === page
-                          ? "bg-blue-100 text-blue-600 border-blue-600"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-blue-300"
-                      }`}
+                      className={`px-4 py-2 border rounded-full text-sm font-semibold ${pageIndex === page
+                        ? "bg-blue-100 text-blue-600 border-blue-600"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-blue-300"
+                        }`}
                     >
                       {page}
                     </button>

@@ -30,18 +30,22 @@ const PaymentList = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [hasMoreData, setHasMoreData] = useState(true);
   const [totalPages, setTotalPages] = useState(1);
-
+  const token = localStorage.getItem("token");
   const fetchPayments = async () => {
     try {
       setLoading(true);
       const response = await fetch(
-        `${
-          import.meta.env.VITE_API
-        }/payment-zalo?pageIndex=${pageIndex}&pageSize=${pageSize}${
-          sortOrder ? `&sortOrder=${sortOrder}` : ""
-        }${createAtFilter ? `&createdAt=${createAtFilter}` : ""}${
-          statusFilter ? `&status=${statusFilter}` : ""
-        }`
+        `${import.meta.env.VITE_API
+        }/payment-zalo?pageIndex=${pageIndex}&pageSize=${pageSize}${sortOrder ? `&sortOrder=${sortOrder}` : ""
+        }${createAtFilter ? `&createdAt=${createAtFilter}` : ""}${statusFilter ? `&status=${statusFilter}` : ""
+        }`,
+        {
+          method: "GET", // Assuming GET since no method was specified; change if needed
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        }
       );
 
       if (!response.ok) {
@@ -212,13 +216,12 @@ const PaymentList = () => {
                       {payment.paymentType}
                     </td>
                     <td
-                      className={`px-6 py-4 font-medium ${
-                        payment.status === "Success"
-                          ? "text-green-600"
-                          : payment.status === "Pending"
+                      className={`px-6 py-4 font-medium ${payment.status === "Success"
+                        ? "text-green-600"
+                        : payment.status === "Pending"
                           ? "text-orange-600"
                           : "text-red-600"
-                      }`}
+                        }`}
                     >
                       {payment.status}
                     </td>

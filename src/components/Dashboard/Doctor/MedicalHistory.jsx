@@ -11,14 +11,19 @@ export default function MedicalHistory({ profileId }) {
   const [totalRecords, setTotalRecords] = useState(0);
   const doctorId = useSelector((state) => state.auth.profileId);
 
+
   const pageSize = 10;
 
   useEffect(() => {
     const fetchMedicalRecords = async () => {
       try {
-        const response = await fetch(
-          `https://mental-care-server-nodenet.onrender.com/api/medical-records/doctor/${doctorId}`
-        );
+        const response = await fetch(`http://localhost:3000/api/medical-records/doctor/${doctorId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
         const medicalData = await response.json();
 
         // Fetch booking details for each medical record
@@ -26,9 +31,16 @@ export default function MedicalHistory({ profileId }) {
           medicalData.map(async (record) => {
             let bookingDetails = {};
             try {
-              const bookingResponse = await fetch(
-                `https://mental-care-server-nodenet.onrender.com/api/bookings?Id=${record.BookingId}`
-              );
+
+
+              const bookingResponse = await fetch(`http://localhost:3000/api/bookings?Id=${record.BookingId}`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`
+                }
+              });
+
               const bookingData = await bookingResponse.json();
               bookingDetails = bookingData.data[0] || {};
             } catch (error) {
