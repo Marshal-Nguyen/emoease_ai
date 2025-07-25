@@ -11,6 +11,20 @@ const PatientMedicalRecord = ({ patientId }) => {
   const [avatarUrl, setAvatarUrl] = useState(null);
   const token = localStorage.getItem('token');
 
+  const getInitials = (fullName) => {
+    if (!fullName) return "??";
+
+    const names = fullName.trim().split(" ");
+    if (names.length === 1) {
+      return names[0].charAt(0).toUpperCase();
+    }
+
+    return (
+      names[0].charAt(0).toUpperCase() +
+      names[names.length - 1].charAt(0).toUpperCase()
+    );
+  };
+
   useEffect(() => {
     const fetchPatientData = async () => {
       setLoading(true);
@@ -94,13 +108,12 @@ const PatientMedicalRecord = ({ patientId }) => {
             createdAt: record.CreatedAt,
             updatedAt: record.LastModified,
             notes: record.Description,
-            specificMentalDisorders: record.MedicalRecordSpecificMentalDisorder?.map(
-              (dis) => ({
+            specificMentalDisorders:
+              record.MedicalRecordSpecificMentalDisorder?.map((dis) => ({
                 id: dis.SpecificMentalDisordersId,
                 name: dis.MentalDisorders.Name,
                 description: dis.MentalDisorders.Description,
-              })
-            ) || [],
+              })) || [],
             psychologicalAssessment:
               patientProfileData.MedicalHistories?.[0]?.Description,
           })),
@@ -205,36 +218,36 @@ const PatientMedicalRecord = ({ patientId }) => {
             }),
             ...(patient.contactInfo.email
               ? [
-                new Paragraph({
-                  children: [
-                    new TextRun({ text: "Email: ", bold: true }),
-                    new TextRun(patient.contactInfo.email),
-                  ],
-                  spacing: { after: 100 },
-                }),
-              ]
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: "Email: ", bold: true }),
+                      new TextRun(patient.contactInfo.email),
+                    ],
+                    spacing: { after: 100 },
+                  }),
+                ]
               : []),
             ...(patient.contactInfo.phone
               ? [
-                new Paragraph({
-                  children: [
-                    new TextRun({ text: "Phone: ", bold: true }),
-                    new TextRun(patient.contactInfo.phone),
-                  ],
-                  spacing: { after: 100 },
-                }),
-              ]
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: "Phone: ", bold: true }),
+                      new TextRun(patient.contactInfo.phone),
+                    ],
+                    spacing: { after: 100 },
+                  }),
+                ]
               : []),
             ...(patient.contactInfo.address
               ? [
-                new Paragraph({
-                  children: [
-                    new TextRun({ text: "Address: ", bold: true }),
-                    new TextRun(patient.contactInfo.address),
-                  ],
-                  spacing: { after: 200 },
-                }),
-              ]
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: "Address: ", bold: true }),
+                      new TextRun(patient.contactInfo.address),
+                    ],
+                    spacing: { after: 200 },
+                  }),
+                ]
               : []),
             new Paragraph({
               text: "Medical History",
@@ -243,147 +256,154 @@ const PatientMedicalRecord = ({ patientId }) => {
             }),
             ...(patient.medicalHistory.diagnosedAt
               ? [
-                new Paragraph({
-                  children: [
-                    new TextRun({ text: "Diagnosis Date: ", bold: true }),
-                    new TextRun(formatDate(patient.medicalHistory.diagnosedAt)),
-                  ],
-                  spacing: { after: 100 },
-                }),
-              ]
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: "Diagnosis Date: ", bold: true }),
+                      new TextRun(
+                        formatDate(patient.medicalHistory.diagnosedAt)
+                      ),
+                    ],
+                    spacing: { after: 100 },
+                  }),
+                ]
               : []),
             ...(patient.allergies
               ? [
-                new Paragraph({
-                  children: [
-                    new TextRun({ text: "Allergies: ", bold: true }),
-                    new TextRun(patient.allergies),
-                  ],
-                  spacing: { after: 100 },
-                }),
-              ]
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: "Allergies: ", bold: true }),
+                      new TextRun(patient.allergies),
+                    ],
+                    spacing: { after: 100 },
+                  }),
+                ]
               : []),
             ...(patient.personalityTraits
               ? [
-                new Paragraph({
-                  children: [
-                    new TextRun({ text: "Personality Traits: ", bold: true }),
-                    new TextRun(patient.personalityTraits),
-                  ],
-                  spacing: { after: 100 },
-                }),
-              ]
+                  new Paragraph({
+                    children: [
+                      new TextRun({ text: "Personality Traits: ", bold: true }),
+                      new TextRun(patient.personalityTraits),
+                    ],
+                    spacing: { after: 100 },
+                  }),
+                ]
               : []),
             ...(patient.medicalHistory.physicalSymptoms.length > 0
               ? [
-                new Paragraph({
-                  text: "Physical Symptoms",
-                  heading: HeadingLevel.HEADING_3,
-                  spacing: { before: 200, after: 100 },
-                }),
-                ...patient.medicalHistory.physicalSymptoms.flatMap((symptom) => [
                   new Paragraph({
-                    children: [
-                      new TextRun({ text: `• ${symptom.name}: `, bold: true }),
-                      new TextRun(
-                        `${symptom.description} (Severity: ${symptom.severity})`
-                      ),
-                    ],
-                    spacing: { after: 100 },
+                    text: "Physical Symptoms",
+                    heading: HeadingLevel.HEADING_3,
+                    spacing: { before: 200, after: 100 },
                   }),
-                ]),
-              ]
-              : []),
-            ...(patient.medicalHistory.psychologicalSymptoms.length > 0
-              ? [
-                new Paragraph({
-                  text: "Psychological Symptoms",
-                  heading: HeadingLevel.HEADING_3,
-                  spacing: { before: 200, after: 100 },
-                }),
-                ...patient.medicalHistory.psychologicalSymptoms.flatMap(
-                  (symptom) => [
-                    new Paragraph({
-                      children: [
-                        new TextRun({
-                          text: `• ${symptom.name}: `,
-                          bold: true,
-                        }),
-                        new TextRun(
-                          `${symptom.description} (Severity: ${symptom.severity})`
-                        ),
-                      ],
-                      spacing: { after: 100 },
-                    }),
-                  ]
-                ),
-              ]
-              : []),
-            ...(patient.medicalRecords.length > 0
-              ? [
-                new Paragraph({
-                  text: "Medical Records",
-                  heading: HeadingLevel.HEADING_2,
-                  spacing: { before: 200, after: 100 },
-                }),
-                ...patient.medicalRecords.flatMap((record) => [
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: `Record Date: ${formatDate(
-                          record.createdAt || record.updatedAt
-                        )}`,
-                        bold: true,
-                      }),
-                    ],
-                    spacing: { after: 100 },
-                  }),
-                  new Paragraph({
-                    children: [
-                      new TextRun({ text: "Notes: ", bold: true }),
-                      new TextRun(record.notes),
-                    ],
-                    spacing: { after: 100 },
-                  }),
-                  ...(record.specificMentalDisorders.length > 0
-                    ? [
-                      new Paragraph({
-                        text: "Mental Disorders",
-                        heading: HeadingLevel.HEADING_3,
-                        spacing: { before: 100, after: 100 },
-                      }),
-                      ...record.specificMentalDisorders.flatMap(
-                        (disorder) => [
-                          new Paragraph({
-                            children: [
-                              new TextRun({
-                                text: `• ${disorder.name}: `,
-                                bold: true,
-                              }),
-                              new TextRun(disorder.description),
-                            ],
-                            spacing: { after: 100 },
-                          }),
-                        ]
-                      ),
-                    ]
-                    : []),
-                  ...(record.psychologicalAssessment
-                    ? [
+                  ...patient.medicalHistory.physicalSymptoms.flatMap(
+                    (symptom) => [
                       new Paragraph({
                         children: [
                           new TextRun({
-                            text: "Psychological Assessment: ",
+                            text: `• ${symptom.name}: `,
                             bold: true,
                           }),
-                          new TextRun(record.psychologicalAssessment),
+                          new TextRun(
+                            `${symptom.description} (Severity: ${symptom.severity})`
+                          ),
                         ],
                         spacing: { after: 100 },
                       }),
                     ]
-                    : []),
-                ]),
-              ]
+                  ),
+                ]
+              : []),
+            ...(patient.medicalHistory.psychologicalSymptoms.length > 0
+              ? [
+                  new Paragraph({
+                    text: "Psychological Symptoms",
+                    heading: HeadingLevel.HEADING_3,
+                    spacing: { before: 200, after: 100 },
+                  }),
+                  ...patient.medicalHistory.psychologicalSymptoms.flatMap(
+                    (symptom) => [
+                      new Paragraph({
+                        children: [
+                          new TextRun({
+                            text: `• ${symptom.name}: `,
+                            bold: true,
+                          }),
+                          new TextRun(
+                            `${symptom.description} (Severity: ${symptom.severity})`
+                          ),
+                        ],
+                        spacing: { after: 100 },
+                      }),
+                    ]
+                  ),
+                ]
+              : []),
+            ...(patient.medicalRecords.length > 0
+              ? [
+                  new Paragraph({
+                    text: "Medical Records",
+                    heading: HeadingLevel.HEADING_2,
+                    spacing: { before: 200, after: 100 },
+                  }),
+                  ...patient.medicalRecords.flatMap((record) => [
+                    new Paragraph({
+                      children: [
+                        new TextRun({
+                          text: `Record Date: ${formatDate(
+                            record.createdAt || record.updatedAt
+                          )}`,
+                          bold: true,
+                        }),
+                      ],
+                      spacing: { after: 100 },
+                    }),
+                    new Paragraph({
+                      children: [
+                        new TextRun({ text: "Notes: ", bold: true }),
+                        new TextRun(record.notes),
+                      ],
+                      spacing: { after: 100 },
+                    }),
+                    ...(record.specificMentalDisorders.length > 0
+                      ? [
+                          new Paragraph({
+                            text: "Mental Disorders",
+                            heading: HeadingLevel.HEADING_3,
+                            spacing: { before: 100, after: 100 },
+                          }),
+                          ...record.specificMentalDisorders.flatMap(
+                            (disorder) => [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    text: `• ${disorder.name}: `,
+                                    bold: true,
+                                  }),
+                                  new TextRun(disorder.description),
+                                ],
+                                spacing: { after: 100 },
+                              }),
+                            ]
+                          ),
+                        ]
+                      : []),
+                    ...(record.psychologicalAssessment
+                      ? [
+                          new Paragraph({
+                            children: [
+                              new TextRun({
+                                text: "Psychological Assessment: ",
+                                bold: true,
+                              }),
+                              new TextRun(record.psychologicalAssessment),
+                            ],
+                            spacing: { after: 100 },
+                          }),
+                        ]
+                      : []),
+                  ]),
+                ]
               : []),
           ],
         },
@@ -448,8 +468,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                   {patient.fullName}
                 </h1>
                 <p className="text-gray-600 mt-1">
-                  {patient.gender || "N/A"} • {calculateAge(patient.birthDate)} Age
-                  • ID: {patient.id?.substring(0, 8) || "N/A"}
+                  {patient.gender || "N/A"} • {calculateAge(patient.birthDate)}{" "}
+                  Age • ID: {patient.id?.substring(0, 8) || "N/A"}
                 </p>
               </div>
             </div>
@@ -482,13 +502,15 @@ const PatientMedicalRecord = ({ patientId }) => {
               (tab) => (
                 <button
                   key={tab}
-                  className={`px-6 py-4 text-sm font-medium transition-colors duration-200 ${activeTab === tab
-                    ? "text-blue-600 border-b-2 border-blue-600"
-                    : "text-gray-600 hover:text-gray-800"
-                    }`}
+                  className={`px-6 py-4 text-sm font-medium transition-colors duration-200 ${
+                    activeTab === tab
+                      ? "text-blue-600 border-b-2 border-blue-600"
+                      : "text-gray-600 hover:text-gray-800"
+                  }`}
                   onClick={() => setActiveTab(tab)}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1).replace("mental", "Mental Health")}
+                  {tab.charAt(0).toUpperCase() +
+                    tab.slice(1).replace("mental", "Mental Health")}
                 </button>
               )
             )}
@@ -502,42 +524,43 @@ const PatientMedicalRecord = ({ patientId }) => {
                 patient.gender ||
                 patient.birthDate ||
                 patient.medicalRecords?.length > 0) && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {patient.medicalHistory?.diagnosedAt && (
-                      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                          Diagnosis
-                        </h3>
-                        <p className="text-gray-600">
-                          {formatDate(patient.medicalHistory.diagnosedAt)}
-                        </p>
-                      </div>
-                    )}
-                    {(patient.gender || patient.birthDate) && (
-                      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                          Personal Information
-                        </h3>
-                        <p className="text-gray-600">
-                          {patient.gender || "N/A"} • {calculateAge(patient.birthDate)} Age
-                        </p>
-                      </div>
-                    )}
-                    {patient.medicalRecords?.length > 0 && (
-                      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                          Latest Update
-                        </h3>
-                        <p className="text-gray-600">
-                          {formatDateTime(
-                            patient.medicalRecords[0].createdAt ||
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {patient.medicalHistory?.diagnosedAt && (
+                    <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                        Diagnosis
+                      </h3>
+                      <p className="text-gray-600">
+                        {formatDate(patient.medicalHistory.diagnosedAt)}
+                      </p>
+                    </div>
+                  )}
+                  {(patient.gender || patient.birthDate) && (
+                    <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                        Personal Information
+                      </h3>
+                      <p className="text-gray-600">
+                        {patient.gender || "N/A"} •{" "}
+                        {calculateAge(patient.birthDate)} Age
+                      </p>
+                    </div>
+                  )}
+                  {patient.medicalRecords?.length > 0 && (
+                    <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                        Latest Update
+                      </h3>
+                      <p className="text-gray-600">
+                        {formatDateTime(
+                          patient.medicalRecords[0].createdAt ||
                             patient.medicalRecords[0].updatedAt
-                          )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {patient.medicalRecords?.length > 0 && (
                 <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100">
@@ -579,17 +602,18 @@ const PatientMedicalRecord = ({ patientId }) => {
 
               {(patient.medicalHistory?.physicalSymptoms?.length > 0 ||
                 patient.medicalHistory?.psychologicalSymptoms?.length > 0) && (
-                  <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                      Medical History
-                    </h3>
-                    {patient.medicalHistory?.physicalSymptoms?.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-base font-medium text-gray-800 mb-2">
-                          Physical Symptoms
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {patient.medicalHistory.physicalSymptoms.map((symptom) => (
+                <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Medical History
+                  </h3>
+                  {patient.medicalHistory?.physicalSymptoms?.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="text-base font-medium text-gray-800 mb-2">
+                        Physical Symptoms
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {patient.medicalHistory.physicalSymptoms.map(
+                          (symptom) => (
                             <div
                               key={symptom.id}
                               className="p-4 bg-blue-50 rounded-lg"
@@ -598,39 +622,43 @@ const PatientMedicalRecord = ({ patientId }) => {
                                 {symptom.name}
                               </h5>
                               <p className="text-sm text-gray-600 mt-1">
-                                {symptom.description} (Severity: {symptom.severity})
+                                {symptom.description} (Severity:{" "}
+                                {symptom.severity})
                               </p>
                             </div>
-                          ))}
-                        </div>
+                          )
+                        )}
                       </div>
-                    )}
-                    {patient.medicalHistory?.psychologicalSymptoms?.length > 0 && (
-                      <div>
-                        <h4 className="text-base font-medium text-gray-800 mb-2">
-                          Psychological Symptoms
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {patient.medicalHistory.psychologicalSymptoms.map(
-                            (symptom) => (
-                              <div
-                                key={symptom.id}
-                                className="p-4 bg-purple-50 rounded-lg"
-                              >
-                                <h5 className="font-medium text-purple-800">
-                                  {symptom.name}
-                                </h5>
-                                <p className="text-sm text-gray-600 mt-1">
-                                  {symptom.description} (Severity: {symptom.severity})
-                                </p>
-                              </div>
-                            )
-                          )}
-                        </div>
+                    </div>
+                  )}
+                  {patient.medicalHistory?.psychologicalSymptoms?.length >
+                    0 && (
+                    <div>
+                      <h4 className="text-base font-medium text-gray-800 mb-2">
+                        Psychological Symptoms
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {patient.medicalHistory.psychologicalSymptoms.map(
+                          (symptom) => (
+                            <div
+                              key={symptom.id}
+                              className="p-4 bg-purple-50 rounded-lg"
+                            >
+                              <h5 className="font-medium text-purple-800">
+                                {symptom.name}
+                              </h5>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {symptom.description} (Severity:{" "}
+                                {symptom.severity})
+                              </p>
+                            </div>
+                          )
+                        )}
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -639,42 +667,44 @@ const PatientMedicalRecord = ({ patientId }) => {
               {(patient.medicalHistory?.diagnosedAt ||
                 patient.allergies ||
                 patient.personalityTraits) && (
-                  <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                      General Information
-                    </h3>
-                    <div className="space-y-4">
-                      {patient.medicalHistory?.diagnosedAt && (
-                        <div className="flex justify-between py-2 border-b border-gray-100">
-                          <span className="text-gray-600 font-medium">
-                            Diagnosis Date
-                          </span>
-                          <span className="text-gray-800">
-                            {formatDate(patient.medicalHistory.diagnosedAt)}
-                          </span>
-                        </div>
-                      )}
-                      {patient.allergies && (
-                        <div className="flex justify-between py-2 border-b border-gray-100">
-                          <span className="text-gray-600 font-medium">
-                            Allergies
-                          </span>
-                          <span className="text-gray-800">{patient.allergies}</span>
-                        </div>
-                      )}
-                      {patient.personalityTraits && (
-                        <div className="flex justify-between py-2 border-b border-gray-100">
-                          <span className="text-gray-600 font-medium">
-                            Personality Traits
-                          </span>
-                          <span className="text-gray-800">
-                            {patient.personalityTraits}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    General Information
+                  </h3>
+                  <div className="space-y-4">
+                    {patient.medicalHistory?.diagnosedAt && (
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600 font-medium">
+                          Diagnosis Date
+                        </span>
+                        <span className="text-gray-800">
+                          {formatDate(patient.medicalHistory.diagnosedAt)}
+                        </span>
+                      </div>
+                    )}
+                    {patient.allergies && (
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600 font-medium">
+                          Allergies
+                        </span>
+                        <span className="text-gray-800">
+                          {patient.allergies}
+                        </span>
+                      </div>
+                    )}
+                    {patient.personalityTraits && (
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600 font-medium">
+                          Personality Traits
+                        </span>
+                        <span className="text-gray-800">
+                          {patient.personalityTraits}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+              )}
 
               {patient.medicalRecords?.length > 0 && (
                 <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100">
@@ -697,14 +727,16 @@ const PatientMedicalRecord = ({ patientId }) => {
                               Mental Disorders
                             </h5>
                             <div className="flex flex-wrap gap-2 mt-2">
-                              {record.specificMentalDisorders.map((disorder) => (
-                                <div
-                                  key={disorder.id}
-                                  className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm"
-                                >
-                                  {disorder.name}: {disorder.description}
-                                </div>
-                              ))}
+                              {record.specificMentalDisorders.map(
+                                (disorder) => (
+                                  <div
+                                    key={disorder.id}
+                                    className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm"
+                                  >
+                                    {disorder.name}: {disorder.description}
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
                         )}
@@ -718,7 +750,8 @@ const PatientMedicalRecord = ({ patientId }) => {
 
           {activeTab === "mental" && (
             <div className="space-y-8">
-              {patient.medicalRecords?.[0]?.specificMentalDisorders?.length > 0 && (
+              {patient.medicalRecords?.[0]?.specificMentalDisorders?.length >
+                0 && (
                 <div className="bg-white rounded-lg p-6 shadow-md border border-gray-100">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     Mental Disorders
@@ -780,7 +813,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                               {symptom.name}
                             </h4>
                             <p className="text-sm text-gray-600 mt-1">
-                              {symptom.description} (Severity: {symptom.severity})
+                              {symptom.description} (Severity:{" "}
+                              {symptom.severity})
                             </p>
                           </div>
                         </div>
@@ -813,7 +847,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                                 {symptom.name}
                               </h4>
                               <p className="text-sm text-gray-600 mt-1">
-                                {symptom.description} (Severity: {symptom.severity})
+                                {symptom.description} (Severity:{" "}
+                                {symptom.severity})
                               </p>
                             </div>
                           </div>
@@ -853,8 +888,12 @@ const PatientMedicalRecord = ({ patientId }) => {
                           </svg>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 font-medium">Email</p>
-                          <p className="text-gray-800">{patient.contactInfo.email}</p>
+                          <p className="text-sm text-gray-600 font-medium">
+                            Email
+                          </p>
+                          <p className="text-gray-800">
+                            {patient.contactInfo.email}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -877,8 +916,12 @@ const PatientMedicalRecord = ({ patientId }) => {
                           </svg>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 font-medium">Phone</p>
-                          <p className="text-gray-800">{patient.contactInfo.phone}</p>
+                          <p className="text-sm text-gray-600 font-medium">
+                            Phone
+                          </p>
+                          <p className="text-gray-800">
+                            {patient.contactInfo.phone}
+                          </p>
                         </div>
                       </div>
                     )}
@@ -907,8 +950,12 @@ const PatientMedicalRecord = ({ patientId }) => {
                           </svg>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 font-medium">Address</p>
-                          <p className="text-gray-800">{patient.contactInfo.address}</p>
+                          <p className="text-sm text-gray-600 font-medium">
+                            Address
+                          </p>
+                          <p className="text-gray-800">
+                            {patient.contactInfo.address}
+                          </p>
                         </div>
                       </div>
                     )}
