@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import CreateMedical from "../../../components/Dashboard/Doctor/CreateMedical";
+import { useSelector } from "react-redux";
 
 const PatientBooking = () => {
   const [patients, setPatients] = useState([]);
@@ -16,7 +17,7 @@ const PatientBooking = () => {
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState("Date");
   const [sortOrder, setSortOrder] = useState("asc");
-  const profileId = "26205c9d-c1d0-4ba2-bd90-edcfe2ce7b52";
+  const profileId = useSelector((state) => state.auth.profileId);
 
   const [patientDetailsData, setPatientDetailsData] = useState({});
 
@@ -96,7 +97,13 @@ const PatientBooking = () => {
   };
 
   useEffect(() => {
-    fetchBookings(pagination.pageIndex, pagination.pageSize, searchTerm, sortBy, sortOrder);
+    fetchBookings(
+      pagination.pageIndex,
+      pagination.pageSize,
+      searchTerm,
+      sortBy,
+      sortOrder
+    );
   }, [pagination.pageIndex, pagination.pageSize, sortBy, sortOrder]);
 
   const handleSelectPatient = (patient) => {
@@ -121,7 +128,13 @@ const PatientBooking = () => {
       setSortBy(column);
       setSortOrder("asc");
     }
-    fetchBookings(pagination.pageIndex, pagination.pageSize, searchTerm, column, sortOrder === "asc" ? "desc" : "asc");
+    fetchBookings(
+      pagination.pageIndex,
+      pagination.pageSize,
+      searchTerm,
+      column,
+      sortOrder === "asc" ? "desc" : "asc"
+    );
   };
 
   return (
@@ -170,13 +183,16 @@ const PatientBooking = () => {
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                         onClick={() => handleSort("Date")}
                       >
-                        Date {sortBy === "Date" && (sortOrder === "asc" ? "↑" : "↓")}
+                        Date{" "}
+                        {sortBy === "Date" && (sortOrder === "asc" ? "↑" : "↓")}
                       </th>
                       <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                         onClick={() => handleSort("StartTime")}
                       >
-                        Time {sortBy === "StartTime" && (sortOrder === "asc" ? "↑" : "↓")}
+                        Time{" "}
+                        {sortBy === "StartTime" &&
+                          (sortOrder === "asc" ? "↑" : "↓")}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -187,8 +203,11 @@ const PatientBooking = () => {
                     {patients.map((patient) => (
                       <tr
                         key={patient.Id}
-                        className={`hover:bg-gray-50 transition-colors duration-150 ${selectedPatient?.Id === patient.Id ? "bg-purple-50" : ""
-                          }`}
+                        className={`hover:bg-gray-50 transition-colors duration-150 ${
+                          selectedPatient?.Id === patient.Id
+                            ? "bg-purple-50"
+                            : ""
+                        }`}
                       >
                         <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                           {patient.BookingCode}
@@ -201,10 +220,11 @@ const PatientBooking = () => {
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <button
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${selectedPatient?.Id === patient.Id
-                              ? "bg-purple-600 text-white hover:bg-purple-700"
-                              : "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                              }`}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
+                              selectedPatient?.Id === patient.Id
+                                ? "bg-purple-600 text-white hover:bg-purple-700"
+                                : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                            }`}
                             onClick={() => handleSelectPatient(patient)}
                           >
                             Select
