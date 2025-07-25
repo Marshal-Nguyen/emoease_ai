@@ -8,7 +8,7 @@ const PaymentCallback = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const tranID = searchParams.get("apptransid");
-
+  const token = localStorage.getItem("token");
   console.log(tranID);
 
   useEffect(() => {
@@ -22,9 +22,13 @@ const PaymentCallback = () => {
 
       try {
         const { data } = await axios.get(
-          `${
-            import.meta.env.VITE_API
-          }/payment-zalo/check-payment-status/${tranID}`
+          `${import.meta.env.VITE_API}/payment-zalo/check-payment-status/${tranID}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            }
+          }
         );
 
         if (data.success && data.status === "Success") {

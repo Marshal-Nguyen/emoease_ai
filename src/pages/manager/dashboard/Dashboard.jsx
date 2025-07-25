@@ -261,8 +261,14 @@ export default function Dashboard() {
         // Fetch daily revenue data
         try {
           const res = await fetch(
-            `${import.meta.env.VITE_API}/payment-zalo/daily-total?StartDate=${dates.start
-            }&EndDate=${dates.end}`
+            `${import.meta.env.VITE_API}/payment-zalo/daily-total?StartDate=${dates.start}&EndDate=${dates.end}`,
+            {
+              method: "GET", // Assuming GET since no method was specified; change if needed
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              }
+            }
           );
           const dailyRevenueData = await res.json();
           const dailyRevenueMap = new Map(
