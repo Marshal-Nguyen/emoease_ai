@@ -134,19 +134,19 @@ export default function Booking() {
 
   // Fetch schedule when date changes
   useEffect(() => {
-    if (!YOUR_TOKEN) {
-      navigate("/login");
-      return;
-    }
+    // if (!YOUR_TOKEN) {
+    //   navigate("/login");
+    //   return;
+    // }
     fetchSchedule();
   }, [selectedDate, doctorId, navigate]);
 
   // Fetch doctor info
   useEffect(() => {
-    if (!YOUR_TOKEN) {
-      navigate("/login");
-      return;
-    }
+    // if (!YOUR_TOKEN) {
+    //   navigate("/login");
+    //   return;
+    // }
 
     const fetchDoctorInfo = async () => {
       try {
@@ -646,9 +646,9 @@ export default function Booking() {
                 <span className="text-xl font-bold text-purple-800">
                   {doctor.Price
                     ? new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }).format(doctor.Price)
+                      style: "currency",
+                      currency: "VND",
+                    }).format(doctor.Price)
                     : "Chưa cập nhật giá"}
                 </span>
               </div>
