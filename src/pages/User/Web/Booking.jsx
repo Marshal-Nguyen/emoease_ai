@@ -111,8 +111,7 @@ export default function Booking() {
       );
 
       const now = new Date();
-      const isToday =
-        selectedDate.toDateString() === new Date().toDateString();
+      const isToday = selectedDate.toDateString() === new Date().toDateString();
 
       const filteredSlots = (response.data.timeSlots || []).filter((slot) => {
         if (!isToday) return true;
@@ -173,7 +172,10 @@ export default function Booking() {
             );
             doctorData.image = imageResponse.data.data.publicUrl;
           } catch (imageError) {
-            console.error(`Error fetching image for doctor ${doctorId}:`, imageError);
+            console.error(
+              `Error fetching image for doctor ${doctorId}:`,
+              imageError
+            );
             doctorData.image = null;
           }
         }
@@ -219,7 +221,7 @@ export default function Booking() {
       date: selectedDate.toLocaleDateString("en-CA"),
       startTime,
       duration,
-      price: 200000,
+      price: doctor.Price,
       promoCode: promoCode.trim() || null,
       giftCodeId: null,
     };
@@ -246,8 +248,6 @@ export default function Booking() {
       toast.error("Cannot book a time slot in the past");
       return;
     }
-
-    console.log("Booking DTO:", bookingDto);
 
     try {
       const bookingDto = buildBookingDto();
@@ -341,7 +341,8 @@ export default function Booking() {
                   {doctor.FullName}
                 </h3>
                 <p className="text-md text-purple-600 font-medium mb-2">
-                  {doctor.specialties?.map((spec) => spec.Name).join(", ") || "No specialties"}
+                  {doctor.specialties?.map((spec) => spec.Name).join(", ") ||
+                    "No specialties"}
                 </p>
                 <div className="flex flex-col space-y-1">
                   <div className="flex items-center text-gray-600">
@@ -456,7 +457,8 @@ export default function Booking() {
                     </span>{" "}
                     years of experience in{" "}
                     {doctor.specialties?.map((spec) => spec.Name).join(", ") ||
-                      "various fields"}.
+                      "various fields"}
+                    .
                   </p>
 
                   <p className="text-gray-600 leading-relaxed mt-2 italic">
@@ -476,9 +478,9 @@ export default function Booking() {
                   </p>
 
                   <p className="text-gray-600 leading-relaxed mt-2 italic">
-                    <span className="ml-8"></span> Over the years, they have helped
-                    thousands of individuals and families overcome psychological
-                    challenges.
+                    <span className="ml-8"></span> Over the years, they have
+                    helped thousands of individuals and families overcome
+                    psychological challenges.
                   </p>
 
                   <p className="text-gray-600 leading-relaxed mt-2 italic">
@@ -571,17 +573,20 @@ export default function Booking() {
                     <div
                       key={idx}
                       className={`flex justify-center items-center h-10 rounded-full
-                        ${isPastDate
-                          ? "text-gray-400 cursor-not-allowed"
-                          : "cursor-pointer hover:bg-purple-100 transition-colors duration-200"
+                        ${
+                          isPastDate
+                            ? "text-gray-400 cursor-not-allowed"
+                            : "cursor-pointer hover:bg-purple-100 transition-colors duration-200"
                         }
-                        ${isSelectedDate
-                          ? "bg-purple-600 text-white font-medium"
-                          : ""
+                        ${
+                          isSelectedDate
+                            ? "bg-purple-600 text-white font-medium"
+                            : ""
                         }
-                        ${isTodayDate && !isSelectedDate
-                          ? "border border-purple-500 font-medium"
-                          : ""
+                        ${
+                          isTodayDate && !isSelectedDate
+                            ? "border border-purple-500 font-medium"
+                            : ""
                         }
                       `}
                       onClick={() => !isPastDate && handleDateClick(day)}
@@ -606,11 +611,12 @@ export default function Booking() {
                       <button
                         key={i}
                         className={`p-3 border rounded-xl text-sm font-medium transition-all duration-200
-                          ${slot.status === "Available"
-                            ? selectedTimeSlot === slot
-                              ? "bg-purple-600 text-white border-purple-600 shadow-md"
-                              : "bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100"
-                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          ${
+                            slot.status === "Available"
+                              ? selectedTimeSlot === slot
+                                ? "bg-purple-600 text-white border-purple-600 shadow-md"
+                                : "bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100"
+                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
                           }`}
                         disabled={slot.status !== "Available"}
                         onClick={() =>
@@ -646,9 +652,9 @@ export default function Booking() {
                 <span className="text-xl font-bold text-purple-800">
                   {doctor.Price
                     ? new Intl.NumberFormat("vi-VN", {
-                      style: "currency",
-                      currency: "VND",
-                    }).format(doctor.Price)
+                        style: "currency",
+                        currency: "VND",
+                      }).format(doctor.Price)
                     : "Chưa cập nhật giá"}
                 </span>
               </div>
@@ -674,13 +680,16 @@ export default function Booking() {
               {/* Booking button */}
               <button
                 className={`w-full py-4 rounded-xl mt-6 font-bold text-white shadow-md transition-all duration-300 
-                  ${selectedTimeSlot
-                    ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
-                    : "bg-gray-400 cursor-not-allowed"
+                  ${
+                    selectedTimeSlot
+                      ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
+                      : "bg-gray-400 cursor-not-allowed"
                   }`}
                 onClick={handleBookingContinue}
                 disabled={!selectedTimeSlot}
-                aria-label={selectedTimeSlot ? "Continue booking" : "Please select a time"}
+                aria-label={
+                  selectedTimeSlot ? "Continue booking" : "Please select a time"
+                }
               >
                 {selectedTimeSlot ? "Continue booking" : "Please select a time"}
               </button>
@@ -694,13 +703,17 @@ export default function Booking() {
         <p className="font-medium text-gray-700 mb-4">Featured Reviews</p>
 
         <div className="space-y-4">
-          {(doctor.reviewsHighlights?.length > 0 ? doctor.reviewsHighlights : [
-            {
-              name: "Nguyen Van Giang",
-              rating: 5,
-              comment: "Excellent consultation, very professional and caring.",
-            },
-          ]).map((review, index) => (
+          {(doctor.reviewsHighlights?.length > 0
+            ? doctor.reviewsHighlights
+            : [
+                {
+                  name: "Nguyen Van Giang",
+                  rating: 5,
+                  comment:
+                    "Excellent consultation, very professional and caring.",
+                },
+              ]
+          ).map((review, index) => (
             <div
               key={index}
               className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
