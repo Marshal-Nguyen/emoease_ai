@@ -544,7 +544,7 @@ const DoctorList = () => {
         </p>
       </motion.div>
 
-      <FilterSection />
+      {/* <FilterSection /> */}
 
       <div>
         {loading ? (
