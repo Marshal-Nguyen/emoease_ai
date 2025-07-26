@@ -18,17 +18,17 @@ import {
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import { debounce } from "lodash"; // Import lodash for debouncing
+
 export default function Booking() {
   const navigate = useNavigate();
   const { doctorId } = useParams();
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(
     JSON.parse(localStorage.getItem("booking_timeSlot")) || null
   );
-
   const [promoCode, setPromoCode] = useState("");
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(
@@ -43,12 +43,12 @@ export default function Booking() {
   const profileId = useSelector((state) => state.auth.profileId);
   const API_SCHEDULING_SERVICE = import.meta.env.VITE_API;
   const API_PROFILE_SERVICE = import.meta.env.VITE_API;
+  const YOUR_TOKEN = localStorage.getItem("token");
 
-  // Hàm lấy số ngày trong tháng (cải tiến)
+  // Get days in the current month
   const getDaysInMonth = (year, month) => {
     const firstDay = new Date(year, month, 1).getDay();
     const totalDays = new Date(year, month + 1, 0).getDate();
-
     return [
       ...Array(firstDay).fill(null),
       ...Array.from({ length: totalDays }, (_, i) => i + 1),
@@ -56,18 +56,21 @@ export default function Booking() {
   };
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonthIndex);
-  // Xử lý khi chọn ngày
+
+  // Handle date selection
   const handleDateClick = (day) => {
     const newDate = new Date(currentYear, currentMonthIndex, day);
     setSelectedDate(newDate);
-    setSelectedTimeSlot(null); // Reset time slot khi chọn ngày mới
-  };
-  // Xử lý khi chọn time slot
-  const handleTimeSlotClick = (slot) => {
-    setSelectedTimeSlot(slot);
+    setSelectedTimeSlot(null); // Reset time slot when a new date is selected
   };
 
-  // Xử lý khi thay đổi tháng
+  // Handle time slot selection
+  const handleTimeSlotClick = (slot) => {
+    setSelectedTimeSlot(slot);
+    localStorage.setItem("booking_timeSlot", JSON.stringify(slot)); // Persist time slot
+  };
+
+  // Change month
   const changeMonth = (step) => {
     let newMonth = currentMonthIndex + step;
     let newYear = currentYear;
@@ -88,51 +91,106 @@ export default function Booking() {
         year: "numeric",
       })
     );
+    setSelectedDate(null); // Reset selected date when changing month
+    setSelectedTimeSlot(null); // Reset selected time slot
   };
 
-  // Lấy lịch trống khi thay đổi ngày
-  useEffect(() => {
+  // Debounced fetch schedule to prevent excessive API calls
+  const fetchSchedule = debounce(async () => {
     if (!selectedDate) return;
 
-    const fetchSchedule = async () => {
+    try {
+      const formattedDate = selectedDate.toLocaleDateString("en-CA"); // Format: YYYY-MM-DD
+      const response = await axios.get(
+        `${API_SCHEDULING_SERVICE}/doctors/${doctorId}/${formattedDate}`,
+        {
+          headers: {
+            Authorization: `Bearer ${YOUR_TOKEN}`,
+          },
+        }
+      );
+
+      const now = new Date();
+      const isToday =
+        selectedDate.toDateString() === new Date().toDateString();
+
+      const filteredSlots = (response.data.timeSlots || []).filter((slot) => {
+        if (!isToday) return true;
+
+        const [hour, minute] = slot.startTime.split(":").map(Number);
+        const slotTime = new Date(selectedDate);
+        slotTime.setHours(hour, minute, 0, 0);
+
+        return slotTime > now;
+      });
+
+      setAvailableSlots(filteredSlots);
+    } catch (error) {
+      console.error("Error fetching schedule:", error);
+      setAvailableSlots([]);
+      toast.error("Failed to load available time slots. Please try again.");
+    }
+  }, 300);
+
+  // Fetch schedule when date changes
+  useEffect(() => {
+    if (!YOUR_TOKEN) {
+      navigate("/login");
+      return;
+    }
+    fetchSchedule();
+  }, [selectedDate, doctorId, navigate]);
+
+  // Fetch doctor info
+  useEffect(() => {
+    if (!YOUR_TOKEN) {
+      navigate("/login");
+      return;
+    }
+
+    const fetchDoctorInfo = async () => {
       try {
-        const formattedDate = selectedDate
-          .toLocaleDateString("en-CA")
-          .split("T")[0]; // Format: YYYY-MM-DD
         const response = await axios.get(
-          `${API_SCHEDULING_SERVICE}/doctors/${doctorId}/${formattedDate}`,
+          `${API_PROFILE_SERVICE}/doctor-profiles/${doctorId}`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${YOUR_TOKEN}`,
             },
           }
         );
-        setAvailableSlots(response.data.timeSlots || []);
-        // const now = new Date();
-        // const isToday =
-        //   selectedDate.toDateString() === new Date().toDateString();
 
-        // const filteredSlots = (response.data.timeSlots || []).filter((slot) => {
-        //   if (!isToday) return true;
+        // Ensure image is included (assuming API returns publicUrl as in your example)
+        const doctorData = response.data;
+        if (!doctorData.image) {
+          try {
+            const imageResponse = await axios.get(
+              `${API_PROFILE_SERVICE}/profile/${doctorId}/image`,
+              {
+                headers: {
+                  Authorization: `Bearer ${YOUR_TOKEN}`,
+                },
+              }
+            );
+            doctorData.image = imageResponse.data.data.publicUrl;
+          } catch (imageError) {
+            console.error(`Error fetching image for doctor ${doctorId}:`, imageError);
+            doctorData.image = null;
+          }
+        }
 
-        //   const [hour, minute] = slot.startTime.split(":").map(Number);
-        //   const slotTime = new Date(selectedDate);
-        //   slotTime.setHours(hour, minute, 0, 0);
-
-        //   return slotTime > now;
-        // });
-
-        // setAvailableSlots(filteredSlots);
+        setDoctor(doctorData);
+        setLoading(false);
       } catch (error) {
-        console.error("Lỗi lấy lịch trình:", error);
-        setAvailableSlots([]);
+        console.error("Error fetching doctor data:", error);
+        setError("Unable to load doctor information. Please try again later.");
+        setLoading(false);
       }
     };
 
-    fetchSchedule();
-  }, [selectedDate, doctorId]);
+    fetchDoctorInfo();
+  }, [doctorId, navigate]);
 
-  // Tính toán thời gian trong phút
+  // Calculate duration in minutes
   const calculateDurationInMinutes = (startTime, endTime) => {
     const [startHour, startMinute] = startTime.split(":").map(Number);
     const [endHour, endMinute] = endTime.split(":").map(Number);
@@ -143,35 +201,10 @@ export default function Booking() {
     return endTotalMinutes - startTotalMinutes;
   };
 
-  console.log(selectedDate);
-
-  // Lấy thông tin bác sĩ
-  useEffect(() => {
-    const fetchDoctorInfo = async () => {
-      try {
-        const response = await axios.get(
-          `${API_PROFILE_SERVICE}/doctor-profiles/${doctorId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        setDoctor(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Lỗi khi lấy dữ liệu bác sĩ:", error);
-        setError("Không thể tải thông tin bác sĩ. Vui lòng thử lại sau.");
-        setLoading(false);
-      }
-    };
-
-    fetchDoctorInfo();
-  }, [doctorId]);
-
+  // Build booking DTO
   const buildBookingDto = () => {
     if (!selectedTimeSlot) {
-      throw new Error("Không có thông tin time slot");
+      throw new Error("No time slot selected");
     }
 
     const startTime = selectedTimeSlot.startTime;
@@ -192,40 +225,32 @@ export default function Booking() {
     };
   };
 
-  //check valied time
-  // const isTimeSlotValid = () => {
-  //   if (!selectedDate || !selectedTimeSlot?.startTime) return false;
-
-  //   const [hour, minute] = selectedTimeSlot.startTime.split(":").map(Number);
-
-  //   const selectedDateTime = new Date(selectedDate);
-  //   selectedDateTime.setHours(hour);
-  //   selectedDateTime.setMinutes(minute);
-  //   selectedDateTime.setSeconds(0);
-  //   selectedDateTime.setMilliseconds(0);
-
-  //   const now = new Date();
-
-  //   return selectedDateTime > now;
-  // };
-
+  // Handle booking submission
   const handleBookingContinue = async () => {
-    if (!localStorage.getItem("token"))
-      return toast.error("Please log in to book a consultation");
+    if (!YOUR_TOKEN) {
+      toast.error("Please log in to book a consultation");
+      return;
+    }
 
-    if (!selectedTimeSlot)
-      return alert("Please select a time for the consultation");
+    if (!selectedTimeSlot) {
+      toast.error("Please select a time for the consultation");
+      return;
+    }
 
-    // if (!isTimeSlotValid()) {
-    //   toast.error("Not allowed to choose time in the past");
-    //   return;
-    // }
+    const now = new Date();
+    const [hour, minute] = selectedTimeSlot.startTime.split(":").map(Number);
+    const selectedDateTime = new Date(selectedDate);
+    selectedDateTime.setHours(hour, minute, 0, 0);
 
-    const bookingDto = buildBookingDto();
+    if (selectedDateTime <= now) {
+      toast.error("Cannot book a time slot in the past");
+      return;
+    }
 
     console.log("Booking DTO:", bookingDto);
 
     try {
+      const bookingDto = buildBookingDto();
       const res = await axios.post(
         `${API_SCHEDULING_SERVICE}/payment-zalo/pay-booking`,
         {
@@ -235,7 +260,7 @@ export default function Booking() {
         },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${YOUR_TOKEN}`,
             "Content-Type": "application/json",
           },
         }
@@ -246,19 +271,23 @@ export default function Booking() {
         window.location.href = res.data.order_url;
       }
     } catch (err) {
-      toast.error("Đã xảy ra lỗi khi đặt lịch. Vui lòng thử lại sau.");
+      console.error("Error processing booking:", err);
+      toast.error("An error occurred while booking. Please try again.");
     }
   };
 
-  if (loading)
+  // Loading state
+  if (loading) {
     return (
       <div className="text-center py-10">
         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
         <p className="mt-2 text-gray-600">Loading...</p>
       </div>
     );
+  }
 
-  if (error)
+  // Error state
+  if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
         <div className="p-8 bg-white rounded-lg shadow-md">
@@ -266,26 +295,29 @@ export default function Booking() {
           <button
             onClick={() => navigate("/EMO/counselor")}
             className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+            aria-label="Return to doctor list"
           >
-            Quay lại trang danh sách bác sĩ
+            Back to doctor list
           </button>
         </div>
       </div>
     );
+  }
 
   return (
     <div className="p-6 bg-gradient-to-b from-purple-50 to-white min-h-screen w-full flex flex-col items-center">
       <div className="max-w-6xl w-full bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
-        {/* Header với nút Back */}
+        {/* Back button */}
         <button
           onClick={() => navigate("/EMO/counselor")}
           className="flex items-center text-purple-700 hover:text-purple-900 mb-6 transition-colors duration-200"
+          aria-label="Back to doctor list"
         >
           <ArrowLeft size={20} className="mr-2" />
-          <span className="font-medium">Back to list of doctors</span>
+          <span className="font-medium">Back to doctor list</span>
         </button>
 
-        {/* Thông tin bác sĩ */}
+        {/* Doctor information */}
         {doctor && (
           <div className="flex items-center justify-between border-b border-purple-100 pb-6 mb-8">
             <div className="flex items-center gap-6">
@@ -300,7 +332,7 @@ export default function Booking() {
                 />
                 <div className="absolute bottom-0 right-0 bg-[#fa8a95] text-gray-800 px-2 py-1 rounded-full text-xs font-bold flex items-center shadow-md">
                   <span className="mr-1">⭐</span>
-                  {doctor.rating}
+                  {doctor.rating || "N/A"}
                 </div>
               </div>
 
@@ -309,16 +341,16 @@ export default function Booking() {
                   {doctor.FullName}
                 </h3>
                 <p className="text-md text-purple-600 font-medium mb-2">
-                  {doctor.specialties?.map((spec) => spec.Name).join(", ")}
+                  {doctor.specialties?.map((spec) => spec.Name).join(", ") || "No specialties"}
                 </p>
                 <div className="flex flex-col space-y-1">
                   <div className="flex items-center text-gray-600">
                     <Phone size={16} className="mr-2 text-purple-500" />
-                    <span>{doctor.PhoneNumber}</span>
+                    <span>{doctor.PhoneNumber || "No phone number"}</span>
                   </div>
                   <div className="flex items-center text-gray-600">
                     <Mail size={16} className="mr-2 text-purple-500" />
-                    <span>{doctor.Email}</span>
+                    <span>{doctor.Email || "No email"}</span>
                   </div>
                 </div>
               </div>
@@ -339,7 +371,7 @@ export default function Booking() {
                   <Star size={20} className="text-purple-600" />
                 </div>
                 <p className="font-bold text-gray-800">324</p>
-                <p className="text-xs text-gray-500">Evaluate</p>
+                <p className="text-xs text-gray-500">Reviews</p>
               </div>
 
               <div className="text-center">
@@ -347,7 +379,7 @@ export default function Booking() {
                   <Heart size={20} className="text-purple-600" />
                 </div>
                 <p className="font-bold text-gray-800">
-                  {doctor.YearsOfExperience}
+                  {doctor.YearsOfExperience || "N/A"}
                 </p>
                 <p className="text-xs text-gray-500">YOE</p>
               </div>
@@ -355,9 +387,9 @@ export default function Booking() {
           </div>
         )}
 
-        {/* Nội dung chính */}
+        {/* Main content */}
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Thông tin chi tiết bác sĩ */}
+          {/* Doctor details */}
           <div className="md:w-3/5 bg-gradient-to-br from-purple-50 to-white p-6 rounded-2xl shadow-md border border-purple-100">
             <h3 className="text-xl font-semibold text-purple-800 mb-6 pb-2 border-b border-purple-100 flex items-center">
               <Info size={20} className="mr-2" />
@@ -373,7 +405,7 @@ export default function Booking() {
                 <div>
                   <p className="font-medium text-gray-700">Work Address</p>
                   <p className="text-gray-600">
-                    {doctor.Address || "Chưa cập nhật địa chỉ"}
+                    {doctor.Address || "Address not updated"}
                   </p>
                 </div>
               </div>
@@ -388,7 +420,7 @@ export default function Booking() {
                     Degrees & Certificates
                   </p>
                   <p className="text-gray-600">
-                    {doctor.Qualifications || "Chưa cập nhật thông tin"}
+                    {doctor.Qualifications || "Qualifications not updated"}
                   </p>
                 </div>
               </div>
@@ -404,33 +436,35 @@ export default function Booking() {
                   </p>
                   <p className="text-gray-600">
                     {doctor.YearsOfExperience
-                      ? `${doctor.YearsOfExperience} năm kinh nghiệm`
-                      : "Chưa cập nhật thông tin"}
+                      ? `${doctor.YearsOfExperience} years of experience`
+                      : "Experience not updated"}
                   </p>
                 </div>
               </div>
 
               <div className="mt-6 pt-4 border-t border-purple-100">
                 <p className="text-xl font-semibold text-purple-800 mb-6 pb-2 border-b border-purple-100 flex items-center">
-                  <BadgeInfo size={20} className="mr-2" /> Introduce
+                  <BadgeInfo size={20} className="mr-2" />
+                  Introduction
                 </p>
                 <div className="ml-10">
                   <p className="text-gray-600 leading-relaxed italic">
                     <span className="ml-8 font-medium">{doctor.FullName}</span>{" "}
                     has over{" "}
                     <span className="font-medium">
-                      {doctor.YearsOfExperience}
+                      {doctor.YearsOfExperience || "N/A"}
                     </span>{" "}
                     years of experience in{" "}
-                    {doctor.specialties?.map((spec) => spec.Name).join(", ")}.
+                    {doctor.specialties?.map((spec) => spec.Name).join(", ") ||
+                      "various fields"}.
                   </p>
 
                   <p className="text-gray-600 leading-relaxed mt-2 italic">
-                    <span className="ml-8"></span> He is currently working at{" "}
+                    <span className="ml-8"></span> Currently working at{" "}
                     <span className="font-medium">
                       {doctor.Address || "Address not updated"}
                     </span>{" "}
-                    and serves as a lecturer at the University of Medicine and
+                    and serving as a lecturer at the University of Medicine and
                     Pharmacy in Ho Chi Minh City.
                   </p>
 
@@ -442,7 +476,7 @@ export default function Booking() {
                   </p>
 
                   <p className="text-gray-600 leading-relaxed mt-2 italic">
-                    <span className="ml-8"></span> Over the years, he has helped
+                    <span className="ml-8"></span> Over the years, they have helped
                     thousands of individuals and families overcome psychological
                     challenges.
                   </p>
@@ -456,9 +490,9 @@ export default function Booking() {
             </div>
           </div>
 
-          {/* Phần đặt lịch */}
+          {/* Booking section */}
           <div className="md:w-2/5 flex flex-col bg-white rounded-2xl shadow-lg border border-purple-200 overflow-hidden h-full max-h-screen sticky top-6">
-            {/* Header lịch */}
+            {/* Booking header */}
             <div className="bg-gradient-to-r from-purple-600 to-purple-500 text-white p-4">
               <h3 className="text-xl font-bold flex items-center">
                 <CalendarIcon size={20} className="mr-2" />
@@ -471,11 +505,12 @@ export default function Booking() {
 
             {/* Calendar */}
             <div className="p-4 bg-white overflow-y-auto">
-              {/* Chọn tháng */}
+              {/* Month navigation */}
               <div className="flex justify-between items-center mb-4">
                 <button
                   className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 transition-colors duration-200"
                   onClick={() => changeMonth(-1)}
+                  aria-label="Previous month"
                 >
                   <ArrowLeft size={18} className="text-purple-600" />
                 </button>
@@ -485,6 +520,7 @@ export default function Booking() {
                 <button
                   className="p-2 rounded-full bg-purple-100 hover:bg-purple-200 transition-colors duration-200"
                   onClick={() => changeMonth(1)}
+                  aria-label="Next month"
                 >
                   <ArrowLeft
                     size={18}
@@ -493,7 +529,7 @@ export default function Booking() {
                 </button>
               </div>
 
-              {/* Ngày trong tuần */}
+              {/* Days of week */}
               <div className="grid grid-cols-7 text-sm mb-2">
                 {daysOfWeek.map((day, idx) => (
                   <span
@@ -505,7 +541,7 @@ export default function Booking() {
                 ))}
               </div>
 
-              {/* Lịch ngày */}
+              {/* Calendar days */}
               <div className="grid grid-cols-7 gap-1 mb-4">
                 {daysInMonth.map((day, idx) => {
                   if (!day) return <div key={idx} className="h-10"></div>;
@@ -535,23 +571,21 @@ export default function Booking() {
                     <div
                       key={idx}
                       className={`flex justify-center items-center h-10 rounded-full
-                        ${
-                          isPastDate
-                            ? "text-gray-400 cursor-not-allowed"
-                            : "cursor-pointer hover:bg-purple-100 transition-colors duration-200"
+                        ${isPastDate
+                          ? "text-gray-400 cursor-not-allowed"
+                          : "cursor-pointer hover:bg-purple-100 transition-colors duration-200"
                         }
-                        ${
-                          isSelectedDate
-                            ? "bg-purple-600 text-white font-medium"
-                            : ""
+                        ${isSelectedDate
+                          ? "bg-purple-600 text-white font-medium"
+                          : ""
                         }
-                        ${
-                          isTodayDate && !isSelectedDate
-                            ? "border border-purple-500 font-medium"
-                            : ""
+                        ${isTodayDate && !isSelectedDate
+                          ? "border border-purple-500 font-medium"
+                          : ""
                         }
                       `}
                       onClick={() => !isPastDate && handleDateClick(day)}
+                      aria-label={`Select date ${day}`}
                     >
                       {day}
                     </div>
@@ -559,7 +593,7 @@ export default function Booking() {
                 })}
               </div>
 
-              {/* Chọn thời gian */}
+              {/* Time slots */}
               <div className="mt-4">
                 <h4 className="font-medium text-purple-800 flex items-center mb-3">
                   <Clock size={18} className="mr-2" />
@@ -572,18 +606,18 @@ export default function Booking() {
                       <button
                         key={i}
                         className={`p-3 border rounded-xl text-sm font-medium transition-all duration-200
-                          ${
-                            slot.status === "Available"
-                              ? selectedTimeSlot === slot
-                                ? "bg-purple-600 text-white border-purple-600 shadow-md"
-                                : "bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100"
-                              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          ${slot.status === "Available"
+                            ? selectedTimeSlot === slot
+                              ? "bg-purple-600 text-white border-purple-600 shadow-md"
+                              : "bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
                           }`}
                         disabled={slot.status !== "Available"}
                         onClick={() =>
                           slot.status === "Available" &&
                           handleTimeSlotClick(slot)
                         }
+                        aria-label={`Select time slot ${slot.startTime} to ${slot.endTime}`}
                       >
                         {`${slot.startTime.slice(0, 5)} - ${slot.endTime.slice(
                           0,
@@ -595,7 +629,7 @@ export default function Booking() {
                 ) : (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
                     <p className="text-yellow-700">
-                      There are no available schedules for this date.
+                      No available schedules for this date.
                     </p>
                     <p className="text-sm text-yellow-600 mt-1">
                       Please select another date
@@ -604,7 +638,7 @@ export default function Booking() {
                 )}
               </div>
 
-              {/* Giá tiền */}
+              {/* Price */}
               <div className="mt-6 bg-purple-50 rounded-lg p-4 flex justify-between items-center">
                 <span className="text-gray-700 font-medium">
                   Consulting fee:
@@ -619,7 +653,7 @@ export default function Booking() {
                 </span>
               </div>
 
-              {/* Nút đặt lịch */}
+              {/* Promo code */}
               <div className="mt-6">
                 <h4 className="font-medium text-purple-800 flex items-center mb-3">
                   <BadgeInfo size={18} className="mr-2" />
@@ -632,18 +666,21 @@ export default function Booking() {
                     placeholder="Enter promo code (if available)"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
+                    aria-label="Enter promo code"
                   />
                 </div>
               </div>
+
+              {/* Booking button */}
               <button
                 className={`w-full py-4 rounded-xl mt-6 font-bold text-white shadow-md transition-all duration-300 
-                  ${
-                    selectedTimeSlot
-                      ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
-                      : "bg-gray-400"
+                  ${selectedTimeSlot
+                    ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
+                    : "bg-gray-400 cursor-not-allowed"
                   }`}
                 onClick={handleBookingContinue}
                 disabled={!selectedTimeSlot}
+                aria-label={selectedTimeSlot ? "Continue booking" : "Please select a time"}
               >
                 {selectedTimeSlot ? "Continue booking" : "Please select a time"}
               </button>
@@ -651,41 +688,40 @@ export default function Booking() {
           </div>
         </div>
       </div>
-      {/* Feedback */}
+
+      {/* Feedback section */}
       <div className="max-w-6xl mt-5 w-full bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
         <p className="font-medium text-gray-700 mb-4">Featured Reviews</p>
 
         <div className="space-y-4">
-          {/* {doctor.reviewsHighlights?.map((review, index) => ( */}
-          <div
-            // key={index}
-            className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
-          >
-            <div className="flex justify-between items-center mb-2">
-              <p className="font-medium">Nguyen Van Giang</p>
-              {/* <p className="font-medium">{review.name}</p> */}
-
-              <div className="flex items-center">
-                {/* {Array(review.rating)
-                            .fill()
-                            .map((_, i) => (
-                              <Star
-                                key={i}
-                                size={14}
-                                className="text-yellow-400 fill-current"
-                              />
-                            ))} */}
-                <Star size={14} className="text-yellow-400 fill-current" />
-                <Star size={14} className="text-yellow-400 fill-current" />
-                <Star size={14} className="text-yellow-400 fill-current" />
-                <Star size={14} className="text-yellow-400 fill-current" />
-                <Star size={14} className="text-yellow-400 fill-current" />
+          {(doctor.reviewsHighlights?.length > 0 ? doctor.reviewsHighlights : [
+            {
+              name: "Nguyen Van Giang",
+              rating: 5,
+              comment: "Excellent consultation, very professional and caring.",
+            },
+          ]).map((review, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-lg p-4 shadow-sm border border-gray-100"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <p className="font-medium">{review.name}</p>
+                <div className="flex items-center">
+                  {Array(review.rating)
+                    .fill()
+                    .map((_, i) => (
+                      <Star
+                        key={i}
+                        size={14}
+                        className="text-yellow-400 fill-current"
+                      />
+                    ))}
+                </div>
               </div>
+              <p className="text-gray-600 text-sm">{review.comment}</p>
             </div>
-            <p className="text-gray-600 text-sm">Hay</p>
-            {/* <p className="text-gray-600 text-sm">{review.comment}</p> */}
-          </div>
-          {/* ))} */}
+          ))}
         </div>
       </div>
     </div>

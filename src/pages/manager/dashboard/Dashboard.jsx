@@ -110,7 +110,14 @@ export default function Dashboard() {
         // Fetch patient statistics
         try {
           const res = await fetch(
-            `${import.meta.env.VITE_API}/patient-statistics`
+            `${import.meta.env.VITE_API}/patient-statistics`,
+            {
+              method: "GET", // Assuming GET since no method was specified; change if needed
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              }
+            }
           );
           const data = await res.json();
           newState.totalUsers = data.registeredThisMonth.toLocaleString();
