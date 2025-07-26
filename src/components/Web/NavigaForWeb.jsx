@@ -244,24 +244,22 @@ const NavigaForWeb = () => {
           </a>
           <Link
             to="learnAboutEmo"
-            className={`hover:text-purple-500 text-base ${
-              location.pathname === "/EMO/learnAboutEmo"
+            className={`hover:text-purple-500 text-base ${location.pathname === "/EMO/learnAboutEmo"
                 ? "text-purple-500"
                 : ""
-            }`}
+              }`}
           >
             {shortMenu ? "Lear..." : "Learn about EmoEase"}
           </Link>
-          {userRole === "User" && (
-            <Link
-              to="counselor"
-              className={`hover:text-purple-500 ${
-                location.pathname === "/EMO/counselor" ? "text-purple-500" : ""
+
+          <Link
+            to="counselor"
+            className={`hover:text-purple-500 ${location.pathname === "/EMO/counselor" ? "text-purple-500" : ""
               }`}
-            >
-              Therapist
-            </Link>
-          )}
+          >
+            Therapist
+          </Link>
+
         </div>
         {/* Logo giữa */}
         <div className="flex flex-1 justify-center min-w-0">
@@ -290,9 +288,8 @@ const NavigaForWeb = () => {
           </a>
           <Link
             to="shop"
-            className={`hover:text-purple-500 ${
-              location.pathname === "/EMO/shop" ? "text-purple-500" : ""
-            }`}
+            className={`hover:text-purple-500 ${location.pathname === "/EMO/shop" ? "text-purple-500" : ""
+              }`}
           >
             Store
           </Link>
