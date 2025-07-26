@@ -245,21 +245,21 @@ const NavigaForWeb = () => {
           <Link
             to="learnAboutEmo"
             className={`hover:text-purple-500 text-base ${location.pathname === "/EMO/learnAboutEmo"
-                ? "text-purple-500"
-                : ""
+              ? "text-purple-500"
+              : ""
               }`}
           >
             {shortMenu ? "Lear..." : "Learn about EmoEase"}
           </Link>
-
+          {/* {userRole === "User" && ( */}
           <Link
             to="counselor"
             className={`hover:text-purple-500 ${location.pathname === "/EMO/counselor" ? "text-purple-500" : ""
               }`}
           >
-            Therapist
+            Therapista
           </Link>
-
+          {/* )} */}
         </div>
         {/* Logo giữa */}
         <div className="flex flex-1 justify-center min-w-0">
