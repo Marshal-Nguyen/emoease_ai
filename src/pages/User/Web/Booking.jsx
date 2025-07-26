@@ -247,7 +247,7 @@ export default function Booking() {
       return;
     }
 
-    console.log("Booking DTO:", bookingDto);
+    // console.log("Booking DTO:", bookingDto);
 
     try {
       const bookingDto = buildBookingDto();
