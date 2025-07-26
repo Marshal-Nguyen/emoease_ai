@@ -86,7 +86,6 @@ const ProfileDoctor = () => {
       } catch (err) {
         setError("Error fetching data. Please try again.");
         console.error("Data fetch error:", err);
-
       } finally {
         setLoading(false);
       }
@@ -149,7 +148,9 @@ const ProfileDoctor = () => {
       const isUpdate = !!avatarUrl;
       const response = await axios({
         method: isUpdate ? "PUT" : "POST",
-        url: `${VITE_API_PROFILE_URL}/profile/${id}/${isUpdate ? "update" : "upload"}?token=${token}`,
+        url: `${VITE_API_PROFILE_URL}/profile/${id}/${
+          isUpdate ? "update" : "upload"
+        }?token=${token}`,
         data: formData,
         headers: {
           Authorization: `Bearer ${token}`,
@@ -161,8 +162,13 @@ const ProfileDoctor = () => {
         `Profile picture ${isUpdate ? "updated" : "uploaded"} successfully!`
       );
     } catch (err) {
-      toast.error(`Error ${avatarUrl ? "updating" : "uploading"} profile picture!`);
-      console.error("Avatar processing error:", err.response?.data || err.message || err);
+      toast.error(
+        `Error ${avatarUrl ? "updating" : "uploading"} profile picture!`
+      );
+      console.error(
+        "Avatar processing error:",
+        err.response?.data || err.message || err
+      );
     } finally {
       setAvatarLoading(false);
     }
@@ -170,7 +176,8 @@ const ProfileDoctor = () => {
 
   // Handle avatar deletion
   const handleAvatarDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete the profile picture?")) return;
+    if (!window.confirm("Are you sure you want to delete the profile picture?"))
+      return;
 
     setAvatarLoading(true);
     try {
@@ -181,7 +188,10 @@ const ProfileDoctor = () => {
       toast.success("Profile picture deleted successfully!");
     } catch (err) {
       toast.error("Error deleting profile picture!");
-      console.error("Avatar deletion error:", err.response?.data || err.message);
+      console.error(
+        "Avatar deletion error:",
+        err.response?.data || err.message
+      );
     } finally {
       setAvatarLoading(false);
     }
@@ -276,7 +286,8 @@ const ProfileDoctor = () => {
               </div>
 
               <p className="mt-4 text-sm text-gray-500 font-medium">
-                Click on the image to {avatarUrl ? "change" : "upload"} profile picture
+                Click on the image to {avatarUrl ? "change" : "upload"} profile
+                picture
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 Supported formats: JPEG, PNG, GIF (max 5MB)
@@ -285,7 +296,9 @@ const ProfileDoctor = () => {
           </div>
 
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-purple-700">Personal Information</h2>
+            <h2 className="text-xl font-semibold mb-4 text-purple-700">
+              Personal Information
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -320,7 +333,9 @@ const ProfileDoctor = () => {
             </div>
           </div>
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-purple-700">Contact Information</h2>
+            <h2 className="text-xl font-semibold mb-4 text-purple-700">
+              Contact Information
+            </h2>
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -360,7 +375,9 @@ const ProfileDoctor = () => {
           </div>
 
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-purple-700">Professional Information</h2>
+            <h2 className="text-xl font-semibold mb-4 text-purple-700">
+              Professional Information
+            </h2>
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -409,7 +426,9 @@ const ProfileDoctor = () => {
           </div>
 
           <div className="bg-white shadow-md rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-purple-700">Specialties</h2>
+            <h2 className="text-xl font-semibold mb-4 text-purple-700">
+              Specialties
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {specialtiesList.map((specialty) => (
                 <div key={specialty.Id} className="flex items-center">
@@ -431,8 +450,6 @@ const ProfileDoctor = () => {
               ))}
             </div>
           </div>
-
-
 
           <div className="flex justify-end space-x-4">
             <button

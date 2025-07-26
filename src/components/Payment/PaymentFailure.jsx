@@ -16,8 +16,6 @@ const PaymentFailure = () => {
     }).format(amount);
   };
 
-  console.log(state);
-
   // Hàm lấy thông báo lỗi từ mã lỗi VNPay
   const getVNPayErrorMessage = (responseCode) => {
     const errorMessages = {
