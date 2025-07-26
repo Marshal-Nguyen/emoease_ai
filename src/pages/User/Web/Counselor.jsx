@@ -106,10 +106,10 @@ const DoctorList = () => {
 
   // Initial fetch for specialties and doctors
   useEffect(() => {
-    if (!YOUR_TOKEN) {
-      navigate("/login");
-      return;
-    }
+    // if (!YOUR_TOKEN) {
+    //   navigate("/login");
+    //   return;
+    // }
     if (isFetched.current) return;
     isFetched.current = true;
 
@@ -339,8 +339,8 @@ const DoctorList = () => {
               debouncedFetchDoctors();
             }}
             className={`px-3 py-1 rounded-full text-sm font-medium flex-shrink-0 ${!selectedSpecialty
-                ? "bg-blue-100 text-blue-700"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             aria-label="Show all specialties"
           >
@@ -351,8 +351,8 @@ const DoctorList = () => {
               key={specialty.id}
               onClick={() => handleSpecialtySelect(specialty.Id)}
               className={`px-3 py-1 rounded-full text-sm flex-shrink-0 ${selectedSpecialty === specialty.Id
-                  ? "bg-blue-100 text-blue-700"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-blue-100 text-blue-700"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               aria-label={`Filter by ${specialty.Name}`}
             >
@@ -394,8 +394,8 @@ const DoctorList = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => handleFilterChange("rating")}
               className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${selectedFilter === "rating"
-                  ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               aria-label="Sort by rating"
             >
@@ -410,8 +410,8 @@ const DoctorList = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => handleFilterChange("specialties")}
               className={`px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${selectedFilter === "specialties"
-                  ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-gradient-to-r from-violet-500 to-purple-500 text-white shadow-lg"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               aria-label="Sort by specialty"
             >
