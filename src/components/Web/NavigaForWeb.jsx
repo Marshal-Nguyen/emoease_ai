@@ -257,7 +257,7 @@ const NavigaForWeb = () => {
             className={`hover:text-purple-500 ${location.pathname === "/EMO/counselor" ? "text-purple-500" : ""
               }`}
           >
-            Therapista
+            Therapist
           </Link>
           {/* )} */}
         </div>
