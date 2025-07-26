@@ -247,6 +247,8 @@ export default function Booking() {
       return;
     }
 
+    console.log("Booking DTO:", bookingDto);
+
     try {
       const bookingDto = buildBookingDto();
       const res = await axios.post(
@@ -642,7 +644,12 @@ export default function Booking() {
                   Consulting fee:
                 </span>
                 <span className="text-xl font-bold text-purple-800">
-                  200.000 đ
+                  {doctor.Price
+                    ? new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(doctor.Price)
+                    : "Chưa cập nhật giá"}
                 </span>
               </div>
 

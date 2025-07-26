@@ -25,6 +25,14 @@ const PsychologistList = () => {
   const [hasMoreData, setHasMoreData] = useState(true);
   const navigate = useNavigate();
 
+  const formatAmount = (amount) => {
+    if (!amount) return "Không xác định";
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(amount);
+  };
+
   const fetchDoctors = async () => {
     try {
       setLoading(true);
@@ -50,6 +58,8 @@ const PsychologistList = () => {
         });
       }
 
+      console.log("API Response:", response.data);
+
       const doctorsWithImages = await Promise.all(
         response.data.data.map(async (doctor) => {
           let profileImage = DEFAULT_AVATAR;
@@ -72,6 +82,7 @@ const PsychologistList = () => {
             specialties: doctor.specialties || [],
             contactInfo: { email: doctor.Email || "N/A" },
             rating: doctor.Rating,
+            price: doctor.Price,
             gender: doctor.Gender || "N/A",
             profileImage,
           };
@@ -201,7 +212,7 @@ const PsychologistList = () => {
                   Gender
                 </th>
                 <th className="px-6 py-4 text-left font-semibold text-sm">
-                  Rating
+                  Price
                 </th>
                 <th className="px-6 py-4 text-center font-semibold text-sm">
                   Actions
@@ -243,7 +254,8 @@ const PsychologistList = () => {
                       {doctor.gender}
                     </td>
                     <td className="px-6 py-4 text-yellow-500 font-semibold">
-                      ⭐ {doctor.rating?.toFixed(1) || "N/A"}
+                      {/* ⭐ {doctor.rating?.toFixed(1) || "N/A"} */}
+                      {formatAmount(doctor.price)}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center gap-4">
