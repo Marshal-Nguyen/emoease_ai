@@ -20,7 +20,7 @@ export default function MedicalHistory({ profileId }) {
     const fetchMedicalRecords = async () => {
       try {
         const response = await fetch(
-          `http://localhost:3000/api/medical-records/doctor/${doctorId}`,
+          `https://mental-care-server-nodenet.onrender.com/api/medical-records/doctor/${doctorId}`,
           {
             method: "GET",
             headers: {
@@ -37,7 +37,7 @@ export default function MedicalHistory({ profileId }) {
             let bookingDetails = {};
             try {
               const bookingResponse = await fetch(
-                `http://localhost:3000/api/bookings?Id=${record.BookingId}`,
+                `https://mental-care-server-nodenet.onrender.com/api/bookings?Id=${record.BookingId}`,
                 {
                   method: "GET",
                   headers: {
@@ -176,11 +176,10 @@ export default function MedicalHistory({ profileId }) {
         key="prev"
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`px-3 py-1 mx-1 rounded ${
-          currentPage === 1
+        className={`px-3 py-1 mx-1 rounded ${currentPage === 1
             ? "bg-gray-200 text-gray-500 cursor-not-allowed"
             : "bg-gray-100 hover:bg-gray-200"
-        }`}
+          }`}
       >
         «
       </button>
@@ -199,11 +198,10 @@ export default function MedicalHistory({ profileId }) {
         <button
           key={i}
           onClick={() => handlePageChange(i)}
-          className={`px-3 py-1 mx-1 rounded ${
-            currentPage === i
+          className={`px-3 py-1 mx-1 rounded ${currentPage === i
               ? "bg-blue-500 text-white"
               : "bg-gray-100 hover:bg-gray-200"
-          }`}
+            }`}
         >
           {i}
         </button>
@@ -215,11 +213,10 @@ export default function MedicalHistory({ profileId }) {
         key="next"
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`px-3 py-1 mx-1 rounded ${
-          currentPage === totalPages
+        className={`px-3 py-1 mx-1 rounded ${currentPage === totalPages
             ? "bg-gray-200 text-gray-500 cursor-not-allowed"
             : "bg-gray-100 hover:bg-gray-200"
-        }`}
+          }`}
       >
         »
       </button>
@@ -250,11 +247,10 @@ export default function MedicalHistory({ profileId }) {
                           record.id
                         )
                       }
-                      className={`border-l-4 cursor-pointer hover:bg-gray-50 ${
-                        activeRecord === record.id
+                      className={`border-l-4 cursor-pointer hover:bg-gray-50 ${activeRecord === record.id
                           ? "border-green-600 bg-green-50"
                           : "border border-transparent"
-                      }`}
+                        }`}
                     >
                       <div className="p-4 border-b border-gray-200">
                         <div className="flex justify-between mb-2">

@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { AiFillEdit, AiFillEye } from "react-icons/ai";
-import { FaUsers } from "react-icons/fa";
+import { FaUsers, FaUserPlus } from "react-icons/fa";
+import { FaUserMd, FaEnvelope, FaPlus } from "react-icons/fa";
+
 import { FiSearch } from "react-icons/fi";
 import { MdFilterList } from "react-icons/md";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import AcceptDoctor from "./AcceptDoctor";
 
 const BASE_API_URL = `${import.meta.env.VITE_API}/doctor-profiles`;
 const SEARCH_API_URL = `${import.meta.env.VITE_API}/doctor-profiles/search`;
-const DEFAULT_AVATAR = "https://via.placeholder.com/150?text=No+Image";
+const DEFAULT_AVATAR = "data:image/jpeg;base64,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";
 
 const PsychologistList = () => {
   const [doctors, setDoctors] = useState([]);
@@ -23,6 +26,7 @@ const PsychologistList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchTrigger, setSearchTrigger] = useState("");
   const [hasMoreData, setHasMoreData] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const formatAmount = (amount) => {
@@ -92,7 +96,7 @@ const PsychologistList = () => {
       setDoctors(doctorsWithImages);
       setHasMoreData(
         doctorsWithImages.length === pageSize &&
-          response.data.pageIndex < response.data.totalPages
+        response.data.pageIndex < response.data.totalPages
       );
     } catch (error) {
       setError("Failed to load doctors. Please try again.");
@@ -111,10 +115,20 @@ const PsychologistList = () => {
     setSearchTrigger(searchQuery);
     setPageIndex(1);
   };
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       handleSearch();
     }
+  };
+
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    fetchDoctors(); // Refresh the list after closing
   };
 
   if (initialLoad) return <div>Loading...</div>;
@@ -135,6 +149,14 @@ const PsychologistList = () => {
         <h2 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">
           Psychologists List
         </h2>
+        <motion.button
+          className="ml-4 p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors shadow-lg"
+          title="Add Doctor"
+          onClick={openModal}
+          whileHover={{ scale: 1.15 }}
+        >
+          <FaUserPlus size={24} />
+        </motion.button>
       </motion.div>
 
       <motion.div
@@ -152,7 +174,7 @@ const PsychologistList = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Search by name..."
-                className="w-full p-3 pl-10 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white text-sm shadow-sm transition-all duration-300 hover:shadow-md"
+                className="w-full p-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white text-sm shadow-sm transition-all duration-300 hover:shadow-md"
               />
               <FiSearch
                 className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-400 cursor-pointer"
@@ -165,7 +187,7 @@ const PsychologistList = () => {
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="p-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm transition-all duration-300 hover:shadow-md"
+                className="p-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm transition-all duration-300 hover:shadow-md"
               >
                 <option value={5}>5 per page</option>
                 <option value={10}>10 per page</option>
@@ -174,7 +196,7 @@ const PsychologistList = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="p-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm transition-all duration-300 hover:shadow-md"
+                className="p-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm transition-all duration-300 hover:shadow-md"
               >
                 <option value="FullName">Sort by Name</option>
                 <option value="Gender">Sort by Gender</option>
@@ -182,7 +204,7 @@ const PsychologistList = () => {
               <select
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
-                className="p-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm transition-all duration-300 hover:shadow-md"
+                className="p-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm transition-all duration-300 hover:shadow-md"
               >
                 <option value="asc">Ascending</option>
                 <option value="desc">Descending</option>
@@ -254,7 +276,6 @@ const PsychologistList = () => {
                       {doctor.gender}
                     </td>
                     <td className="px-6 py-4 text-yellow-500 font-semibold">
-                      {/* ⭐ {doctor.rating?.toFixed(1) || "N/A"} */}
                       {formatAmount(doctor.price)}
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -317,6 +338,43 @@ const PsychologistList = () => {
           Next
         </motion.button>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <motion.div
+            className="bg-white/90 rounded-2xl shadow-2xl p-8 max-w-md w-full"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-purple-700 flex items-center gap-2">
+                <FaUserMd className="text-purple-600" /> Add New Doctor
+              </h3>
+              <button
+                className="text-gray-500 hover:text-gray-700"
+                onClick={closeModal}
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <AcceptDoctor onClose={closeModal} />
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

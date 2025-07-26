@@ -5,27 +5,28 @@ import { useNavigate } from "react-router-dom";
 const menuItemsData = [
     { id: 0, text: "Dashboard", path: "dashboard", subMenu: [] },
     { id: 1, text: "Users", path: "viewCustomer", subMenu: [] },
-    {
-        id: 2,
-        text: "Doctor",
-        path: "doctor",
-        subMenu: [
-            { path: "viewDoctor", text: "List doctor" },
-            { path: "addDoctor", text: "Add doctor" },
-        ],
-    },
+    { id: 2, text: "Doctor", path: "viewDoctor", subMenu: [] },
+    // {
+    //     id: 2,
+    //     text: "Doctor",
+    //     path: "doctor",
+    //     subMenu: [
+    //         { path: "viewDoctor", text: "List doctor" },
+    //         { path: "addDoctor", text: "Add doctor" },
+    //     ],
+    // },
     { id: 3, text: "Bookings", path: "booking", subMenu: [] },
     { id: 4, text: "Transactions", path: "transaction", subMenu: [] },
-    {
-        id: 5,
-        text: "Service Packages",
-        path: "promotion",
-        subMenu: [
-            { path: "managePackages", text: "List Packages" },
-            { path: "addPackages", text: "Add Packages" },
-        ],
-    },
-    { id: 6, text: "Pending Replies", path: "view-message", subMenu: [] },
+    // {
+    //     id: 5,
+    //     text: "Service Packages",
+    //     path: "promotion",
+    //     subMenu: [
+    //         { path: "managePackages", text: "List Packages" },
+    //         { path: "addPackages", text: "Add Packages" },
+    //     ],
+    // },
+    // { id: 6, text: "Pending Replies", path: "view-message", subMenu: [] },
 ];
 
 const Tab = ({ history, setHistory, activeTab, setActiveTab }) => {

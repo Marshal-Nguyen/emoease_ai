@@ -84,7 +84,7 @@ const CreateMedical = ({ selectedPatient, patientDetails, profileId }) => {
     };
 
     try {
-      const response = await fetch("http://localhost:3000/api/medical-records", {
+      const response = await fetch("https://mental-care-server-nodenet.onrender.com/api/medical-records", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

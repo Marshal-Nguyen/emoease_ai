@@ -77,7 +77,7 @@ const CustomerDetail = () => {
 
         // Fetch medical records
 
-        const medicalRecordsResponse = await fetch(`http://localhost:3000/api/medical-records/${id}`, {
+        const medicalRecordsResponse = await fetch(`https://mental-care-server-nodenet.onrender.com/api/medical-records/${id}`, {
           method: "GET", // Assuming GET since no method was specified; change if needed
           headers: {
             "Content-Type": "application/json",

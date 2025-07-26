@@ -12,21 +12,22 @@ const { GrDocumentStore, FaUserDoctor, FaChartSimple, TbReportSearch, MdManageAc
 const menuItemsData = [
     { id: 0, text: "Dashboard", path: 'dashboard', icon: <FaChartSimple />, subMenu: [] },
     { id: 1, text: "Users", path: 'viewCustomer', icon: <GrUserManager />, subMenu: [] },
-    {
-        id: 2, text: "Doctor", path: 'doctor', icon: <FaUserDoctor />, subMenu: [
-            { path: 'viewDoctor', text: 'List doctor' },
-            { path: 'addDoctor', text: 'Add doctor' },
-        ]
-    },
+    { id: 2, text: "Doctor", path: 'viewDoctor', icon: <FaUserDoctor />, subMenu: [] },
+    // {
+    //     id: 2, text: "Doctor", path: 'viewDoctor', icon: <FaUserDoctor />, subMenu: [
+    //         { path: 'viewDoctor', text: 'List doctor' },
+    //         { path: 'addDoctor', text: 'Add doctor' },
+    //     ]
+    // },
     { id: 3, text: "Bookings", path: 'booking', icon: <TbFileInvoice />, subMenu: [] },
     { id: 4, text: "Transactions", path: 'transaction', icon: <LiaMoneyBillWaveSolid />, subMenu: [] },
-    {
-        id: 5, text: "Service Packages", path: 'promotion', icon: <LiaGiftsSolid />, subMenu: [
-            { path: 'managePackages', text: 'List Packages' },
-            { path: 'addPackages', text: 'Add Packages' },
-        ]
-    },
-    { id: 6, text: "Pending Replies", path: 'view-message', icon: <RiFeedbackFill />, subMenu: [] },
+    // {
+    //     id: 5, text: "Service Packages", path: 'promotion', icon: <LiaGiftsSolid />, subMenu: [
+    //         { path: 'managePackages', text: 'List Packages' },
+    //         { path: 'addPackages', text: 'Add Packages' },
+    //     ]
+    // },
+    // { id: 6, text: "Pending Replies", path: 'view-message', icon: <RiFeedbackFill />, subMenu: [] },
 ];
 
 const SildebarLeft = ({ onMenuClick }) => {

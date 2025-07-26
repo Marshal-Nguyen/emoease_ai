@@ -35,7 +35,7 @@ const PatientBooking = () => {
     setError(null);
     try {
       const response = await fetch(
-        `http://localhost:3000/api/bookings?doctorId=${profileId}&pageIndex=${pageIndex}&pageSize=${pageSize}&Search=${encodeURIComponent(
+        `https://mental-care-server-nodenet.onrender.com/api/bookings?doctorId=${profileId}&pageIndex=${pageIndex}&pageSize=${pageSize}&Search=${encodeURIComponent(
           search
         )}&SortBy=${sortBy}&SortOrder=${sortOrder}`,
         {
@@ -141,7 +141,7 @@ const PatientBooking = () => {
   const updateBookingStatus = async (bookingId, status) => {
     try {
       const response = await fetch(
-        `http://localhost:3000/api/updateStatus/${bookingId}`,
+        `https://mental-care-server-nodenet.onrender.com/api/updateStatus/${bookingId}`,
         {
           method: "POST",
           headers: {
@@ -267,11 +267,10 @@ const PatientBooking = () => {
                       {patients.map((patient) => (
                         <tr
                           key={patient.Id}
-                          className={`hover:bg-gray-50 transition-colors duration-150 ${
-                            selectedPatient?.Id === patient.Id
+                          className={`hover:bg-gray-50 transition-colors duration-150 ${selectedPatient?.Id === patient.Id
                               ? "bg-purple-50"
                               : ""
-                          }`}
+                            }`}
                         >
                           <td className="px-4 py-3 text-sm text-gray-900 font-medium">
                             {patient.BookingCode}
@@ -284,17 +283,16 @@ const PatientBooking = () => {
                           </td>
                           <td className="px-4 py-3 text-sm">
                             <span
-                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                patient.Status === "CheckIn"
+                              className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${patient.Status === "CheckIn"
                                   ? "bg-green-100 text-green-800"
                                   : patient.Status === "CheckOut"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : patient.Status === "Booking Success"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : patient.Status === "Cancelled"
-                                  ? "bg-red-100 text-red-800"
-                                  : "bg-gray-100 text-gray-800"
-                              }`}
+                                    ? "bg-blue-100 text-blue-800"
+                                    : patient.Status === "Booking Success"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : patient.Status === "Cancelled"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-gray-100 text-gray-800"
+                                }`}
                             >
                               {patient.Status || "Pending"}
                             </span>
@@ -302,11 +300,10 @@ const PatientBooking = () => {
                           <td className="px-4 py-3 text-sm">
                             <div className="flex flex-col space-y-1">
                               <button
-                                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors duration-150 ${
-                                  selectedPatient?.Id === patient.Id
+                                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors duration-150 ${selectedPatient?.Id === patient.Id
                                     ? "bg-purple-600 text-white hover:bg-purple-700"
                                     : "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                                }`}
+                                  }`}
                                 onClick={() => handleSelectPatient(patient)}
                               >
                                 Select
