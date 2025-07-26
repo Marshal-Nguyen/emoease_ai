@@ -35,16 +35,16 @@ export default function Manager() {
                         {/* Thanh Manager */}
                         <div className="fixed top-0 py-2 left-0 w-full border border-gray-200 bg-white z-100 ml-56">
                             <div className="flex justify-end items-center space-x-2 mr-58">
-                                <span className="text-blue-800 text-lg font-medium">
+                                {/* <span className="text-blue-800 text-lg font-medium">
                                     {userName}
-                                </span>
-                                <button onClick={() => navigate("/manager/profile")}>
-                                    <img
-                                        src={"https://i.pravatar.cc/150?img=4"}
-                                        alt="Avatar"
-                                        className="w-7 h-7 rounded-full border-4 border-blue-500"
-                                    />
-                                </button>
+                                </span> */}
+                                {/* <button onClick={() => navigate("/manager/profile")}> */}
+                                <img
+                                    src={"/emo.webp"}
+                                    alt="Avatar"
+                                    className="w-8 h-8 rounded-full border-1 border-blue-500"
+                                />
+                                {/* </button> */}
                             </div>
                         </div>
 

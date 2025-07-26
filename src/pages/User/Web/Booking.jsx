@@ -248,7 +248,6 @@ export default function Booking() {
       toast.error("Cannot book a time slot in the past");
       return;
     }
-
     try {
       const bookingDto = buildBookingDto();
       const res = await axios.post(
