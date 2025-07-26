@@ -21,6 +21,7 @@ const ProfileDoctor = () => {
     qualifications: "",
     yearsOfExperience: 0,
     bio: "",
+    price: 0,
   });
 
   const VITE_API_PROFILE_URL = import.meta.env.VITE_API;
@@ -69,6 +70,7 @@ const ProfileDoctor = () => {
           qualifications: doctorProfile.Qualifications || "",
           yearsOfExperience: doctorProfile.YearsOfExperience || 0,
           bio: doctorProfile.Bio || "",
+          price: doctorProfile.Price || 0,
         });
 
         // Fetch specialties
@@ -224,6 +226,7 @@ const ProfileDoctor = () => {
         YearsOfExperience: parseInt(formData.yearsOfExperience),
         Bio: formData.bio,
         specialties: formData.specialties.map((id) => ({ Id: id })),
+        Price: parseFloat(formData.price),
       };
 
       await axios.put(
@@ -469,6 +472,20 @@ const ProfileDoctor = () => {
                       className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       min="0"
                       max="70"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Booking fee
+                    </label>
+                    <input
+                      type="number"
+                      name="price"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      min="0"
                       required
                     />
                   </div>
