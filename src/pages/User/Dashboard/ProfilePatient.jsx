@@ -21,6 +21,7 @@ const EditProfileForm = () => {
     formData: {
       FullName: "",
       Gender: "",
+      BirthDate: "",
       Allergies: "",
       PersonalityTraits: "",
       Address: "",
@@ -34,7 +35,7 @@ const EditProfileForm = () => {
     },
   });
 
-  const genderOptions = ["Male", "Female", "Non-binary", "Prefer not to say"];
+  const genderOptions = ["Male", "Female", "Other"];
   const personalityOptions = [
     "Introversion",
     "Extroversion",
@@ -91,6 +92,7 @@ const EditProfileForm = () => {
           formData: {
             FullName: profileResponse.data.FullName || "",
             Gender: profileResponse.data.Gender || "",
+            BirthDate: profileResponse.data.BirthDate || "",
             Allergies: profileResponse.data.Allergies || "",
             PersonalityTraits: profileResponse.data.PersonalityTraits || "",
             Address: profileResponse.data.Address || "",
@@ -257,7 +259,7 @@ const EditProfileForm = () => {
     try {
       const updatedMedicalHistory = {
         ...state.medicalHistory,
-        diagnosedAt: new Date().toISOString(), // Add current date and time
+        diagnosedAt: new Date().toISOString(),
       };
       await axios.put(
         `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${profileId}`,
@@ -378,6 +380,17 @@ const EditProfileForm = () => {
                   <option key={option} value={option}>{option}</option>
                 ))}
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Birth Date</label>
+              <input
+                type="date"
+                name="BirthDate"
+                value={formData.BirthDate}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-300"
+                required
+              />
             </div>
           </div>
         </section>
