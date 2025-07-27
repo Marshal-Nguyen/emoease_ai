@@ -20,7 +20,6 @@ const Navigation = () => {
   const profileId = useSelector((state) => state.auth.profileId);
   const { setIsLoggedIn } = useAuth();
   const nav = useNavigate();
-  console.log("Test Profile", profileId);
 
   // Sử dụng useLocation để lấy thông tin URL hiện tại
   const location = useLocation();

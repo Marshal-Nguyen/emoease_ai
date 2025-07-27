@@ -29,8 +29,6 @@ const HistoryTestResult = () => {
           .select("Id, PatientId")
           .limit(1);
 
-        console.log("Table connection test:", { tableCheck, tableError });
-
         // Query Supabase directly for ALL TestResults of this patient
         const { data, error: supabaseError } = await supabase
           .from("TestResults")
@@ -38,8 +36,6 @@ const HistoryTestResult = () => {
           .eq("PatientId", profileId)
           .not("TakenAt", "is", null)
           .order("TakenAt", { ascending: false });
-
-        console.log("Supabase query result:", { data, error: supabaseError });
 
         if (supabaseError) {
           console.error("Supabase error:", supabaseError);

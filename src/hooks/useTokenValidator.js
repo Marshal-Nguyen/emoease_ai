@@ -35,15 +35,11 @@ export const useTokenValidator = (checkInterval = 2 * 60 * 1000) => {
   };
 
   const checkToken = () => {
-    console.log("🔍 Kiểm tra token...", { token: token ? "có" : "không có" });
     if (token) {
       const expired = isTokenExpired(token);
-      console.log("📊 Kết quả kiểm tra:", { expired });
+
       if (expired) {
-        console.log("⚠️ Token đã hết hạn, hiển thị modal...");
         handleTokenExpired();
-      } else {
-        console.log("✅ Token còn hiệu lực");
       }
     }
   };
