@@ -247,6 +247,32 @@ const LogIn = () => {
 
     setDropdownOpen(false);
   };
+
+  const proileId = localStorage.getItem("profileId");
+
+  const getAvatar = async () => {
+    try {
+      const imageResponse = await axios.get(
+        `https://mental-care-server-nodenet.onrender.com/api/profile/${proileId}/image`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      setAvatarUrl(imageResponse.data.data.publicUrl);
+    } catch (error) {
+      console.error("Error fetching avatar:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    getAvatar();
+  }, [isLoggedIn, proileId]);
+
   return (
     <div className="relative">
       <div className="flex items-center gap-4">
