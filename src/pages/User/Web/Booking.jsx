@@ -1,5 +1,5 @@
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import axios from "axios";
 import {
   ArrowLeft,
@@ -44,6 +44,8 @@ export default function Booking() {
   const API_SCHEDULING_SERVICE = import.meta.env.VITE_API;
   const API_PROFILE_SERVICE = import.meta.env.VITE_API;
   const YOUR_TOKEN = localStorage.getItem("token");
+
+  console.log("your token", YOUR_TOKEN);
 
   // Get days in the current month
   const getDaysInMonth = (year, month) => {
@@ -266,7 +268,6 @@ export default function Booking() {
       );
 
       if (res.data?.order_url) {
-        localStorage.setItem("bookingDTO", JSON.stringify(bookingDto));
         window.location.href = res.data.order_url;
       }
     } catch (err) {
@@ -680,12 +681,12 @@ export default function Booking() {
               <button
                 className={`w-full py-4 rounded-xl mt-6 font-bold text-white shadow-md transition-all duration-300 
                   ${
-                    selectedTimeSlot
+                    selectedTimeSlot && YOUR_TOKEN
                       ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 hover:shadow-lg"
                       : "bg-gray-400 cursor-not-allowed"
                   }`}
                 onClick={handleBookingContinue}
-                disabled={!selectedTimeSlot}
+                disabled={!YOUR_TOKEN || !selectedTimeSlot}
                 aria-label={
                   selectedTimeSlot ? "Continue booking" : "Please select a time"
                 }

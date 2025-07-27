@@ -115,7 +115,7 @@ const MedicalProfile = ({ patientId }) => {
 
       <div className="mx-4 h-px bg-gray-200 my-4"></div>
 
-      <div className="overflow-y-auto max-h-60">
+      <div className="overflow-y-auto max-h-96">
         <SectionItem
           title="Address"
           content={patient.Address || "No address"}

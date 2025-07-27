@@ -39,9 +39,9 @@ const HistoryBooking = () => {
 
   // ID bệnh nhân cố định (có thể chuyển thành prop nếu cần)
   const patientId = useSelector((state) => state.auth.profileId);
-  console.log("Patient ID:", patientId);
   const VITE_API_SCHEDULE_URL = import.meta.env.VITE_API;
   const VITE_API_PROFILE_URL = import.meta.env.VITE_API_PROFILE_URL;
+
   // Hàm lấy dữ liệu booking
   const fetchBookings = async () => {
     setLoading(true);
@@ -156,7 +156,7 @@ const HistoryBooking = () => {
       return {
         willRefund: true,
         message: "Bạn sẽ nhận được tiền hoàn sau 2 ngày (hủy trước 1 ngày)",
-        refundAmount: 100000, // Hoặc tính toán dựa trên price
+        refundAmount: price * 0.5,
       };
     } else {
       return {
@@ -190,6 +190,8 @@ const HistoryBooking = () => {
           },
         }
       );
+
+      console.log("Booking cancelled successfully:", response.data);
 
       // Cập nhật lại danh sách lịch hẹn
       fetchBookings();

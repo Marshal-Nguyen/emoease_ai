@@ -27,8 +27,6 @@ const MentalHealthDashboard = () => {
           .select("Id, PatientId")
           .limit(1);
 
-        console.log("Table connection test:", { tableCheck, tableError });
-
         // Query Supabase directly for TestResults
         const { data, error: supabaseError } = await supabase
           .from("TestResults")
@@ -37,8 +35,6 @@ const MentalHealthDashboard = () => {
           .not("TakenAt", "is", null)
           .order("TakenAt", { ascending: false })
           .limit(1);
-
-        console.log("Supabase query result:", { data, error: supabaseError });
 
         if (supabaseError) {
           console.error("Supabase error:", supabaseError);

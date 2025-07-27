@@ -20,7 +20,6 @@ const Navigation = () => {
   const profileId = useSelector((state) => state.auth.profileId);
   const { setIsLoggedIn } = useAuth();
   const nav = useNavigate();
-  console.log("Test Profile", profileId);
 
   // Sử dụng useLocation để lấy thông tin URL hiện tại
   const location = useLocation();
@@ -92,7 +91,7 @@ const Navigation = () => {
             Back To Home
           </button>
         </div>
-        <div className="hover:text-[#5D4DB8] flex justify-center gap-3 items-center rounded-xl px-2.5 mx-auto transition duration-200">
+        {/* <div className="hover:text-[#5D4DB8] flex justify-center gap-3 items-center rounded-xl px-2.5 mx-auto transition duration-200">
           <LogOut size={20} strokeWidth={1.5} color="#554d4ddc" />
           <button
             type="button"
@@ -105,7 +104,7 @@ const Navigation = () => {
           >
             Log Out
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );
