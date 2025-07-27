@@ -66,7 +66,7 @@ const StatictisPatient = () => {
                 Active Session
               </span>
             </div>
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200 cursor-pointer">
+            {/* <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200 cursor-pointer">
               <svg
                 className="w-5 h-5 text-white"
                 fill="none"
@@ -80,7 +80,7 @@ const StatictisPatient = () => {
                   d="M15 17h5l-5 5v-5zM4 4h7l5 5v3"
                 />
               </svg>
-            </div>
+            </div> */}
           </div>
         </div>
         <p className="text-gray-600 text-lg font-medium">

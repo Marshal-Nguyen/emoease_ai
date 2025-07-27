@@ -15,19 +15,11 @@ export const isTokenExpired = (token) => {
     const decodedToken = jwtDecode(token);
     const currentTime = Date.now() / 1000; // Chuyển đổi sang giây
 
-    console.log("🔍 Thông tin token:", {
-      exp: decodedToken.exp,
-      currentTime,
-      expired: decodedToken.exp && decodedToken.exp < currentTime,
-    });
-
     // Kiểm tra nếu token có exp field và so sánh với thời gian hiện tại
     if (decodedToken.exp && decodedToken.exp < currentTime) {
-      console.log("⚠️ Token đã hết hạn!");
       return true;
     }
 
-    console.log("✅ Token còn hiệu lực");
     return false;
   } catch (error) {
     console.error("❌ Lỗi khi decode token:", error);
