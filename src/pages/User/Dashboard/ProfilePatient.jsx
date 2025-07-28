@@ -18,6 +18,7 @@ const EditProfileForm = () => {
     medicalHistoryLoading: false,
     medicalHistoryError: null,
     medicalHistorySaving: false,
+    medicalHistoryExists: false, // New state to track if medical history exists
     formData: {
       FullName: "",
       Gender: "",
@@ -117,6 +118,7 @@ const EditProfileForm = () => {
                 })
               ) || [],
           },
+          medicalHistoryExists: medicalResponse.data.length > 0, // Set whether medical history exists
         }));
       } catch (err) {
         setState((prev) => ({
@@ -257,23 +259,44 @@ const EditProfileForm = () => {
   const handleMedicalHistorySave = async () => {
     setState((prev) => ({ ...prev, medicalHistorySaving: true }));
     try {
-      const updatedMedicalHistory = {
+      const userName = state.formData.FullName || "Unknown User"; // Use FullName or fallback
+      const today = new Date();
+      const diagnosedAt = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const medicalHistoryData = {
         ...state.medicalHistory,
-        diagnosedAt: new Date().toISOString(),
+        diagnosedAt,
+        ...(state.medicalHistoryExists
+          ? { lastModifiedBy: userName }
+          : {
+            patientId: profileId,
+            createdBy: userName,
+            lastModifiedBy: userName,
+          }),
       };
-      await axios.put(
-        `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${profileId}`,
-        updatedMedicalHistory,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+
+      const method = state.medicalHistoryExists ? "put" : "post";
+      const url = state.medicalHistoryExists
+        ? `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${profileId}`
+        : `https://mental-care-server-nodenet.onrender.com/api/medical-histories`;
+
+      await axios({
+        method,
+        url,
+        data: medicalHistoryData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      toast.success(
+        `Medical history ${state.medicalHistoryExists ? "updated" : "created"} successfully!`
       );
-      toast.success("Medical history saved successfully!");
+      setState((prev) => ({ ...prev, medicalHistoryExists: true }));
     } catch (err) {
-      toast.error("Error saving medical history!");
+      toast.error(
+        `Error ${state.medicalHistoryExists ? "updating" : "creating"} medical history!`
+      );
       console.error("Save error:", err.response?.data || err.message);
     } finally {
       setState((prev) => ({ ...prev, medicalHistorySaving: false }));
