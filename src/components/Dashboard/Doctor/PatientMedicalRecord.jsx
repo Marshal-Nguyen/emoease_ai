@@ -3,13 +3,13 @@ import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import { saveAs } from "file-saver";
 import axios from "axios";
 
-const PatientMedicalRecord = ({ patientId }) => {
+const PatientMedicalRecord = ({ patientId, bookingId }) => {
   const [patient, setPatient] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
 
   const getInitials = (fullName) => {
     if (!fullName) return "??";
@@ -31,41 +31,51 @@ const PatientMedicalRecord = ({ patientId }) => {
       setError(null);
 
       try {
-        const medicalRecordsResponse = await fetch(`https://mental-care-server-nodenet.onrender.com/api/medical-records/${patientId}`, {
-          method: "GET", // Assuming GET since no method was specified; change if needed
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+        // Gọi API theo bookingId
+        const medicalRecordsResponse = await fetch(
+          `http://localhost:3000/api/medical-records/booking/${bookingId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
+        );
         if (!medicalRecordsResponse.ok) {
-          throw new Error("Failed to fetch medical records");
+          throw new Error("Failed to fetch medical record");
         }
-        const medicalRecordsData = await medicalRecordsResponse.json();
+        const medicalRecordData = await medicalRecordsResponse.json();
 
-
-        const patientProfileResponse = await fetch(`https://mental-care-server-nodenet.onrender.com/api/patient-profiles/${patientId}`, {
-          method: "GET", // Assuming GET since no method was specified; change if needed
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+        // Lấy thông tin hồ sơ bệnh nhân
+        const patientProfileResponse = await fetch(
+          `http://localhost:3000/api/patient-profiles/${patientId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
+        );
         if (!patientProfileResponse.ok) {
           throw new Error("Failed to fetch patient profile");
         }
         const patientProfileData = await patientProfileResponse.json();
+
+        // Lấy ảnh đại diện
         const imageResponse = await axios.get(
-          `https://mental-care-server-nodenet.onrender.com/api/profile/${patientId}/image`,
+          `http://localhost:3000/api/profile/${patientId}/image`,
           {
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
         setAvatarUrl(imageResponse.data.data.publicUrl);
 
+        // Định dạng dữ liệu bệnh nhân
         const patientData = {
           id: patientProfileData.Id,
           fullName: patientProfileData.FullName,
@@ -103,20 +113,24 @@ const PatientMedicalRecord = ({ patientId }) => {
                 })
               ) || [],
           },
-          medicalRecords: medicalRecordsData.map((record) => ({
-            id: record.Id,
-            createdAt: record.CreatedAt,
-            updatedAt: record.LastModified,
-            notes: record.Description,
-            specificMentalDisorders:
-              record.MedicalRecordSpecificMentalDisorder?.map((dis) => ({
-                id: dis.SpecificMentalDisordersId,
-                name: dis.MentalDisorders.Name,
-                description: dis.MentalDisorders.Description,
-              })) || [],
-            psychologicalAssessment:
-              patientProfileData.MedicalHistories?.[0]?.Description,
-          })),
+          medicalRecords: [
+            {
+              id: medicalRecordData.Id,
+              createdAt: medicalRecordData.CreatedAt,
+              updatedAt: medicalRecordData.LastModified,
+              notes: medicalRecordData.Description,
+              specificMentalDisorders:
+                medicalRecordData.MedicalRecordSpecificMentalDisorder?.map(
+                  (dis) => ({
+                    id: dis.SpecificMentalDisordersId,
+                    name: dis.MentalDisorders.Name,
+                    description: dis.MentalDisorders.Description,
+                  })
+                ) || [],
+              psychologicalAssessment:
+                patientProfileData.MedicalHistories?.[0]?.Description,
+            },
+          ],
         };
 
         setPatient(patientData);
@@ -127,10 +141,10 @@ const PatientMedicalRecord = ({ patientId }) => {
       }
     };
 
-    if (patientId) {
+    if (patientId && bookingId) {
       fetchPatientData();
     }
-  }, [patientId]);
+  }, [patientId, bookingId]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -445,9 +459,9 @@ const PatientMedicalRecord = ({ patientId }) => {
   }
 
   return (
-    <div className="w-full min-h-screen  p-6">
+    <div className="w-full min-h-screen p-2">
       <div className="max-w-7xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="p-8 bg-gradient-to-r from-blue-50 to-blue-100">
+        <div className="p-4 bg-gradient-to-r from-blue-50 to-blue-100">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center mr-4 border-2 border-teal-100 overflow-hidden">
@@ -503,8 +517,8 @@ const PatientMedicalRecord = ({ patientId }) => {
                 <button
                   key={tab}
                   className={`px-6 py-4 text-sm font-medium transition-colors duration-200 ${activeTab === tab
-                      ? "text-blue-600 border-b-2 border-blue-600"
-                      : "text-gray-600 hover:text-gray-800"
+                    ? "text-blue-600 border-b-2 border-blue-600"
+                    : "text-gray-600 hover:text-gray-800"
                     }`}
                   onClick={() => setActiveTab(tab)}
                 >
@@ -621,8 +635,7 @@ const PatientMedicalRecord = ({ patientId }) => {
                                   {symptom.name}
                                 </h5>
                                 <p className="text-sm text-gray-600 mt-1">
-                                  {symptom.description} (Severity:{" "}
-                                  {symptom.severity})
+                                  {symptom.description} (Severity: {symptom.severity})
                                 </p>
                               </div>
                             )
@@ -630,32 +643,30 @@ const PatientMedicalRecord = ({ patientId }) => {
                         </div>
                       </div>
                     )}
-                    {patient.medicalHistory?.psychologicalSymptoms?.length >
-                      0 && (
-                        <div>
-                          <h4 className="text-base font-medium text-gray-800 mb-2">
-                            Psychological Symptoms
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {patient.medicalHistory.psychologicalSymptoms.map(
-                              (symptom) => (
-                                <div
-                                  key={symptom.id}
-                                  className="p-4 bg-purple-50 rounded-lg"
-                                >
-                                  <h5 className="font-medium text-purple-800">
-                                    {symptom.name}
-                                  </h5>
-                                  <p className="text-sm text-gray-600 mt-1">
-                                    {symptom.description} (Severity:{" "}
-                                    {symptom.severity})
-                                  </p>
-                                </div>
-                              )
-                            )}
-                          </div>
+                    {patient.medicalHistory?.psychologicalSymptoms?.length > 0 && (
+                      <div>
+                        <h4 className="text-base font-medium text-gray-800 mb-2">
+                          Psychological Symptoms
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {patient.medicalHistory.psychologicalSymptoms.map(
+                            (symptom) => (
+                              <div
+                                key={symptom.id}
+                                className="p-4 bg-purple-50 rounded-lg"
+                              >
+                                <h5 className="font-medium text-purple-800">
+                                  {symptom.name}
+                                </h5>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {symptom.description} (Severity: {symptom.severity})
+                                </p>
+                              </div>
+                            )
+                          )}
                         </div>
-                      )}
+                      </div>
+                    )}
                   </div>
                 )}
             </div>
@@ -686,9 +697,7 @@ const PatientMedicalRecord = ({ patientId }) => {
                           <span className="text-gray-600 font-medium">
                             Allergies
                           </span>
-                          <span className="text-gray-800">
-                            {patient.allergies}
-                          </span>
+                          <span className="text-gray-800">{patient.allergies}</span>
                         </div>
                       )}
                       {patient.personalityTraits && (
@@ -812,8 +821,7 @@ const PatientMedicalRecord = ({ patientId }) => {
                               {symptom.name}
                             </h4>
                             <p className="text-sm text-gray-600 mt-1">
-                              {symptom.description} (Severity:{" "}
-                              {symptom.severity})
+                              {symptom.description} (Severity: {symptom.severity})
                             </p>
                           </div>
                         </div>
@@ -846,8 +854,7 @@ const PatientMedicalRecord = ({ patientId }) => {
                                 {symptom.name}
                               </h4>
                               <p className="text-sm text-gray-600 mt-1">
-                                {symptom.description} (Severity:{" "}
-                                {symptom.severity})
+                                {symptom.description} (Severity: {symptom.severity})
                               </p>
                             </div>
                           </div>

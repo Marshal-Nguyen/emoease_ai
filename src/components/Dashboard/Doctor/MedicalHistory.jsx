@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 export default function MedicalHistory({ profileId }) {
   const [medicalRecords, setMedicalRecords] = useState([]);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
+  const [selectedBookingId, setSelectedBookingId] = useState(null); // Thêm state cho bookingId
   const [activeRecord, setActiveRecord] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -59,6 +60,7 @@ export default function MedicalHistory({ profileId }) {
             return {
               id: record.Id,
               patientProfileId: record.PatientId,
+              bookingId: record.BookingId, // Thêm bookingId vào record
               status: record.DiagnosedAt ? "Done" : "Processing",
               createdAt: record.CreatedAt,
               notes: record.Description || "No description provided",
@@ -75,9 +77,6 @@ export default function MedicalHistory({ profileId }) {
 
         // Filter for completed records
         const completedRecords = formattedRecords;
-        // const completedRecords = formattedRecords.filter(
-        //   record => getStatusBadge(record.status) === "Done"
-        // );
 
         // Implement pagination
         const startIndex = (currentPage - 1) * pageSize;
@@ -104,9 +103,11 @@ export default function MedicalHistory({ profileId }) {
         if (paginatedRecords.length > 0) {
           const firstRecord = paginatedRecords[0];
           setSelectedPatientId(firstRecord.patientProfileId);
+          setSelectedBookingId(firstRecord.bookingId); // Chọn bookingId đầu tiên
           setActiveRecord(firstRecord.id);
         } else {
           setSelectedPatientId(null);
+          setSelectedBookingId(null);
           setActiveRecord(null);
         }
       } catch (error) {
@@ -115,6 +116,7 @@ export default function MedicalHistory({ profileId }) {
         setTotalRecords(0);
         setTotalPages(1);
         setSelectedPatientId(null);
+        setSelectedBookingId(null);
         setActiveRecord(null);
       }
     };
@@ -122,8 +124,9 @@ export default function MedicalHistory({ profileId }) {
     fetchMedicalRecords();
   }, [profileId, currentPage]);
 
-  const handleViewPatientDetails = (patientId, recordId) => {
+  const handleViewPatientDetails = (patientId, recordId, bookingId) => {
     setSelectedPatientId(patientId);
+    setSelectedBookingId(bookingId); // Cập nhật bookingId khi chọn record
     setActiveRecord(recordId);
   };
 
@@ -177,8 +180,8 @@ export default function MedicalHistory({ profileId }) {
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className={`px-3 py-1 mx-1 rounded ${currentPage === 1
-            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-            : "bg-gray-100 hover:bg-gray-200"
+          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+          : "bg-gray-100 hover:bg-gray-200"
           }`}
       >
         «
@@ -199,8 +202,8 @@ export default function MedicalHistory({ profileId }) {
           key={i}
           onClick={() => handlePageChange(i)}
           className={`px-3 py-1 mx-1 rounded ${currentPage === i
-              ? "bg-blue-500 text-white"
-              : "bg-gray-100 hover:bg-gray-200"
+            ? "bg-blue-500 text-white"
+            : "bg-gray-100 hover:bg-gray-200"
             }`}
         >
           {i}
@@ -214,8 +217,8 @@ export default function MedicalHistory({ profileId }) {
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         className={`px-3 py-1 mx-1 rounded ${currentPage === totalPages
-            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-            : "bg-gray-100 hover:bg-gray-200"
+          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+          : "bg-gray-100 hover:bg-gray-200"
           }`}
       >
         »
@@ -244,12 +247,13 @@ export default function MedicalHistory({ profileId }) {
                       onClick={() =>
                         handleViewPatientDetails(
                           record.patientProfileId,
-                          record.id
+                          record.id,
+                          record.bookingId // Truyền bookingId
                         )
                       }
                       className={`border-l-4 cursor-pointer hover:bg-gray-50 ${activeRecord === record.id
-                          ? "border-green-600 bg-green-50"
-                          : "border border-transparent"
+                        ? "border-green-600 bg-green-50"
+                        : "border border-transparent"
                         }`}
                     >
                       <div className="p-4 border-b border-gray-200">
@@ -261,19 +265,12 @@ export default function MedicalHistory({ profileId }) {
                             {formatDate(record.createdAt)}
                           </div>
                         </div>
-                        {/* <div className="mb-1">ID: {truncateId(record.id)}</div> */}
                         <div className="text-gray-500 text-xs mt-1 font-bold">
                           {record.bookingCode}
                         </div>
-
                         <div className="text-gray-700 text-xs mt-1">
                           Patient: {record.patientName}
                         </div>
-
-                        {/* <div className="text-gray-500 text-xs mt-1">
-                        Doctor: {record.doctorName}
-                      </div> */}
-
                         {record.mentalDisorders && (
                           <div className="text-gray-500 text-xs mt-1">
                             Disorders: {record.mentalDisorders}
@@ -304,9 +301,12 @@ export default function MedicalHistory({ profileId }) {
         </div>
 
         {/* Phần 2: Thông tin chi tiết bệnh nhân */}
-        <div className="col-span-3 h-[90%] shadow-sm bg-white rounded-lg overflow-y-auto">
-          {selectedPatientId ? (
-            <PatientMedicalRecord patientId={selectedPatientId} />
+        <div className="col-span-3 shadow-sm bg-white rounded-lg overflow-y-auto">
+          {selectedPatientId && selectedBookingId ? (
+            <PatientMedicalRecord
+              patientId={selectedPatientId}
+              bookingId={selectedBookingId}
+            />
           ) : (
             <div className="text-center text-gray-500 p-8">
               Please select a patient to view detailed information.
