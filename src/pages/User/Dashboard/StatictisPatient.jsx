@@ -169,7 +169,7 @@ const StatictisPatient = () => {
         <div className="xl:col-span-4 space-y-6">
           {/* Medical Profile */}
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 border border-white/30 overflow-hidden group hover:scale-[1.02] transform">
-            <div className="bg-gradient-to-r  from-orange-500 via-red-500 to-pink-600 p-6 relative overflow-hidden">
+            {/* <div className="bg-gradient-to-r  from-orange-500 via-red-500 to-pink-600 p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-black/10"></div>
               <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 translate-x-12"></div>
               <div className="relative flex items-center space-x-4">
@@ -197,15 +197,15 @@ const StatictisPatient = () => {
                   </p>
                 </div>
               </div>
-            </div>
-            <div className="p-4">
-              <MedicalProfile patientId={profileId} />
-            </div>
+            </div> */}
+            {/* <div className="p-4"> */}
+            <MedicalProfile patientId={profileId} />
+            {/* </div> */}
           </div>
 
           {/* Notion Patient */}
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 border border-white/30 overflow-hidden group hover:scale-[1.02] transform">
-            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-600 p-6 relative overflow-hidden">
+            {/* <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-600 p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-black/10"></div>
               <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-10 translate-x-10"></div>
               <div className="relative flex items-center space-x-4">
@@ -231,10 +231,10 @@ const StatictisPatient = () => {
                   <p className="text-white/80 text-sm">📋 Treatment history</p>
                 </div>
               </div>
-            </div>
-            <div className="p-4">
-              <NotionPatient />
-            </div>
+            </div> */}
+            {/* <div className="p-4"> */}
+            <NotionPatient />
+            {/* </div> */}
           </div>
 
           {/* Quick Stats Card */}
