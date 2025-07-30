@@ -531,13 +531,13 @@ export default function Dashboard() {
     []
   );
 
-  const getGenderTotalUsers = () => {
-    const total = Object.values(state.users).reduce(
-      (sum, val) => sum + parseInt(val.replace(/,/g, "") || 0),
-      0
-    );
-    return total ? total.toLocaleString() : "N/A";
-  };
+  // const getGenderTotalUsers = () => {
+  //   const total = Object.values(state.users).reduce(
+  //     (sum, val) => sum + parseInt(val.replace(/,/g, "") || 0),
+  //     0
+  //   );
+  //   return total ? total.toLocaleString() : "N/A";
+  // };
 
   const exportToExcel = useCallback(() => {
     const monthName = new Date(0, dates.month - 1).toLocaleString("en-US", {
@@ -736,7 +736,7 @@ export default function Dashboard() {
       }}
     >
       <div className="max-w-7xl mx-auto">
-        <motion.div
+        {/* <motion.div
           className="sticky top-0 z-10 bg-white/80 backdrop-blur-md p-4 rounded-b-xl shadow-md flex justify-between items-center mb-2"
           initial={{ y: -50 }}
           animate={{ y: 0 }}
@@ -807,9 +807,9 @@ export default function Dashboard() {
             </div>
             <ExportButton onClick={exportToExcel} />
           </div>
-        </motion.div>
+        </motion.div> */}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
+        {/* <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
           <div className="lg:col-span-2">
             <ChartCard
               title="Daily Revenue Trend"
@@ -992,10 +992,10 @@ export default function Dashboard() {
               ))}
             />
           </div>
-        </div>
+        </div> */}
 
-        <div className="my-2 border-t" style={{ borderColor: COLORS.border }} />
-
+        {/* <div className="my-2 border-t" style={{ borderColor: COLORS.border }} /> */}
+        {/* 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ChartCard
             title="Booking Status Overview"
@@ -1117,7 +1117,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </ChartCard>
 
-          {/* <ChartCard
+          <ChartCard
             title="Test Score Trends"
             config={ICON_CONFIG.testTrends}
             key={`test-trends-${dates.start}-${dates.end}`}
@@ -1163,9 +1163,9 @@ export default function Dashboard() {
                 />
               </LineChart>
             </ResponsiveContainer>
-          </ChartCard> */}
-        </div>
-
+          </ChartCard>
+        </div> */}
+        <div>aaa</div>
         {error && (
           <p
             className="mt-6 text-center text-sm"
