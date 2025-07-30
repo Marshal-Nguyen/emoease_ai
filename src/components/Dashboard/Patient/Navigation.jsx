@@ -24,27 +24,59 @@ const Navigation = () => {
   // Sử dụng useLocation để lấy thông tin URL hiện tại
   const location = useLocation();
 
+  // const NavItem = ({ icon, text, to, isComingSoon = false }) => {
+  //   const location = useLocation();
+  //   const isActive = location.pathname.includes(to);
+
+  //   return (
+  //     <Link
+  //       to={to}
+  //       className={`relative flex items-center gap-3 transition duration-300 font-medium ${
+  //         isActive
+  //           ? "text-white text-[15px] font-serif bg-gradient-to-r from-[#9284e0] to-[#5849b1] px-4 py-2.5 rounded-[11px] shadow-sm"
+  //           : "text-[#554d4ddc] font-serif text-[15px] hover:text-[#5241b1] hover:bg-white/10 px-4 py-2.5 rounded-xl"
+  //       }`}
+  //     >
+  //       {icon}
+  //       <span className="tracking-wide">{text}</span>
+
+  //       {isComingSoon && (
+  //         <span className="absolute -top-1 -right-2 bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+  //           Soon
+  //         </span>
+  //       )}
+  //     </Link>
+  //   );
+  // };
+
   const NavItem = ({ icon, text, to, isComingSoon = false }) => {
     const location = useLocation();
     const isActive = location.pathname.includes(to);
 
-    return (
-      <Link
-        to={to}
-        className={`relative flex items-center gap-3 transition duration-300 font-medium ${
-          isActive
-            ? "text-white text-[15px] font-serif bg-gradient-to-r from-[#9284e0] to-[#5849b1] px-4 py-2.5 rounded-[11px] shadow-sm"
-            : "text-[#554d4ddc] font-serif text-[15px] hover:text-[#5241b1] hover:bg-white/10 px-4 py-2.5 rounded-xl"
-        }`}
-      >
-        {icon}
-        <span className="tracking-wide">{text}</span>
+    const className = `relative flex items-center gap-3 transition duration-300 font-medium ${
+      isActive
+        ? "text-white text-[15px] font-serif bg-gradient-to-r from-[#9284e0] to-[#5849b1] px-4 py-2.5 rounded-[11px] shadow-sm"
+        : "text-[#554d4ddc] font-serif text-[15px] hover:text-[#5241b1] hover:bg-white/10 px-4 py-2.5 rounded-xl"
+    } ${
+      isComingSoon ? "cursor-not-allowed opacity-60 pointer-events-none" : ""
+    }`;
 
-        {isComingSoon && (
+    if (isComingSoon) {
+      return (
+        <div className={className}>
+          {icon}
+          <span className="tracking-wide">{text}</span>
           <span className="absolute -top-1 -right-2 bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
             Soon
           </span>
-        )}
+        </div>
+      );
+    }
+
+    return (
+      <Link to={to} className={className}>
+        {icon}
+        <span className="tracking-wide">{text}</span>
       </Link>
     );
   };
@@ -70,12 +102,7 @@ const Navigation = () => {
               to="StatictisPatient"
             />
             {/* <NavItem icon={<Map size={20} />} text="Roadmap" to="Roadmap" /> */}
-            <NavItem
-              icon={<Map size={20} />}
-              text="Roadmap"
-              to="Roadmap"
-              isComingSoon={true}
-            />
+            <NavItem icon={<Map size={20} />} text="Roadmap" to="Roadmap" />
 
             <NavItem
               icon={<FileText size={20} />}
