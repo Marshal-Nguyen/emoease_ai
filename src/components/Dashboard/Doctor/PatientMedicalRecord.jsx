@@ -33,7 +33,7 @@ const PatientMedicalRecord = ({ patientId, bookingId }) => {
       try {
         // Gọi API theo bookingId
         const medicalRecordsResponse = await fetch(
-          `http://localhost:3000/api/medical-records/booking/${bookingId}`,
+          `https://mental-care-server-nodenet.onrender.com/api/medical-records/booking/${bookingId}`,
           {
             method: "GET",
             headers: {
@@ -49,7 +49,7 @@ const PatientMedicalRecord = ({ patientId, bookingId }) => {
 
         // Lấy thông tin hồ sơ bệnh nhân
         const patientProfileResponse = await fetch(
-          `http://localhost:3000/api/patient-profiles/${patientId}`,
+          `https://mental-care-server-nodenet.onrender.com/api/patient-profiles/${patientId}`,
           {
             method: "GET",
             headers: {
@@ -65,7 +65,7 @@ const PatientMedicalRecord = ({ patientId, bookingId }) => {
 
         // Lấy ảnh đại diện
         const imageResponse = await axios.get(
-          `http://localhost:3000/api/profile/${patientId}/image`,
+          `https://mental-care-server-nodenet.onrender.com/api/profile/${patientId}/image`,
           {
             headers: {
               "Content-Type": "application/json",
