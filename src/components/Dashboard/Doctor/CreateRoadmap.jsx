@@ -1,116 +1,21 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import PropTypes from "prop-types";
 import { toast } from "react-toastify";
+import axios from "axios";
 import { FaSun, FaCloudMoon } from "react-icons/fa";
 import { IoPartlySunnySharp } from "react-icons/io5";
-
-// Hardcoded sessions data
-const hardcodedSessions = [
-    { id: "session1", startDate: "2025-07-14T00:00:00Z" },
-    { id: "session2", startDate: "2025-07-15T00:00:00Z" },
-    { id: "session3", startDate: "2025-07-16T00:00:00Z" },
-    { id: "session4", startDate: "2025-07-31T00:00:00Z" },
-];
-
-// Hardcoded activities data
-const hardcodedActivities = {
-    session1: [
-        {
-            id: "act1",
-            timeRange: "2025-07-14T08:00:00Z",
-            duration: "30 minutes",
-            status: "Pending",
-            foodActivity: {
-                name: "Breakfast",
-                description: "Healthy oatmeal with fruits",
-                mealTime: "Morning",
-                foodNutrients: ["Fiber", "Vitamin C"],
-                intensityLevel: "Low",
-            },
-        },
-        {
-            id: "act2",
-            timeRange: "2025-07-14T10:00:00Z",
-            duration: "45 minutes",
-            status: "Pending",
-            physicalActivity: {
-                name: "Morning Walk",
-                description: "Brisk walking in the park",
-                intensityLevel: "Moderate",
-                impactLevel: "Low",
-            },
-        },
-    ],
-    session2: [
-        {
-            id: "act3",
-            timeRange: "2025-07-15T09:00:00Z",
-            duration: "30 minutes",
-            status: "Pending",
-            foodActivity: {
-                name: "Lunch",
-                description: "Grilled chicken with vegetables",
-                mealTime: "Noon",
-                foodNutrients: ["Protein", "Vitamin A"],
-                intensityLevel: "Low",
-            },
-        },
-    ],
-    session3: [
-        {
-            id: "act4",
-            timeRange: "2025-07-16T14:00:00Z",
-            duration: "60 minutes",
-            status: "Pending",
-            therapeuticActivity: {
-                name: "Physical Therapy",
-                description: "Rehabilitation exercises",
-                intensityLevel: "Moderate",
-                impactLevel: "Medium",
-                instructions: "Follow therapist guidance",
-            },
-        },
-    ],
-    session4: [
-        {
-            id: "act5",
-            timeRange: "2025-07-31T20:00:00Z",
-            duration: "30 minutes",
-            status: "Pending",
-            PeriodName: "Tối",
-            therapeuticActivity: {
-                name: "Medication Review",
-                description: "Review medication schedule with doctor",
-                intensityLevel: "Low",
-                impactLevel: "Low",
-            },
-        },
-        {
-            id: "act6",
-            timeRange: "2025-07-31T08:00:00Z",
-            duration: "30 minutes",
-            status: "Pending",
-            PeriodName: "Sáng",
-            therapeuticActivity: {
-                name: "Medication Review",
-                description: "Review medication schedule with doctor",
-                intensityLevel: "Low",
-                impactLevel: "Low",
-            },
-        },
-    ],
-};
 
 // Utility functions
 const formatDateKey = (date) =>
     date
-        ? `${date.getFullYear()}-${(date.getMonth() + 1)
+        ? `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date
+            .getDate()
             .toString()
-            .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`
+            .padStart(2, "0")}`
         : "";
 
 const isToday = (date) => {
-    const today = new Date("2025-07-31");
+    const today = new Date();
     return (
         date.getDate() === today.getDate() &&
         date.getMonth() === today.getMonth() &&
@@ -128,20 +33,14 @@ const getMonthName = (date) =>
 const getColorForPeriod = (periodName) =>
     ({ Sáng: "yellow", Chiều: "blue", Tối: "purple" })[periodName] || "gray";
 
-const getPeriodForTime = (time) => {
-    const hours = parseInt(time.split(":")[0]);
-    if (hours < 12) return "Sáng";
-    if (hours < 18) return "Chiều";
-    return "Tối";
-};
-
 // Reusable Components
-const DateButton = ({ date, isSelected, isToday, onClick }) => (
+const DateButton = ({ date, isSelected, isToday, hasData, onClick }) => (
     <button
-        className={`flex flex-col items-center p-3 min-w-16 rounded-lg ${isSelected
-            ? "bg-purple-600 text-white"
-            : `bg-white border ${isToday ? "border-purple-500" : "border-gray-200"}`
-            }`}
+        className={`flex flex-col items-center p-3 min-w-16 rounded-lg transition-all duration-200 ${isSelected
+                ? "bg-purple-600 text-white"
+                : `bg-white border ${hasData ? "bg-purple-100 border-purple-300" : isToday ? "border-purple-500" : "border-gray-200"
+                }`
+            } hover:shadow-md`}
         onClick={() => onClick(date)}
     >
         <span className="text-xs font-medium">{formatDayName(date)}</span>
@@ -154,16 +53,14 @@ DateButton.propTypes = {
     date: PropTypes.instanceOf(Date).isRequired,
     isSelected: PropTypes.bool.isRequired,
     isToday: PropTypes.bool.isRequired,
+    hasData: PropTypes.bool.isRequired,
     onClick: PropTypes.func.isRequired,
 };
 
 const TaskItem = ({ activityId, action, periodName, taskStatus, toggleTaskStatus }) => (
-    <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 flex items-center">
+    <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 flex items-center transition-all duration-200 hover:shadow-lg">
         <div className="mx-4">
-            <label
-                className="relative text-[#FF91AF] flex items-center justify-center gap-2"
-                htmlFor={`heart-${activityId}`}
-            >
+            <label className="relative text-[#FF91AF] flex items-center justify-center gap-2" htmlFor={`heart-${activityId}`}>
                 <input
                     className="peer appearance-none"
                     id={`heart-${activityId}`}
@@ -220,54 +117,55 @@ TaskItem.propTypes = {
     toggleTaskStatus: PropTypes.func.isRequired,
 };
 
-const ActivityModal = ({ isOpen, onClose, selectedDate, onSave }) => {
-    const [timeOfDay, setTimeOfDay] = useState("");
-    const [activities, setActivities] = useState([]);
+const ActivityModal = ({ isOpen, onClose, selectedDate, onSave, timePeriods, initialActivities = [] }) => {
     const [currentActivity, setCurrentActivity] = useState("");
+    const [currentTimeOfDay, setCurrentTimeOfDay] = useState("");
+    const [activities, setActivities] = useState(initialActivities);
 
-    const handleAddActivity = () => {
-        if (currentActivity.trim() && timeOfDay) {
-            setActivities([...activities, { name: currentActivity, timeOfDay }]);
+    const handleAddActivity = useCallback(() => {
+        if (currentActivity.trim() && currentTimeOfDay) {
+            setActivities((prev) => [...prev, { name: currentActivity, timeOfDay: currentTimeOfDay }]);
             setCurrentActivity("");
+            setCurrentTimeOfDay("");
             toast.success("Hoạt động đã được thêm vào danh sách!");
         } else {
             toast.error("Vui lòng chọn buổi và nhập tên hoạt động.");
         }
-    };
+    }, [currentActivity, currentTimeOfDay]);
 
-    const handleDeleteActivity = (indexToDelete) => {
-        setActivities(activities.filter((_, index) => index !== indexToDelete));
+    const handleDeleteActivity = useCallback((index) => {
+        setActivities((prev) => prev.filter((_, i) => i !== index));
         toast.success("Hoạt động đã được xóa!");
-    };
+    }, []);
 
-    const handleSave = () => {
-        if (timeOfDay && activities.length > 0) {
-            onSave(selectedDate, timeOfDay, activities);
-            setTimeOfDay("");
+    const handleSave = useCallback(() => {
+        if (activities.length > 0) {
+            onSave(selectedDate, activities);
             setActivities([]);
             setCurrentActivity("");
+            setCurrentTimeOfDay("");
             onClose();
             toast.success("Lộ trình đã được lưu!");
         } else {
-            toast.error("Vui lòng chọn buổi và thêm ít nhất một hoạt động.");
+            toast.error("Vui lòng thêm ít nhất một hoạt động.");
         }
-    };
+    }, [activities, selectedDate, onSave, onClose]);
 
-    // New handler for cancel button to reset states and close modal
-    const handleCancel = () => {
-        setTimeOfDay("");
-        setActivities([]);
+    const handleCancel = useCallback(() => {
+        setActivities(initialActivities);
         setCurrentActivity("");
+        setCurrentTimeOfDay("");
         onClose();
-    };
+    }, [initialActivities, onClose]);
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300 ease-out animate-in fade-in">
             <div className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-2xl w-full max-w-lg transform transition-all duration-300 ease-out animate-in slide-in-from-bottom-10">
-                <h2 className="text-2xl font-extrabold mb-6 text-purple-700 tracking-tight">Thêm Hoạt động</h2>
-
+                <h2 className="text-2xl font-extrabold mb-6 text-purple-700 tracking-tight">
+                    {initialActivities.length > 0 ? "Cập nhật Hoạt động" : "Thêm Hoạt động"}
+                </h2>
                 <div className="mb-6">
                     <label className="block text-gray-800 font-semibold mb-2">Ngày:</label>
                     <input
@@ -277,25 +175,23 @@ const ActivityModal = ({ isOpen, onClose, selectedDate, onSave }) => {
                         className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed transition-shadow duration-200 hover:shadow-md"
                     />
                 </div>
-
                 <div className="mb-6">
                     <label className="block text-gray-800 font-semibold mb-2">Chọn buổi:</label>
                     <div className="flex gap-3">
-                        {["Sáng", "Chiều", "Tối"].map((time) => (
+                        {timePeriods.map((period) => (
                             <button
-                                key={time}
-                                onClick={() => setTimeOfDay(time)}
-                                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${timeOfDay === time
+                                key={period.Id}
+                                onClick={() => setCurrentTimeOfDay(period.PeriodName)}
+                                className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:shadow-lg ${currentTimeOfDay === period.PeriodName
                                         ? "bg-purple-600 text-white shadow-md"
                                         : "bg-gray-200 text-gray-700 hover:bg-purple-200"
                                     }`}
                             >
-                                {time}
+                                {period.PeriodName}
                             </button>
                         ))}
                     </div>
                 </div>
-
                 <div className="mb-6">
                     <label className="block text-gray-800 font-semibold mb-2">Thêm hoạt động:</label>
                     <div className="flex gap-3">
@@ -303,11 +199,7 @@ const ActivityModal = ({ isOpen, onClose, selectedDate, onSave }) => {
                             type="text"
                             value={currentActivity}
                             onChange={(e) => setCurrentActivity(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    handleAddActivity();
-                                }
-                            }}
+                            onKeyDown={(e) => e.key === "Enter" && handleAddActivity()}
                             placeholder="Nhập tên hoạt động"
                             className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200 hover:shadow-md"
                         />
@@ -319,7 +211,6 @@ const ActivityModal = ({ isOpen, onClose, selectedDate, onSave }) => {
                         </button>
                     </div>
                 </div>
-
                 {activities.length > 0 && (
                     <div className="mb-6">
                         <h3 className="text-gray-800 font-semibold mb-2">Danh sách hoạt động:</h3>
@@ -329,7 +220,9 @@ const ActivityModal = ({ isOpen, onClose, selectedDate, onSave }) => {
                                     key={index}
                                     className="text-gray-700 flex justify-between items-center transition-all duration-200 animate-in slide-in-from-left-5"
                                 >
-                                    <span>{activity.name} ({activity.timeOfDay})</span>
+                                    <span>
+                                        {activity.name} ({activity.timeOfDay})
+                                    </span>
                                     <button
                                         onClick={() => handleDeleteActivity(index)}
                                         className="text-red-500 hover:text-red-600 font-medium transition-all duration-200 hover:scale-110"
@@ -341,10 +234,9 @@ const ActivityModal = ({ isOpen, onClose, selectedDate, onSave }) => {
                         </ul>
                     </div>
                 )}
-
                 <div className="flex justify-end gap-3">
                     <button
-                        onClick={handleCancel} // Use the new handleCancel function
+                        onClick={handleCancel}
                         className="py-3 px-6 bg-gray-300 text-gray-800 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 hover:bg-gray-400 hover:shadow-lg"
                     >
                         Hủy
@@ -366,21 +258,113 @@ ActivityModal.propTypes = {
     onClose: PropTypes.func.isRequired,
     selectedDate: PropTypes.instanceOf(Date).isRequired,
     onSave: PropTypes.func.isRequired,
+    timePeriods: PropTypes.arrayOf(
+        PropTypes.shape({
+            Id: PropTypes.string.isRequired,
+            PeriodName: PropTypes.string.isRequired,
+        })
+    ).isRequired,
+    initialActivities: PropTypes.arrayOf(
+        PropTypes.shape({
+            name: PropTypes.string.isRequired,
+            timeOfDay: PropTypes.string.isRequired,
+        })
+    ),
 };
 
 const WeeklyPlanner = ({ patientId }) => {
-    const [selectedDate, setSelectedDate] = useState(new Date("2025-07-31"));
-    const [sessions, setSessions] = useState(hardcodedSessions);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [sessions, setSessions] = useState([]);
     const [activities, setActivities] = useState([]);
     const [taskStatus, setTaskStatus] = useState({});
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [customActivities, setCustomActivities] = useState({}); // Store custom activities
+    const [customActivities, setCustomActivities] = useState({});
+    const [timePeriods, setTimePeriods] = useState([]);
+
+    // Fetch time periods
+    useEffect(() => {
+        const fetchTimePeriods = async () => {
+            try {
+                const response = await axios.get("http://localhost:3000/api/time-periods/allTime");
+                if (response.data.success) {
+                    setTimePeriods(response.data.data);
+                } else {
+                    toast.error("Không thể lấy danh sách time periods.");
+                }
+            } catch (error) {
+                console.error("Error fetching time periods:", error);
+                toast.error("Lỗi khi lấy danh sách time periods. Vui lòng thử lại!");
+            }
+        };
+        fetchTimePeriods();
+    }, []);
+
+    // Fetch treatment routes
+    const fetchTreatmentRoutes = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`http://localhost:3000/api/treatment-routes/_?patientId=${patientId}`);
+            if (response.data.success) {
+                const fetchedSessions = response.data.data.map((route) => ({
+                    id: route.Id,
+                    startDate: route.Date,
+                }));
+                setSessions(fetchedSessions);
+
+                const activitiesBySession = {};
+                response.data.data.forEach((route) => {
+                    activitiesBySession[route.Id] = route.Actions.map((action) => ({
+                        id: action.Id,
+                        timeRange: route.Date,
+                        duration: "30 minutes",
+                        status: action.Status === "completed" ? "Completed" : "Pending",
+                        PeriodName: mapApiPeriodToLocal(action.TimePeriods?.PeriodName || action.PeriodName || ""),
+                        therapeuticActivity: {
+                            name: action.ActionName,
+                            description: `Therapeutic activity: ${action.ActionName}`,
+                            intensityLevel: "Low",
+                            impactLevel: "Low",
+                        },
+                    }));
+                });
+                setCustomActivities((prev) => ({ ...prev, ...activitiesBySession }));
+            } else {
+                toast.error("Không thể lấy danh sách lộ trình điều trị.");
+            }
+        } catch (error) {
+            console.error("Error fetching treatment routes:", error);
+            toast.error("Lỗi khi lấy dữ liệu lộ trình điều trị. Vui lòng thử lại!");
+        } finally {
+            setLoading(false);
+        }
+    }, [patientId]);
+
+    useEffect(() => {
+        fetchTreatmentRoutes();
+    }, [fetchTreatmentRoutes]);
+
+    // Enhanced period mapping with case-insensitive matching
+    const mapApiPeriodToLocal = useCallback((apiPeriodName) => {
+        if (!apiPeriodName) return "Sáng"; // Fallback to "Sáng" if undefined
+        const periodMap = {
+            "buổi sáng": "Sáng",
+            "buổi chiều": "Chiều",
+            "buổi tối": "Tối",
+            morning: "Sáng",
+            afternoon: "Chiều",
+            evening: "Tối",
+        };
+        const normalizedPeriod = apiPeriodName.toLowerCase();
+        const mappedPeriod = periodMap[normalizedPeriod] || apiPeriodName;
+        console.log(`Mapping API period "${apiPeriodName}" to "${mappedPeriod}"`);
+        return mappedPeriod;
+    }, []);
 
     // Generate two-week dates
     const twoWeekDates = useMemo(() => {
         const dates = [];
-        const today = new Date("2025-07-31");
+        const today = new Date();
         for (let i = -7; i <= 7; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() + i);
@@ -389,75 +373,46 @@ const WeeklyPlanner = ({ patientId }) => {
         return dates;
     }, []);
 
-    // Create a standardized activity object
-    const createActivityObject = (activity, time, sessionId) => {
-        let title = "Activity";
-        let description = "No description available";
-
-        if (activity.foodActivity) {
-            title = `Meal: ${activity.foodActivity.name}`;
-            description = activity.foodActivity.description;
-        } else if (activity.physicalActivity) {
-            title = `Physical Activity: ${activity.physicalActivity.name}`;
-            description = activity.physicalActivity.description;
-        } else if (activity.therapeuticActivity) {
-            title = `Therapy: ${activity.therapeuticActivity.name}`;
-            description = activity.therapeuticActivity.description;
-        }
-
-        const timeString =
-            time.getUTCHours().toString().padStart(2, "0") +
-            ":" +
-            time.getUTCMinutes().toString().padStart(2, "0");
-
-        return {
+    // Create activity object
+    const createActivityObject = useCallback(
+        (activity, time, sessionId) => ({
             id: activity.id,
-            title,
-            description,
-            time: timeString,
+            title: activity.therapeuticActivity ? `Therapy: ${activity.therapeuticActivity.name}` : "Activity",
+            description: activity.therapeuticActivity?.description || "No description available",
+            time:
+                time.getUTCHours().toString().padStart(2, "0") + ":" + time.getUTCMinutes().toString().padStart(2, "0"),
             status: activity.status,
-            periodName: activity.PeriodName || getPeriodForTime(timeString),
-        };
-    };
+            periodName: activity.PeriodName,
+        }),
+        []
+    );
 
-    // Fetch and group activities by period
+    // Load and group activities
     useEffect(() => {
         const loadActivities = async () => {
             try {
                 setLoading(true);
                 const dateKey = formatDateKey(selectedDate);
-                const sessionForDate = sessions.find(
-                    (session) => formatDateKey(new Date(session.startDate)) === dateKey
-                );
+                const sessionForDate = sessions.find((session) => formatDateKey(new Date(session.startDate)) === dateKey);
 
                 let activitiesForDate = [];
                 if (sessionForDate) {
-                    const sessionActivities = [
-                        ...(hardcodedActivities[sessionForDate.id] || []),
-                        ...(customActivities[sessionForDate.id] || []),
-                    ];
-                    activitiesForDate = sessionActivities.map((activity) =>
+                    activitiesForDate = (customActivities[sessionForDate.id] || []).map((activity) =>
                         createActivityObject(activity, new Date(activity.timeRange), sessionForDate.id)
                     );
                 }
+                console.log("Activities for date:", activitiesForDate);
 
+                // Always include all periods, even if empty
                 const groupedActivities = [
-                    {
-                        PeriodId: "per-001",
-                        PeriodName: "Sáng",
-                        Actions: activitiesForDate.filter((act) => act.periodName === "Sáng"),
-                    },
+                    { PeriodId: "per-001", PeriodName: "Sáng", Actions: activitiesForDate.filter((act) => act.periodName === "Sáng") },
                     {
                         PeriodId: "per-002",
                         PeriodName: "Chiều",
                         Actions: activitiesForDate.filter((act) => act.periodName === "Chiều"),
                     },
-                    {
-                        PeriodId: "per-003",
-                        PeriodName: "Tối",
-                        Actions: activitiesForDate.filter((act) => act.periodName === "Tối"),
-                    },
-                ].filter((period) => period.Actions.length > 0);
+                    { PeriodId: "per-003", PeriodName: "Tối", Actions: activitiesForDate.filter((act) => act.periodName === "Tối") },
+                ];
 
                 setActivities(groupedActivities);
 
@@ -474,24 +429,17 @@ const WeeklyPlanner = ({ patientId }) => {
             }
         };
 
-        if (sessions.length > 0) {
+        if (sessions.length > 0 || timePeriods.length > 0) {
             loadActivities();
         }
-    }, [selectedDate, sessions, customActivities]);
+    }, [selectedDate, sessions, customActivities, createActivityObject, timePeriods]);
 
     // Toggle task status
     const toggleTaskStatus = useCallback((taskId) => {
         setTaskStatus((prev) => {
-            const currentStatus = prev[taskId] || false;
-            const newStatus = !currentStatus;
-            try {
-                toast.success(`Cập nhật trạng thái thành ${newStatus ? "Hoàn thành" : "Chờ"}!`);
-                return { ...prev, [taskId]: newStatus };
-            } catch (error) {
-                console.error("Error updating status:", error);
-                toast.error("Lỗi khi cập nhật trạng thái. Vui lòng thử lại!");
-                return prev;
-            }
+            const newStatus = !prev[taskId];
+            toast.success(`Cập nhật trạng thái thành ${newStatus ? "Hoàn thành" : "Chờ"}!`);
+            return { ...prev, [taskId]: newStatus };
         });
     }, []);
 
@@ -509,57 +457,99 @@ const WeeklyPlanner = ({ patientId }) => {
         return Math.round((completedTasks / totalTasks) * 100) || 0;
     }, [activities, taskStatus]);
 
-    // Handle saving new activities from modal
-    const handleSaveActivity = (date, timeOfDay, newActivities) => {
-        const dateKey = formatDateKey(date);
-        const sessionForDate = sessions.find(
-            (session) => formatDateKey(new Date(session.startDate)) === dateKey
-        );
+    // Check if selected date has data
+    const hasDataForSelectedDate = useMemo(
+        () => sessions.some((session) => formatDateKey(new Date(session.startDate)) === formatDateKey(selectedDate)),
+        [sessions, selectedDate]
+    );
 
-        if (!sessionForDate) {
-            const newSessionId = `session${sessions.length + 1}`;
-            setSessions([...sessions, { id: newSessionId, startDate: date.toISOString() }]);
-            const newActivityData = newActivities.map((activity, index) => ({
-                id: `act${Date.now() + index}`,
-                timeRange: `${dateKey}T${timeOfDay === "Sáng" ? "08:00:00" : timeOfDay === "Chiều" ? "14:00:00" : "20:00:00"}Z`,
-                duration: "30 minutes",
-                status: "Pending",
-                PeriodName: timeOfDay,
-                therapeuticActivity: {
-                    name: activity.name,
-                    description: `Custom therapeutic activity`,
-                    intensityLevel: "Low",
-                    impactLevel: "Low",
-                },
+    // Get initial activities for modal
+    const initialActivities = useMemo(() => {
+        const dateKey = formatDateKey(selectedDate);
+        const sessionForDate = sessions.find((session) => formatDateKey(new Date(session.startDate)) === dateKey);
+        if (sessionForDate) {
+            const activities = (customActivities[sessionForDate.id] || []).map((activity) => ({
+                name: activity.therapeuticActivity.name,
+                timeOfDay: activity.PeriodName,
             }));
-            setCustomActivities((prev) => ({
-                ...prev,
-                [newSessionId]: newActivityData,
-            }));
-        } else {
-            const newActivityData = newActivities.map((activity, index) => ({
-                id: `act${Date.now() + index}`,
-                timeRange: `${dateKey}T${timeOfDay === "Sáng" ? "08:00:00" : timeOfDay === "Chiều" ? "14:00:00" : "20:00:00"}Z`,
-                duration: "30 minutes",
-                status: "Pending",
-                PeriodName: timeOfDay,
-                therapeuticActivity: {
-                    name: activity.name,
-                    description: `Custom therapeutic activity`,
-                    intensityLevel: "Low",
-                    impactLevel: "Low",
-                },
-            }));
-            setCustomActivities((prev) => ({
-                ...prev,
-                [sessionForDate.id]: [...(prev[sessionForDate.id] || []), ...newActivityData],
-            }));
+            console.log("Initial activities for modal:", activities);
+            return activities;
         }
-    };
+        return [];
+    }, [sessions, customActivities, selectedDate]);
+
+    // Handle save activity
+    const handleSaveActivity = useCallback(
+        async (date, newActivities) => {
+            try {
+                const doctorId = localStorage.getItem("profileId");
+                if (!doctorId) {
+                    toast.error("Không tìm thấy doctorId trong localStorage.");
+                    return;
+                }
+
+                const dateKey = formatDateKey(date);
+                const dateString = `${dateKey}T00:00:00Z`;
+
+                const response = await axios.post("http://localhost:3000/api/treatment-routes", {
+                    patientId,
+                    doctorId,
+                    date: dateString,
+                    actions: newActivities.map((activity) => {
+                        const timePeriod = timePeriods.find((period) => period.PeriodName === activity.timeOfDay);
+                        if (!timePeriod) throw new Error(`Không tìm thấy time period cho ${activity.timeOfDay}`);
+                        return {
+                            timePeriodsId: timePeriod.Id,
+                            actionName: activity.name,
+                        };
+                    }),
+                });
+
+                if (response.status === 200 || response.status === 201) {
+                    toast.success("Hoạt động đã được lưu qua API!");
+                    const newSessionId = response.data.data?.Id || response.data.data?.id;
+                    if (!newSessionId) {
+                        throw new Error("Không tìm thấy session ID trong phản hồi API.");
+                    }
+
+                    const newActivityData = response.data.data.Actions.map((action, index) => ({
+                        id: action.Id,
+                        timeRange: dateString,
+                        duration: "30 minutes",
+                        status: action.Status === "completed" ? "Completed" : "Pending",
+                        PeriodName: mapApiPeriodToLocal(newActivities[index].timeOfDay),
+                        therapeuticActivity: {
+                            name: action.ActionName,
+                            description: `Custom therapeutic activity: ${action.ActionName}`,
+                            intensityLevel: "Low",
+                            impactLevel: "Low",
+                        },
+                    }));
+
+                    setSessions((prev) => {
+                        if (!prev.some((session) => session.id === newSessionId)) {
+                            return [...prev, { id: newSessionId, startDate: dateString }];
+                        }
+                        return prev;
+                    });
+
+                    setCustomActivities((prev) => ({
+                        ...prev,
+                        [newSessionId]: [...(prev[newSessionId] || []), ...newActivityData],
+                    }));
+
+                    await fetchTreatmentRoutes();
+                }
+            } catch (error) {
+                console.error("Error saving activities:", error);
+                toast.error(`Lỗi khi lưu hoạt động qua API: ${error.message}`);
+            }
+        },
+        [patientId, timePeriods, mapApiPeriodToLocal, fetchTreatmentRoutes]
+    );
 
     return (
-        <div className="max-w-full bg-white h-screen overflow-y-auto py-6 px-3 rounded-2xl">
-            {/* Date Navigation */}
+        <div className="max-w-full bg-white h-[calc(100vh-4rem)] overflow-y-auto py-6 px-3 rounded-2xl">
             <div className="mb-4">
                 <h2 className="text-xl font-serif mb-4">Lịch hoạt động</h2>
                 <div className="overflow-x-auto">
@@ -570,14 +560,13 @@ const WeeklyPlanner = ({ patientId }) => {
                                 date={date}
                                 isSelected={formatDateKey(date) === formatDateKey(selectedDate)}
                                 isToday={isToday(date)}
+                                hasData={sessions.some((session) => formatDateKey(new Date(session.startDate)) === formatDateKey(date))}
                                 onClick={setSelectedDate}
                             />
                         ))}
                     </div>
                 </div>
             </div>
-
-            {/* Current Date Display and Add Button */}
             <div className="bg-white rounded-lg shadow-md p-4 mb-4">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
@@ -585,35 +574,30 @@ const WeeklyPlanner = ({ patientId }) => {
                             {formatDayName(selectedDate)}, {selectedDate.getDate()} {getMonthName(selectedDate)}
                         </h3>
                         {isToday(selectedDate) && (
-                            <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                                Hôm nay
-                            </span>
+                            <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">Hôm nay</span>
                         )}
                     </div>
                     <div className="flex space-x-2">
                         <button
-                            className="text-purple-600 border border-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50"
-                            onClick={() => setSelectedDate(new Date("2025-07-31"))}
+                            className="text-purple-600 border border-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50 transition-all duration-200"
+                            onClick={() => setSelectedDate(new Date())}
                         >
                             Hôm nay
                         </button>
                         <button
-                            className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                            className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all duration-200"
                             onClick={() => setIsModalOpen(true)}
                         >
-                            Thêm
+                            {hasDataForSelectedDate ? "Cập nhật" : "Thêm"}
                         </button>
                     </div>
                 </div>
             </div>
-
-            {/* Progress Indicator */}
             <div className="bg-white rounded-lg shadow-md p-4 mb-4">
                 <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold">Tiến độ hôm nay</h3>
                     <span className="text-sm text-gray-500">
-                        {Object.values(taskStatus).filter((status) => status).length}/
-                        {Object.keys(taskStatus).length} hoạt động
+                        {Object.values(taskStatus).filter((status) => status).length}/{Object.keys(taskStatus).length} hoạt động
                     </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -623,15 +607,13 @@ const WeeklyPlanner = ({ patientId }) => {
                     />
                 </div>
             </div>
-
-            {/* Activities List */}
             <div className="space-y-6">
                 {loading ? (
                     <div className="text-center py-10">
                         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
                         <p className="mt-2 text-gray-600">Đang tải...</p>
                     </div>
-                ) : activities.length === 0 ? (
+                ) : activities.every((period) => period.Actions.length === 0) ? (
                     <div className="bg-white rounded-lg shadow-md p-6 text-center">
                         <p className="text-gray-500">Không có hoạt động nào được lên lịch cho ngày này</p>
                     </div>
@@ -642,42 +624,42 @@ const WeeklyPlanner = ({ patientId }) => {
                             <div key={period.PeriodId} className="mb-8 relative">
                                 <div className="flex items-center mb-4">
                                     <div
-                                        className={`w-8 h-8 bg-${getColorForPeriod(
-                                            period.PeriodName
-                                        )}-400 rounded-full flex items-center justify-center z-10`}
+                                        className={`w-8 h-8 bg-${getColorForPeriod(period.PeriodName)}-400 rounded-full flex items-center justify-center z-10`}
                                     >
                                         {period.PeriodName === "Sáng" && <FaSun className="text-white text-lg" />}
-                                        {period.PeriodName === "Chiều" && (
-                                            <IoPartlySunnySharp className="text-white text-lg" />
-                                        )}
+                                        {period.PeriodName === "Chiều" && <IoPartlySunnySharp className="text-white text-lg" />}
                                         {period.PeriodName === "Tối" && <FaCloudMoon className="text-white text-lg" />}
                                     </div>
                                     <h3 className="ml-4 text-lg font-semibold">{period.PeriodName}</h3>
                                 </div>
                                 <div className="ml-12 space-y-4">
-                                    {period.Actions.map((action) => (
-                                        <TaskItem
-                                            key={action.id}
-                                            activityId={action.id}
-                                            action={action}
-                                            periodName={period.PeriodName}
-                                            taskStatus={taskStatus}
-                                            toggleTaskStatus={toggleTaskStatus}
-                                        />
-                                    ))}
+                                    {period.Actions.length > 0 ? (
+                                        period.Actions.map((action) => (
+                                            <TaskItem
+                                                key={action.id}
+                                                activityId={action.id}
+                                                action={action}
+                                                periodName={period.PeriodName}
+                                                taskStatus={taskStatus}
+                                                toggleTaskStatus={toggleTaskStatus}
+                                            />
+                                        ))
+                                    ) : (
+                                        <p className="text-gray-500">Không có hoạt động nào trong buổi {period.PeriodName}</p>
+                                    )}
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
-
-            {/* Activity Modal */}
             <ActivityModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 selectedDate={selectedDate}
                 onSave={handleSaveActivity}
+                timePeriods={timePeriods}
+                initialActivities={initialActivities}
             />
         </div>
     );

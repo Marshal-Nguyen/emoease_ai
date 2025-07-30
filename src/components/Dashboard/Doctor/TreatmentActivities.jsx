@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-// import PatientMedicalRecord from "../../../components/Dashboard/Doctor/PatientMedicalRecord";
 import CreateWeeklyPlanner from "../../../components/Dashboard/Doctor/CreateRoadmap";
-// import CreateWeeklyPlanner from "../../../components/Dashboard/Doctor/CreateWeeklyPlanner";
 import { useSelector } from "react-redux";
 
 export default function MedicalHistory({ profileId }) {
