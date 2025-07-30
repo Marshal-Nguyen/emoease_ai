@@ -24,14 +24,14 @@ const Navigation = () => {
   // Sử dụng useLocation để lấy thông tin URL hiện tại
   const location = useLocation();
 
-  const NavItem = ({ icon, text, to }) => {
-    // Kiểm tra xem đường dẫn hiện tại có chứa "to" hay không
+  const NavItem = ({ icon, text, to, isComingSoon = false }) => {
+    const location = useLocation();
     const isActive = location.pathname.includes(to);
 
     return (
       <Link
         to={to}
-        className={`flex items-center gap-3 cursor-pointer transition duration-300 font-medium ${
+        className={`relative flex items-center gap-3 transition duration-300 font-medium ${
           isActive
             ? "text-white text-[15px] font-serif bg-gradient-to-r from-[#9284e0] to-[#5849b1] px-4 py-2.5 rounded-[11px] shadow-sm"
             : "text-[#554d4ddc] font-serif text-[15px] hover:text-[#5241b1] hover:bg-white/10 px-4 py-2.5 rounded-xl"
@@ -39,6 +39,12 @@ const Navigation = () => {
       >
         {icon}
         <span className="tracking-wide">{text}</span>
+
+        {isComingSoon && (
+          <span className="absolute -top-1 -right-2 bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+            Soon
+          </span>
+        )}
       </Link>
     );
   };
@@ -47,10 +53,15 @@ const Navigation = () => {
     <div className={styles.container}>
       <div className="grid grid-cols-1 grid-rows-8 h-full text-center">
         <div className="row-span-2 flex items-center justify-center">
-          <div className="w-35 flex justify-center items-center h-35 bg-gradient-to-b from-[#925FE2] to-[#7042C0] rounded-4xl">
-            <img src="/LogoUpdate.png" alt="Logo" className="w-[70%]" />
+          <div className="w-35 h-35 overflow-hidden rounded-3xl bg-gradient-to-b from-[#925FE2] to-[#7042C0]">
+            <img
+              src="/emo.webp"
+              alt="Logo"
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
+
         <div className="row-span-5 row-start-3 mt-4 flex justify-center">
           <nav className="flex flex-col gap-5 text-white font-light">
             <NavItem
@@ -58,17 +69,32 @@ const Navigation = () => {
               text="Dashboard"
               to="StatictisPatient"
             />
-            <NavItem icon={<Map size={20} />} text="Roadmap" to="Roadmap" />
+            {/* <NavItem icon={<Map size={20} />} text="Roadmap" to="Roadmap" /> */}
+            <NavItem
+              icon={<Map size={20} />}
+              text="Roadmap"
+              to="Roadmap"
+              isComingSoon={true}
+            />
+
             <NavItem
               icon={<FileText size={20} />}
               text="Records"
               to="HistoryPatient"
             />
-            <NavItem
+            {/* <NavItem
               icon={<ShoppingCart size={20} />}
               text="Shopping"
               to="Shopping"
             />
+             */}
+            <NavItem
+              icon={<ShoppingCart size={20} />}
+              text="Shopping"
+              to="Shopping"
+              isComingSoon={true}
+            />
+
             <NavItem
               icon={<User size={20} />}
               text="Profile Patient"
