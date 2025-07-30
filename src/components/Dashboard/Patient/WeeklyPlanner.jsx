@@ -5,61 +5,6 @@ import { FaSun } from "react-icons/fa6";
 import { FaCloudMoon } from "react-icons/fa";
 import { IoPartlySunnySharp } from "react-icons/io5";
 
-
-const activitiesData = [
-  {
-    Id: "d1",
-    DoctorId: "doc-001",
-    PatientId: "pat-001",
-    CreatedAt: "2025-07-30T22:15:00Z",
-    Date: "2025-07-31",
-    RoadMap: [
-      {
-        PeriodId: "per-001",
-        PeriodName: "Sáng",
-        Actions: [{ ActionName: "uống thuốc" }, { ActionName: "thiền 15 phút" }],
-      },
-      {
-        PeriodId: "per-002",
-        PeriodName: "Chiều",
-        Actions: [{ ActionName: "ngủ Chiều 30 phút" }],
-      },
-      {
-        PeriodId: "per-003",
-        PeriodName: "Tối",
-        Actions: [{ ActionName: "uống thuốc" }, { ActionName: "đọc sách 20 phút" }],
-      },
-    ],
-  },
-  {
-    Id: "d2",
-    DoctorId: "doc-001",
-    PatientId: "pat-001",
-    CreatedAt: "2025-07-30T22:15:00Z",
-    Date: "2025-08-01",
-    RoadMap: [
-      {
-        PeriodId: "per-001",
-        PeriodName: "Sáng",
-        Actions: [{ ActionName: "uống thuốc" }, { ActionName: "đi bộ 20 phút" }],
-      },
-      {
-        PeriodId: "per-002",
-        PeriodName: "Chiều",
-        Actions: [{ ActionName: "nghe nhạc thư giãn" }],
-      },
-      {
-        PeriodId: "per-003",
-        PeriodName: "Tối",
-        Actions: [
-          { ActionName: "uống thuốc" },
-          { ActionName: "viết nhật ký cảm xúc" },
-        ],
-      },
-    ],
-  },
-];
-
 // Utility functions
 const formatDateKey = (date) =>
   date
@@ -69,7 +14,7 @@ const formatDateKey = (date) =>
     : "";
 
 const isToday = (date) => {
-  const today = new Date("2025-07-31");
+  const today = new Date();
   return (
     date.getDate() === today.getDate() &&
     date.getMonth() === today.getMonth() &&
@@ -85,14 +30,16 @@ const getMonthName = (date) =>
   ];
 
 const getColorForPeriod = (periodName) =>
-  ({ Sáng: "yellow", Chiều: "blue", Tối: "purple" })[periodName] || "gray";
+  ({ "Buối sáng": "yellow", "Buổi chiều": "blue", "Buổi tối": "purple" })[periodName] || "gray";
 
 // Reusable Components
-const DateButton = ({ date, isSelected, isToday, onClick }) => (
+const DateButton = ({ date, isSelected, isToday, hasData, onClick }) => (
   <button
     className={`flex flex-col items-center p-3 min-w-16 rounded-lg ${isSelected
       ? "bg-purple-600 text-white"
-      : `bg-white border ${isToday ? "border-purple-500" : "border-gray-200"}`
+      : hasData
+        ? "bg-purple-100 text-purple-800 border border-purple-300"
+        : `bg-white border ${isToday ? "border-purple-500" : "border-gray-200"}`
       }`}
     onClick={() => onClick(date)}
   >
@@ -106,6 +53,7 @@ DateButton.propTypes = {
   date: PropTypes.instanceOf(Date).isRequired,
   isSelected: PropTypes.bool.isRequired,
   isToday: PropTypes.bool.isRequired,
+  hasData: PropTypes.bool.isRequired,
   onClick: PropTypes.func.isRequired,
 };
 
@@ -122,7 +70,7 @@ const TaskItem = ({ activityId, action, periodName, taskStatus, toggleTaskStatus
           name={`heart-${activityId}`}
           type="checkbox"
           checked={taskStatus[activityId] || false}
-          onChange={() => toggleTaskStatus(activityId)}
+          onChange={() => toggleTaskStatus(activityId, action.Id)}
         />
         <span className="absolute left-0 top-1/2 h-5 w-5 -translate-x-full -translate-y-1/2 rounded-[0.25em] border-2 border-[#FF91AF] flex items-center justify-center"></span>
         <svg
@@ -164,21 +112,22 @@ const TaskItem = ({ activityId, action, periodName, taskStatus, toggleTaskStatus
 
 TaskItem.propTypes = {
   activityId: PropTypes.string.isRequired,
-  action: PropTypes.shape({ ActionName: PropTypes.string.isRequired }).isRequired,
+  action: PropTypes.shape({ ActionName: PropTypes.string.isRequired, Id: PropTypes.string.isRequired }).isRequired,
   periodName: PropTypes.string.isRequired,
   taskStatus: PropTypes.object.isRequired,
   toggleTaskStatus: PropTypes.func.isRequired,
 };
 
 const WeeklyPlanner = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date("2025-07-31"));
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [activities, setActivities] = useState([]);
   const [taskStatus, setTaskStatus] = useState({});
   const [loading, setLoading] = useState(false);
+  const [availableDates, setAvailableDates] = useState([]);
 
   const twoWeekDates = useMemo(() => {
     const dates = [];
-    const today = new Date("2025-07-31");
+    const today = new Date();
     for (let i = -7; i <= 7; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
@@ -191,14 +140,83 @@ const WeeklyPlanner = () => {
     const loadActivities = async () => {
       try {
         setLoading(true);
-        const dateKey = formatDateKey(selectedDate);
-        const filteredActivities = activitiesData.filter((a) => a.Date === dateKey);
-        setActivities(filteredActivities);
+        const profileId = localStorage.getItem("profileId");
+        if (!profileId) {
+          throw new Error("No profile ID found in localStorage");
+        }
 
-        const initialTaskStatus = filteredActivities.reduce((acc, activity) => {
+        const response = await fetch(
+          `https://mental-care-server-nodenet.onrender.com/api/treatment-routes/_?patientId=${profileId}`
+        );
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error(result.message || "Failed to fetch activities");
+        }
+
+        // Process API data to match the required structure
+        const processedActivities = result.data.map((item) => ({
+          Id: item.Id,
+          DoctorId: item.DoctorId,
+          PatientId: item.PatientId,
+          CreatedAt: item.CreatedAt,
+          Date: item.Date,
+          RoadMap: [
+            {
+              PeriodId: "morning",
+              PeriodName: "Buối sáng",
+              Actions: item.Actions.filter(
+                (action) => action.TimePeriods.PeriodName === "Buối sáng"
+              ).map((action) => ({
+                ActionName: action.ActionName,
+                Id: action.Id,
+                Status: action.Status,
+              })),
+            },
+            {
+              PeriodId: "afternoon",
+              PeriodName: "Buổi chiều",
+              Actions: item.Actions.filter(
+                (action) => action.TimePeriods.PeriodName === "Buổi chiều"
+              ).map((action) => ({
+                ActionName: action.ActionName,
+                Id: action.Id,
+                Status: action.Status,
+              })),
+            },
+            {
+              PeriodId: "evening",
+              PeriodName: "Buổi tối",
+              Actions: item.Actions.filter(
+                (action) => action.TimePeriods.PeriodName === "Buổi tối"
+              ).map((action) => ({
+                ActionName: action.ActionName,
+                Id: action.Id,
+                Status: action.Status,
+              })),
+            },
+          ].filter((period) => period.Actions.length > 0),
+        }));
+
+        setActivities(processedActivities);
+
+        // Store available dates as strings for comparison
+        const dates = [
+          ...new Set(
+            result.data.map((item) => item.Date)
+          ),
+        ];
+        setAvailableDates(dates);
+
+        // Set initial selected date to today
+        setSelectedDate(new Date());
+
+        // Initialize task status
+        const initialTaskStatus = processedActivities.reduce((acc, activity) => {
           activity.RoadMap.forEach((period) => {
-            period.Actions.forEach((_, index) => {
-              acc[`${activity.Id}-${period.PeriodId}-${index}`] = false;
+            period.Actions.forEach((action, index) => {
+              acc[`${activity.Id}-${period.PeriodId}-${index}`] =
+                action.Status === "completed";
             });
           });
           return acc;
@@ -213,23 +231,40 @@ const WeeklyPlanner = () => {
     };
 
     loadActivities();
-  }, [selectedDate]);
+  }, []);
 
   const toggleTaskStatus = useCallback(
-    async (taskId) => {
+    async (taskId, actionId) => {
       setTaskStatus((prev) => {
         const currentStatus = prev[taskId] || false;
         const newStatus = !currentStatus;
-        try {
-          // Simulate API call
-          // await updateTaskStatus(taskId, newStatus);
-          toast.success(`Cập nhật trạng thái thành ${newStatus ? "Hoàn thành" : "Chờ"}!`);
-          return { ...prev, [taskId]: newStatus };
-        } catch (error) {
-          console.error("Error updating status:", error);
-          toast.error("Lỗi khi cập nhật trạng thái. Vui lòng thử lại!");
-          return prev;
-        }
+        const statusPayload = newStatus ? "completed" : "not_started";
+
+        // Make API call to update status
+        fetch(`https://mental-care-server-nodenet.onrender.com/api/treatment-routes/actions/${actionId}/status`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: statusPayload }),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to update task status");
+            }
+            return response.json();
+          })
+          .then(() => {
+            toast.success(`Cập nhật trạng thái thành ${newStatus ? "Hoàn thành" : "Chờ"}!`);
+            setTaskStatus((prev) => ({ ...prev, [taskId]: newStatus }));
+          })
+          .catch((error) => {
+            console.error("Error updating status:", error);
+            toast.error("Lỗi khi cập nhật trạng thái. Vui lòng thử lại!");
+          });
+
+        // Optimistically update UI
+        return { ...prev, [taskId]: newStatus };
       });
     },
     []
@@ -239,16 +274,18 @@ const WeeklyPlanner = () => {
     if (!activities.length) return 0;
     let totalTasks = 0;
     let completedTasks = 0;
-    activities.forEach((activity) => {
-      activity.RoadMap.forEach((period) => {
-        period.Actions.forEach((_, index) => {
-          totalTasks++;
-          if (taskStatus[`${activity.Id}-${period.PeriodId}-${index}`]) completedTasks++;
+    activities
+      .filter((a) => a.Date === formatDateKey(selectedDate))
+      .forEach((activity) => {
+        activity.RoadMap.forEach((period) => {
+          period.Actions.forEach((_, index) => {
+            totalTasks++;
+            if (taskStatus[`${activity.Id}-${period.PeriodId}-${index}`]) completedTasks++;
+          });
         });
       });
-    });
     return Math.round((completedTasks / totalTasks) * 100) || 0;
-  }, [activities, taskStatus]);
+  }, [activities, taskStatus, selectedDate]);
 
   return (
     <div className="max-w-full bg-white h-screen overflow-y-auto py-6 px-3 rounded-2xl">
@@ -263,6 +300,7 @@ const WeeklyPlanner = () => {
                 date={date}
                 isSelected={formatDateKey(date) === formatDateKey(selectedDate)}
                 isToday={isToday(date)}
+                hasData={availableDates.includes(formatDateKey(date))}
                 onClick={setSelectedDate}
               />
             ))}
@@ -285,7 +323,7 @@ const WeeklyPlanner = () => {
           </div>
           <button
             className="text-purple-600 border border-purple-600 px-4 py-2 rounded-lg hover:bg-purple-50"
-            onClick={() => setSelectedDate(new Date("2025-07-31"))}
+            onClick={() => setSelectedDate(new Date())}
           >
             Hôm nay
           </button>
@@ -296,10 +334,7 @@ const WeeklyPlanner = () => {
       <div className="bg-white rounded-lg shadow-md p-4 mb-4">
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-bold">Tiến độ hôm nay</h3>
-          <span className="text-sm text-gray-500">
-            {Object.values(taskStatus).filter((status) => status).length}/
-            {Object.keys(taskStatus).length} hoạt động
-          </span>
+
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div
@@ -316,49 +351,51 @@ const WeeklyPlanner = () => {
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
             <p className="mt-2 text-gray-600">Đang tải...</p>
           </div>
-        ) : activities.length === 0 ? (
+        ) : activities.filter((a) => a.Date === formatDateKey(selectedDate)).length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
             <p className="text-gray-500">Không có hoạt động nào được lên lịch cho ngày này</p>
           </div>
         ) : (
           <div className="relative">
             <div className="absolute left-4 top-0 bottom-0 w-1 bg-gray-200" />
-            {activities.map((activity) =>
-              activity.RoadMap.map((period) => (
-                <div key={period.PeriodId} className="mb-8 relative">
-                  <div className="flex items-center mb-4">
-                    <div
-                      className={`w-8 h-8 bg-${getColorForPeriod(
-                        period.PeriodName
-                      )}-400 rounded-full flex items-center justify-center z-10`}
-                    >
-                      {period.PeriodName === "Sáng" && (
-                        <FaSun className="text-white text-lg" />
-                      )}
-                      {period.PeriodName === "Chiều" && (
-                        <IoPartlySunnySharp className="text-white text-lg" />
-                      )}
-                      {period.PeriodName === "Tối" && (
-                        <FaCloudMoon className="text-white text-lg" />
-                      )}
+            {activities
+              .filter((a) => a.Date === formatDateKey(selectedDate))
+              .map((activity) =>
+                activity.RoadMap.map((period) => (
+                  <div key={period.PeriodId} className="mb-8 relative">
+                    <div className="flex items-center mb-4">
+                      <div
+                        className={`w-8 h-8 bg-${getColorForPeriod(
+                          period.PeriodName
+                        )}-400 rounded-full flex items-center justify-center z-10`}
+                      >
+                        {period.PeriodName === "Buối sáng" && (
+                          <FaSun className="text-white text-lg" />
+                        )}
+                        {period.PeriodName === "Buổi chiều" && (
+                          <IoPartlySunnySharp className="text-white text-lg" />
+                        )}
+                        {period.PeriodName === "Buổi tối" && (
+                          <FaCloudMoon className="text-white text-lg" />
+                        )}
+                      </div>
+                      <h3 className="ml-4 text-lg font-semibold">{period.PeriodName}</h3>
                     </div>
-                    <h3 className="ml-4 text-lg font-semibold">{period.PeriodName}</h3>
+                    <div className="ml-12 space-y-4">
+                      {period.Actions.map((action, index) => (
+                        <TaskItem
+                          key={`${activity.Id}-${period.PeriodId}-${index}`}
+                          activityId={`${activity.Id}-${period.PeriodId}-${index}`}
+                          action={action}
+                          periodName={period.PeriodName}
+                          taskStatus={taskStatus}
+                          toggleTaskStatus={toggleTaskStatus}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div className="ml-12 space-y-4">
-                    {period.Actions.map((action, index) => (
-                      <TaskItem
-                        key={`${activity.Id}-${period.PeriodId}-${index}`}
-                        activityId={`${activity.Id}-${period.PeriodId}-${index}`}
-                        action={action}
-                        periodName={period.PeriodName}
-                        taskStatus={taskStatus}
-                        toggleTaskStatus={toggleTaskStatus}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
           </div>
         )}
       </div>

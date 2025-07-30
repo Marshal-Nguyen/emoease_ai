@@ -93,7 +93,7 @@ const StatictisPatient = () => {
         {/* Left Column - Main Charts */}
         <div className="xl:col-span-8 space-y-8">
           {/* Task Progress Chart */}
-          {/* <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 border border-white/30 overflow-hidden group hover:scale-[1.02] transform">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 border border-white/30 overflow-hidden group hover:scale-[1.02] transform">
             <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-600 p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-black/10"></div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
@@ -126,7 +126,7 @@ const StatictisPatient = () => {
             <div className="p-8">
               <TaskProgressChart />
             </div>
-          </div> */}
+          </div>
 
           {/* Mental Health Dashboard */}
           {/* <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 border border-white/30 overflow-hidden group hover:scale-[1.02] transform">
