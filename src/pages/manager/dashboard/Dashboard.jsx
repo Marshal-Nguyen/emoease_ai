@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
-  LineChart,
-  Line,
+  // LineChart,
+  // Line,
   BarChart,
   Bar,
   PieChart,
@@ -1117,7 +1117,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard
+          {/* <ChartCard
             title="Test Score Trends"
             config={ICON_CONFIG.testTrends}
             key={`test-trends-${dates.start}-${dates.end}`}
@@ -1163,7 +1163,7 @@ export default function Dashboard() {
                 />
               </LineChart>
             </ResponsiveContainer>
-          </ChartCard>
+          </ChartCard> */}
         </div>
 
         {error && (
