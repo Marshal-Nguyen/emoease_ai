@@ -296,7 +296,7 @@ export default function Dashboard() {
 
   const navigate = useNavigate();
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [dates, setDates] = useState({
     month: currentDate.getMonth() + 1,
     year: currentDate.getFullYear(),
@@ -306,230 +306,230 @@ export default function Dashboard() {
   const userName = localStorage.getItem("username") || "User";
   const token = localStorage.getItem("token");
 
-  const fetchData = useCallback(async () => {
-    if (!token) {
-      setError("Authentication token is missing. Please log in again.");
-      setLoading(false);
-      navigate("/login");
-      return;
-    }
+  // const fetchData = useCallback(async () => {
+  //   if (!token) {
+  //     setError("Authentication token is missing. Please log in again.");
+  //     setLoading(false);
+  //     navigate("/login");
+  //     return;
+  //   }
 
-    setLoading(true);
-    setError(null);
+  //   setLoading(true);
+  //   setError(null);
 
-    try {
-      const [
-        dailySalesResponse,
-        bookingsResponse,
-        doctorsResponse,
-        usersResponse,
-        topDoctorsResponse,
-        testStatsResponse,
-        testTrendsResponse,
-      ] = await Promise.all([
-        fetch(
-          `${API_BASE_URL}/payment-zalo/daily-total?StartDate=${dates.start}&EndDate=${dates.end}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        ),
-        fetch(
-          `${API_BASE_URL}/bookings?StartDate=${dates.start}&EndDate=${dates.end}&Status=CheckIn`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        ),
-        fetch(`${API_BASE_URL}/doctor-profiles`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-        fetch(
-          `${API_BASE_URL}/patient-statistics?startDate=${dates.start}&endDate=${dates.end}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        ),
-        fetch(
-          `${API_BASE_URL}/topdoctors/view?startDate=${dates.start}&endDate=${dates.end}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        ),
-        fetch(
-          `${API_BASE_URL}/test-view/statistics?startDate=${dates.start}&endDate=${dates.end}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        ),
-        fetch(
-          `${API_BASE_URL}/test-view/trends?startDate=${dates.start}&endDate=${dates.end}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        ),
-      ]);
+  //   try {
+  //     const [
+  //       dailySalesResponse,
+  //       bookingsResponse,
+  //       doctorsResponse,
+  //       usersResponse,
+  //       topDoctorsResponse,
+  //       testStatsResponse,
+  //       testTrendsResponse,
+  //     ] = await Promise.all([
+  //       fetch(
+  //         `${API_BASE_URL}/payment-zalo/daily-total?StartDate=${dates.start}&EndDate=${dates.end}`,
+  //         {
+  //           method: "GET",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       ),
+  //       fetch(
+  //         `${API_BASE_URL}/bookings?StartDate=${dates.start}&EndDate=${dates.end}&Status=CheckIn`,
+  //         {
+  //           method: "GET",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       ),
+  //       fetch(`${API_BASE_URL}/doctor-profiles`, {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }),
+  //       fetch(
+  //         `${API_BASE_URL}/patient-statistics?startDate=${dates.start}&endDate=${dates.end}`,
+  //         {
+  //           method: "GET",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       ),
+  //       fetch(
+  //         `${API_BASE_URL}/topdoctors/view?startDate=${dates.start}&endDate=${dates.end}`,
+  //         {
+  //           method: "GET",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       ),
+  //       fetch(
+  //         `${API_BASE_URL}/test-view/statistics?startDate=${dates.start}&endDate=${dates.end}`,
+  //         {
+  //           method: "GET",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       ),
+  //       fetch(
+  //         `${API_BASE_URL}/test-view/trends?startDate=${dates.start}&endDate=${dates.end}`,
+  //         {
+  //           method: "GET",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       ),
+  //     ]);
 
-      if (!dailySalesResponse.ok) throw new Error("Failed to fetch daily sales");
-      if (!bookingsResponse.ok) throw new Error("Failed to fetch bookings");
-      if (!doctorsResponse.ok) throw new Error("Failed to fetch doctors");
-      if (!usersResponse.ok) throw new Error("Failed to fetch users");
-      if (!topDoctorsResponse.ok) throw new Error("Failed to fetch top doctors");
-      if (!testStatsResponse.ok) throw new Error("Failed to fetch test statistics");
-      if (!testTrendsResponse.ok) throw new Error("Failed to fetch test trends");
+  //     if (!dailySalesResponse.ok) throw new Error("Failed to fetch daily sales");
+  //     if (!bookingsResponse.ok) throw new Error("Failed to fetch bookings");
+  //     if (!doctorsResponse.ok) throw new Error("Failed to fetch doctors");
+  //     if (!usersResponse.ok) throw new Error("Failed to fetch users");
+  //     if (!topDoctorsResponse.ok) throw new Error("Failed to fetch top doctors");
+  //     if (!testStatsResponse.ok) throw new Error("Failed to fetch test statistics");
+  //     if (!testTrendsResponse.ok) throw new Error("Failed to fetch test trends");
 
-      const [
-        dailySalesData,
-        bookingsData,
-        doctorsData,
-        usersData,
-        topDoctorsData,
-        testStatsData,
-        testTrendsData,
-      ] = await Promise.all([
-        dailySalesResponse.json(),
-        bookingsResponse.json(),
-        doctorsResponse.json(),
-        usersResponse.json(),
-        topDoctorsResponse.json(),
-        testStatsResponse.json(),
-        testTrendsResponse.json(),
-      ]);
+  //     const [
+  //       dailySalesData,
+  //       bookingsData,
+  //       doctorsData,
+  //       usersData,
+  //       topDoctorsData,
+  //       testStatsData,
+  //       testTrendsData,
+  //     ] = await Promise.all([
+  //       dailySalesResponse.json(),
+  //       bookingsResponse.json(),
+  //       doctorsResponse.json(),
+  //       usersResponse.json(),
+  //       topDoctorsResponse.json(),
+  //       testStatsResponse.json(),
+  //       testTrendsResponse.json(),
+  //     ]);
 
-      const dailySales = dailySalesData.data?.map((item) => ({
-        name: item.date,
-        revenue: item.totalAmount || 0,
-        payment: item.totalAmount || 0,
-      })) || [];
+  //     const dailySales = dailySalesData.data?.map((item) => ({
+  //       name: item.date,
+  //       revenue: item.totalAmount || 0,
+  //       payment: item.totalAmount || 0,
+  //     })) || [];
 
-      const bookings = {
-        total: (
-          (bookingsData.statusSummary?.statusSummary?.totalCheckOut || 0) +
-          (bookingsData.statusSummary?.statusSummary?.totalCheckIn || 0) +
-          (bookingsData.statusSummary?.statusSummary?.totalBookingSuccess || 0) +
-          (bookingsData.statusSummary?.statusSummary?.totalCancelled || 0)
-        ).toLocaleString(),
-        details: {
-          BookingSuccess: (bookingsData.statusSummary?.statusSummary?.totalBookingSuccess || 0).toLocaleString(),
-          CheckIn: (bookingsData.statusSummary?.statusSummary?.totalCheckIn || 0).toLocaleString(),
-          Completed: (bookingsData.statusSummary?.statusSummary?.totalCheckOut || 0).toLocaleString(),
-          Cancelled: (bookingsData.statusSummary?.statusSummary?.totalCancelled || 0).toLocaleString(),
-        },
-      };
+  //     const bookings = {
+  //       total: (
+  //         (bookingsData.statusSummary?.statusSummary?.totalCheckOut || 0) +
+  //         (bookingsData.statusSummary?.statusSummary?.totalCheckIn || 0) +
+  //         (bookingsData.statusSummary?.statusSummary?.totalBookingSuccess || 0) +
+  //         (bookingsData.statusSummary?.statusSummary?.totalCancelled || 0)
+  //       ).toLocaleString(),
+  //       details: {
+  //         BookingSuccess: (bookingsData.statusSummary?.statusSummary?.totalBookingSuccess || 0).toLocaleString(),
+  //         CheckIn: (bookingsData.statusSummary?.statusSummary?.totalCheckIn || 0).toLocaleString(),
+  //         Completed: (bookingsData.statusSummary?.statusSummary?.totalCheckOut || 0).toLocaleString(),
+  //         Cancelled: (bookingsData.statusSummary?.statusSummary?.totalCancelled || 0).toLocaleString(),
+  //       },
+  //     };
 
-      const totalDoctors = doctorsData.data?.length.toLocaleString() || "0";
+  //     const totalDoctors = doctorsData.data?.length.toLocaleString() || "0";
 
-      const users = {
-        male: (usersData.genderStats?.male || 0).toLocaleString(),
-        female: (usersData.genderStats?.female || 0).toLocaleString(),
-        else: (usersData.genderStats?.other || 0).toLocaleString(),
-      };
-      const totalUsers = (usersData.registeredInPeriod || 0).toLocaleString();
-      const totalUser = (usersData.totalCount || 0).toLocaleString();
+  //     const users = {
+  //       male: (usersData.genderStats?.male || 0).toLocaleString(),
+  //       female: (usersData.genderStats?.female || 0).toLocaleString(),
+  //       else: (usersData.genderStats?.other || 0).toLocaleString(),
+  //     };
+  //     const totalUsers = (usersData.registeredInPeriod || 0).toLocaleString();
+  //     const totalUser = (usersData.totalCount || 0).toLocaleString();
 
-      const topDoctors = {
-        total: (topDoctorsData?.length || 0).toLocaleString(),
-        details: topDoctorsData?.map((doctor) => ({
-          fullName: doctor.doctorName || "N/A",
-          bookings: (doctor.bookingCount || 0).toLocaleString(),
-        })) || [
-            { fullName: "N/A", bookings: "0" },
-            { fullName: "N/A", bookings: "0" },
-            { fullName: "N/A", bookings: "0" },
-            { fullName: "N/A", bookings: "0" },
-          ],
-      };
+  //     const topDoctors = {
+  //       total: (topDoctorsData?.length || 0).toLocaleString(),
+  //       details: topDoctorsData?.map((doctor) => ({
+  //         fullName: doctor.doctorName || "N/A",
+  //         bookings: (doctor.bookingCount || 0).toLocaleString(),
+  //       })) || [
+  //           { fullName: "N/A", bookings: "0" },
+  //           { fullName: "N/A", bookings: "0" },
+  //           { fullName: "N/A", bookings: "0" },
+  //           { fullName: "N/A", bookings: "0" },
+  //         ],
+  //     };
 
-      const testStatistics = {
-        total: (testStatsData.totalTests || 0).toLocaleString(),
-        severityDistribution: {
-          Severe: (testStatsData.severityDistribution?.Severe || 0).toLocaleString(),
-          Moderate: (testStatsData.severityDistribution?.Moderate || 0).toLocaleString(),
-          Mild: (testStatsData.severityDistribution?.Mild || 0).toLocaleString(),
-        },
-      };
+  //     const testStatistics = {
+  //       total: (testStatsData.totalTests || 0).toLocaleString(),
+  //       severityDistribution: {
+  //         Severe: (testStatsData.severityDistribution?.Severe || 0).toLocaleString(),
+  //         Moderate: (testStatsData.severityDistribution?.Moderate || 0).toLocaleString(),
+  //         Mild: (testStatsData.severityDistribution?.Mild || 0).toLocaleString(),
+  //       },
+  //     };
 
-      const testTrends = testTrendsData.trends?.map((item) => ({
-        name: item.date,
-        depression: item.avgDepressionScore || 0,
-        anxiety: item.avgAnxietyScore || 0,
-        stress: item.avgStressScore || 0,
-      })) || [];
+  //     const testTrends = testTrendsData.trends?.map((item) => ({
+  //       name: item.date,
+  //       depression: item.avgDepressionScore || 0,
+  //       anxiety: item.avgAnxietyScore || 0,
+  //       stress: item.avgStressScore || 0,
+  //     })) || [];
 
-      setState({
-        totalUsers,
-        totalUser,
-        users,
-        totalDoctors,
-        bookings,
-        dailySales,
-        topDoctors,
-        testStatistics,
-        testTrends,
-        totalRevenue: (dailySalesData.totalAmountInRange || 0).toLocaleString("vi-VN") + " ₫",
-        subscriptions: state.subscriptions,
-      });
-    } catch (err) {
-      setError(err.message || "An unexpected error occurred");
-      console.error("Fetch Error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [token, dates.start, dates.end, navigate]);
+  //     setState({
+  //       totalUsers,
+  //       totalUser,
+  //       users,
+  //       totalDoctors,
+  //       bookings,
+  //       dailySales,
+  //       topDoctors,
+  //       testStatistics,
+  //       testTrends,
+  //       totalRevenue: (dailySalesData.totalAmountInRange || 0).toLocaleString("vi-VN") + " ₫",
+  //       subscriptions: state.subscriptions,
+  //     });
+  //   } catch (err) {
+  //     setError(err.message || "An unexpected error occurred");
+  //     console.error("Fetch Error:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [token, dates.start, dates.end, navigate]);
 
-  useEffect(() => {
-    if (!isMounted.current) {
-      isMounted.current = true;
-      return;
-    }
-    const timer = setTimeout(() => {
-      fetchData();
-    }, 300); // Debounce API calls
-    return () => clearTimeout(timer);
-  }, [fetchData]);
+  // useEffect(() => {
+  //   if (!isMounted.current) {
+  //     isMounted.current = true;
+  //     return;
+  //   }
+  //   const timer = setTimeout(() => {
+  //     fetchData();
+  //   }, 300); // Debounce API calls
+  //   return () => clearTimeout(timer);
+  // }, [fetchData]);
 
-  const handleDateChange = useCallback(
-    (type) => (e) => {
-      const value = parseInt(e.target.value);
-      setDates((prev) => {
-        let newMonth = prev.month;
-        let newYear = prev.year;
-        if (type === "month") {
-          newMonth = value;
-        } else if (type === "year") {
-          newYear = value;
-        }
-        return { month: newMonth, year: newYear, ...getMonthDateRange(newYear, newMonth) };
-      });
-    },
-    []
-  );
+  // const handleDateChange = useCallback(
+  //   (type) => (e) => {
+  //     const value = parseInt(e.target.value);
+  //     setDates((prev) => {
+  //       let newMonth = prev.month;
+  //       let newYear = prev.year;
+  //       if (type === "month") {
+  //         newMonth = value;
+  //       } else if (type === "year") {
+  //         newYear = value;
+  //       }
+  //       return { month: newMonth, year: newYear, ...getMonthDateRange(newYear, newMonth) };
+  //     });
+  //   },
+  //   []
+  // );
 
   // const getGenderTotalUsers = () => {
   //   const total = Object.values(state.users).reduce(
