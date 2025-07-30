@@ -401,7 +401,7 @@ const PatientMedicalRecord = ({ patientId, bookingId }) => {
     <div className=" p-2">
       <div className="max-w-5xl h-screen mx-auto bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Header Section */}
-        <div className="p-4 bg-gradient-to-r from-blue-100 to-teal-100">
+        <div className="p-4 bg-[#f7ebff] to-teal-100">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center border-2 border-teal-200 overflow-hidden">
