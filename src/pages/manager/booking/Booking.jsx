@@ -104,22 +104,19 @@ const BookingList = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Completed":
-        return "text-green-600";
-      case "Awaiting Payment":
-        return "text-orange-600";
-      case "Payment Failed":
-        return "text-red-600";
-      case "Awaiting Meeting":
+      case "Booking Success":
+        return "text-yellow-600";
+      case "CheckIn":
         return "text-blue-600";
+      case "CheckOut":
+        return "text-green-600";
       case "Cancelled":
-        return "text-gray-600";
-      case "Confirmed":
-        return "text-purple-600";
+        return "text-red-600";
       default:
         return "text-gray-600";
     }
   };
+
 
   return (
     <div className="container mx-auto p-6 mt-2 bg-white min-h-screen">
@@ -172,12 +169,11 @@ const BookingList = () => {
                 className="p-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm shadow-sm"
               >
                 <option value="">All Statuses</option>
-                <option value="Confirmed">Confirmed</option>
-                <option value="Awaiting Payment">Awaiting Payment</option>
-                <option value="Completed">Completed</option>
-                <option value="Payment Failed">Payment Failed</option>
-                <option value="Awaiting Meeting">Awaiting Meeting</option>
+                <option value="Booking Success">Booking Success</option>
+                <option value="CheckIn">CheckIn</option>
+                <option value="CheckOut">CheckOut</option>
                 <option value="Cancelled">Cancelled</option>
+
               </select>
               <select
                 value={pageSize}

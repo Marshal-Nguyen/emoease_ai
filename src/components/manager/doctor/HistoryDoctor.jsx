@@ -16,7 +16,7 @@ const HistoryBooking = () => {
   const [sortBy, setSortBy] = useState("StartTime");
   const [sortOrder, setSortOrder] = useState("desc");
   const token = localStorage.getItem('token');
-  const { id } = useParams();
+  const { userId } = useParams();
 
   // Fetch bookings from API
   const fetchBookings = async () => {
@@ -31,25 +31,26 @@ const HistoryBooking = () => {
           Search: search || undefined,
           SortBy: sortBy,
           SortOrder: sortOrder,
-          doctorId: id,
+          doctorId: userId,
         },
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
+          "Authorization": `Bearer ${token}`,
+        },
       });
 
-
       const bookingsData = response.data.data || [];
+      console.log("Bookings data:", bookingsData); // Log để kiểm tra
       setBookings(bookingsData);
       setTotalCount(response.data.totalCount || 0);
       setTotalPages(response.data.totalPages || 0);
 
-      const patientIds = [
-        ...new Set(bookingsData.map((booking) => booking.PatientId)),
-      ];
+      const patientIds = [...new Set(bookingsData.map((booking) => booking.PatientId))];
+      console.log("Patient IDs:", patientIds); // Log để kiểm tra
       if (patientIds.length > 0) {
         fetchPatientsInfo(patientIds);
+      } else {
+        console.warn("No patient IDs found in bookings data");
       }
     } catch (err) {
       setError(`Failed to fetch bookings: ${err.message}`);
@@ -66,23 +67,29 @@ const HistoryBooking = () => {
       const patientsData = { ...patients };
       for (const patientId of patientIds) {
         if (!patientsData[patientId]) {
-
-          const response = await fetch(
-            `${import.meta.env.VITE_API}/patient-profiles/${patientId}`,
-            {
-              method: "GET", // Assuming GET since no method was specified; change if needed
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
+          try {
+            const response = await axios.get(
+              `${import.meta.env.VITE_API}/patient-profiles/${patientId}`,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`,
+                },
               }
-            }
-          );
-          patientsData[patientId] = response.data;
+            );
+            // Giả sử API trả về { data: { FullName, Email, ... } }
+            patientsData[patientId] = response.data.data || response.data;
+            console.log(`Patient data fetched for ${patientId}:`, patientsData[patientId]);
+          } catch (err) {
+            console.error(`Error fetching patient ${patientId}:`, err.message);
+            // Gán giá trị mặc định nếu lỗi
+            patientsData[patientId] = { FullName: "Unknown Patient", Email: "N/A" };
+          }
         }
       }
       setPatients(patientsData);
     } catch (err) {
-      console.error("Error fetching patients info:", err);
+      console.error("Error in fetchPatientsInfo:", err);
       setError(`Failed to fetch patient profiles: ${err.message}`);
     } finally {
       setLoadingPatients(false);

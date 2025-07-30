@@ -23,42 +23,47 @@ const BookingDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const token = localStorage.getItem("token");
+
   useEffect(() => {
     const fetchBookingDetails = async () => {
+      if (!token) {
+        setError("Authentication token is missing");
+        setLoading(false);
+        return;
+      }
+
       try {
-        const bookingResponse = await axios.get(
+        const axiosInstance = axios.create({
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const bookingResponse = await axiosInstance.get(
           `${import.meta.env.VITE_API}/bookings?Id=${id}`
         );
         const bookingData = bookingResponse.data.data[0];
         setBooking(bookingData);
 
-        const doctorResponse = await axios.get(
+        const doctorResponse = await axiosInstance.get(
           `${import.meta.env.VITE_API}/doctor-profiles/${bookingData.DoctorId}`
         );
         const doctorData = doctorResponse.data;
         setDoctor(doctorData);
 
-
-        const patientResponse = await fetch(
-          `${import.meta.env.VITE_API}/patient-profiles/${bookingData.PatientId
-          }`,
-          {
-            method: "GET", // Assuming GET since no method was specified; change if needed
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            }
-          }
+        const patientResponse = await axiosInstance.get(
+          `${import.meta.env.VITE_API}/patient-profiles/${bookingData.PatientId}`
         );
         const patientData = patientResponse.data;
         setPatient(patientData);
 
-        const doctorImageResponse = await axios.get(
+        const doctorImageResponse = await axiosInstance.get(
           `${import.meta.env.VITE_API}/profile/${bookingData.DoctorId}/image`
         );
         setDoctorImage(doctorImageResponse.data.data.publicUrl);
 
-        const patientImageResponse = await axios.get(
+        const patientImageResponse = await axiosInstance.get(
           `${import.meta.env.VITE_API}/profile/${bookingData.PatientId}/image`
         );
         setPatientImage(patientImageResponse.data.data.publicUrl);
@@ -71,7 +76,7 @@ const BookingDetail = () => {
     };
 
     fetchBookingDetails();
-  }, [id]);
+  }, [id, token]);
 
   if (loading)
     return (
@@ -87,7 +92,7 @@ const BookingDetail = () => {
     );
 
   return (
-    <div className=" bg-gradient-to-br from-gray-50 to-gray-100 pt-12 pb-2 px-4 sm:px-6 lg:px-8">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 pt-12 pb-2 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-10">
@@ -183,8 +188,8 @@ const BookingDetail = () => {
                   label="Status"
                   value={booking.Status}
                   className={`font-semibold ${booking.Status === "Confirmed"
-                    ? "text-green-600"
-                    : "text-orange-500"
+                      ? "text-green-600"
+                      : "text-orange-500"
                     }`}
                 />
               </div>
