@@ -10,11 +10,11 @@ const RoadMapCreate = () => {
   return (
     <div className="h-screen rounded-xl pt-4 flex flex-col">
       {/* Tabs Navigation */}
-      <div className="flex space-x-1 p-1 bg-gray-100 rounded-lg w-fit mb-2">
+      <div className="flex space-x-1 p-1 bg-gray-100 rounded-lg w-fit">
         <button
           type="button"
           onClick={() => setActiveTab("Medical")}
-          className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === "Medical"
+          className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${activeTab === "Medical"
             ? "bg-white text-blue-600 shadow-sm"
             : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
             }`}>
