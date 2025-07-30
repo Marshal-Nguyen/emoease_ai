@@ -504,13 +504,20 @@ export default function Dashboard() {
   }, [token, dates.start, dates.end, navigate]);
 
   useEffect(() => {
+    console.log(">>>>>>> check 2");
+
     if (!isMounted.current) {
+      console.log(">>>>>>> check 3");
+
       isMounted.current = true;
       return;
     }
+    console.log(">>>>>>> check 4");
+
     const timer = setTimeout(() => {
       fetchData();
     }, 300); // Debounce API calls
+    console.log(">>>>>>> check 1");
     return () => clearTimeout(timer);
   }, [fetchData]);
 
