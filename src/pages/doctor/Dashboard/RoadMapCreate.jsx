@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import MedicalHistory from "../../../components/Dashboard/Doctor/MedicalHistory";
+import TreatmentPlan from "../../../components/Dashboard/Doctor/TreatmentActivities";
 import { useSelector } from "react-redux";
 
 const RoadMapCreate = () => {
@@ -15,14 +15,26 @@ const RoadMapCreate = () => {
           type="button"
           onClick={() => setActiveTab("Medical")}
           className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${activeTab === "Medical"
-            ? "bg-white text-blue-600 shadow-sm"
-            : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-            }`}>
+              ? "bg-white text-blue-600 shadow-sm"
+              : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+        >
           <div className="flex flex-col items-center">
             <span>Medical Record</span>
-            <span className="text-xs text-gray-500">
-              Review medical records
-            </span>
+            <span className="text-xs text-gray-500">Review medical records</span>
+          </div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("Treatment")}
+          className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${activeTab === "Treatment"
+              ? "bg-white text-blue-600 shadow-sm"
+              : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+        >
+          <div className="flex flex-col items-center">
+            <span>Treatment Plan</span>
+            <span className="text-xs text-gray-500">Manage treatment plans</span>
           </div>
         </button>
       </div>
@@ -30,7 +42,8 @@ const RoadMapCreate = () => {
       {/* Tab Content */}
       <div className="flex-1 overflow-hidden bg-white rounded-xl">
         <div className="h-full">
-          <MedicalHistory />
+          {activeTab === "Medical" && <MedicalHistory />}
+          {activeTab === "Treatment" && <TreatmentPlan />}
         </div>
       </div>
     </div>

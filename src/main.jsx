@@ -14,11 +14,11 @@ createRoot(document.getElementById("root")).render(
       googleMapsApiKey="AIzaSyAyBjAXybQ98p7VJfnLICb7o1tBKWpOgV0"
       loadingElement={<></>}
     >
-      <StrictMode>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </StrictMode>
+      {/* <StrictMode> */}
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+      {/* </StrictMode> */}
     </LoadScript>
   </Provider>
 );

@@ -161,7 +161,7 @@ function App() {
                 <Route index element={<Navigate to="StatictisDoctor" />} />
                 <Route path="StatictisDoctor" element={<StatictisDoctor />} />
                 <Route
-                  path="MedicalRecordsCreate"
+                  path="Records"
                   element={<RoadMapCreate />}
                 />
                 <Route path="ProfileDoctor" element={<ProfileDoctor />} />
