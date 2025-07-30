@@ -367,7 +367,7 @@ export default function Dashboard() {
 
       // Fetch New Users
       const usersResponse = await fetch(
-        `http://localhost:3000/api/patient-statistics?startDate=${dates.start}&endDate=${dates.end}`,
+        `https://mental-care-server-nodenet.onrender.com/api/patient-statistics?startDate=${dates.start}&endDate=${dates.end}`,
         {
           method: "GET",
           headers: {
@@ -389,7 +389,7 @@ export default function Dashboard() {
 
       // Fetch Top Performing Doctors
       const topDoctorsResponse = await fetch(
-        `http://localhost:3000/api/topdoctors/view?startDate=${dates.start}&endDate=${dates.end}`,
+        `https://mental-care-server-nodenet.onrender.com/api/topdoctors/view?startDate=${dates.start}&endDate=${dates.end}`,
         {
           method: "GET",
           headers: {
@@ -416,7 +416,7 @@ export default function Dashboard() {
 
       // Fetch Test Statistics
       const testStatsResponse = await fetch(
-        `http://localhost:3000/api/test-view/statistics?startDate=${dates.start}&endDate=${dates.end}`,
+        `https://mental-care-server-nodenet.onrender.com/api/test-view/statistics?startDate=${dates.start}&endDate=${dates.end}`,
         {
           method: "GET",
           headers: {
@@ -439,7 +439,7 @@ export default function Dashboard() {
 
       // Fetch Test Trends
       const testTrendsResponse = await fetch(
-        `http://localhost:3000/api/test-view/trends?startDate=${dates.start}&endDate=${dates.end}`,
+        `https://mental-care-server-nodenet.onrender.com/api/test-view/trends?startDate=${dates.start}&endDate=${dates.end}`,
         {
           method: "GET",
           headers: {
