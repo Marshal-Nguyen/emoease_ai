@@ -38,7 +38,9 @@ const VerifyDoctorEmail = () => {
         const payload = JSON.parse(atob(tokenParts[1]));
         const userId = payload.sub;
         const email = payload.email;
-
+        console.log("Payload:", payload);
+        console.log("User ID:", userId);
+        console.log("Email:", email);
         // Gọi API để verify doctor email
         await axios.post(`${import.meta.env.VITE_API}/verify-doctor-email`, {
           userId,
