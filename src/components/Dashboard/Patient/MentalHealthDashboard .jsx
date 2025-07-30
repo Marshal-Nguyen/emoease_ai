@@ -19,8 +19,6 @@ const MentalHealthDashboard = () => {
           throw new Error("Profile ID is required");
         }
 
-        console.log("Fetching test results for profileId:", profileId);
-
         // First, let's check if we can connect to Supabase and see what tables exist
         const { data: tableCheck, error: tableError } = await supabase
           .from("TestResults")
@@ -337,7 +335,7 @@ const MentalHealthDashboard = () => {
         <h2 className="text-lg font-semibold mb-3 text-center">
           Recommendations:
         </h2>
-        <div className="h-96 overflow-y-auto italic">
+        <div className="h-auto overflow-y-auto italic">
           <div className="space-y-4">
             {recommendations.map((text, index) => (
               <div key={index} className="prose max-w-none">

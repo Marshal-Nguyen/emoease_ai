@@ -19,7 +19,7 @@ const StatictisPatient = () => {
       </div>
 
       {/* Header Section */}
-      <div className="mb-8 relative z-10">
+      {/* <div className="mb-8 relative z-10">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -65,8 +65,8 @@ const StatictisPatient = () => {
               <span className="text-sm text-gray-700 font-semibold">
                 Active Session
               </span>
-            </div>
-            {/* <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200 cursor-pointer">
+            </div> */}
+      {/* <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform duration-200 cursor-pointer">
               <svg
                 className="w-5 h-5 text-white"
                 fill="none"
@@ -81,12 +81,12 @@ const StatictisPatient = () => {
                 />
               </svg>
             </div> */}
-          </div>
+      {/* </div>
         </div>
         <p className="text-gray-600 text-lg font-medium">
           🌟 Track your mental wellness journey
         </p>
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 relative z-10">
@@ -129,7 +129,7 @@ const StatictisPatient = () => {
           </div> */}
 
           {/* Mental Health Dashboard */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 border border-white/30 overflow-hidden group hover:scale-[1.02] transform">
+          {/* <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 border border-white/30 overflow-hidden group hover:scale-[1.02] transform">
             <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-600 p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-black/10"></div>
               <div className="absolute top-0 left-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 -translate-x-20"></div>
@@ -159,10 +159,10 @@ const StatictisPatient = () => {
                 </div>
               </div>
             </div>
-            <div className="p-8">
-              <MentalHealthDashboard />
-            </div>
-          </div>
+            <div className="p-8"> */}
+          <MentalHealthDashboard />
+          {/* </div>
+          </div> */}
         </div>
 
         {/* Right Column - Profile & Notes */}
