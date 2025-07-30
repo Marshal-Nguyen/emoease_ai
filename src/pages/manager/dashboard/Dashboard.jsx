@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   LineChart,
   Line,
@@ -28,6 +28,17 @@ import {
 import styled from "styled-components";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
+import Loader from "../../../components/Web/Loader";
+
+// Environment variable for API base URL
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://mental-care-server-nodenet.onrender.com";
+
+// Utility to get first and last day of the month
+const getMonthDateRange = (year, month) => {
+  const start = new Date(year, month - 1, 1).toISOString().split("T")[0];
+  const end = new Date(year, month, 0).toISOString().split("T")[0];
+  return { start, end };
+};
 
 const COLORS = {
   primary: "#4F46E5",
@@ -94,7 +105,7 @@ const ICON_CONFIG = {
   },
 };
 
-const StatCard = ({ config, label, value, details }) => (
+const StatCard = React.memo(({ config, label, value, details }) => (
   <motion.div
     className="p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform hover:scale-105"
     style={{ background: COLORS.cardBg, border: `1px solid ${COLORS.border}` }}
@@ -126,9 +137,9 @@ const StatCard = ({ config, label, value, details }) => (
       )}
     </div>
   </motion.div>
-);
+));
 
-const ChartCard = ({ title, children, config }) => (
+const ChartCard = React.memo(({ title, children, config }) => (
   <motion.div
     className="p-6 rounded-xl shadow-lg transition-transform hover:scale-102"
     style={{ background: COLORS.cardBg, border: `1px solid ${COLORS.border}` }}
@@ -153,9 +164,9 @@ const ChartCard = ({ title, children, config }) => (
     </div>
     {children}
   </motion.div>
-);
+));
 
-const ExportButton = ({ onClick }) => (
+const ExportButton = React.memo(({ onClick }) => (
   <StyledWrapper>
     <button className="button" type="button" onClick={onClick}>
       <span className="button__text">Excel</span>
@@ -172,7 +183,7 @@ const ExportButton = ({ onClick }) => (
       </span>
     </button>
   </StyledWrapper>
-);
+));
 
 const StyledWrapper = styled.div`
   .button {
@@ -242,6 +253,7 @@ const StyledWrapper = styled.div`
 `;
 
 export default function Dashboard() {
+  const currentDate = new Date();
   const [state, setState] = useState({
     totalUsers: "0",
     totalUser: "0",
@@ -286,54 +298,136 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dates, setDates] = useState({
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
-    start: "2025-07-01",
-    end: "2025-07-31",
+    month: currentDate.getMonth() + 1,
+    year: currentDate.getFullYear(),
+    ...getMonthDateRange(currentDate.getFullYear(), currentDate.getMonth() + 1),
   });
   const isMounted = useRef(false);
   const userName = localStorage.getItem("username") || "User";
   const token = localStorage.getItem("token");
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    if (!token) {
+      setError("Authentication token is missing. Please log in again.");
+      setLoading(false);
+      navigate("/login");
+      return;
+    }
+
     setLoading(true);
     setError(null);
-    console.log(`Fetching data for ${dates.start} to ${dates.end}`);
+
     try {
-      // Fetch Daily Revenue Trend
-      const dailySalesResponse = await fetch(
-        `https://mental-care-server-nodenet.onrender.com/api/payment-zalo/daily-total?StartDate=${dates.start}&EndDate=${dates.end}`,
-        {
+      const [
+        dailySalesResponse,
+        bookingsResponse,
+        doctorsResponse,
+        usersResponse,
+        topDoctorsResponse,
+        testStatsResponse,
+        testTrendsResponse,
+      ] = await Promise.all([
+        fetch(
+          `${API_BASE_URL}/api/payment-zalo/daily-total?StartDate=${dates.start}&EndDate=${dates.end}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        ),
+        fetch(
+          `${API_BASE_URL}/api/bookings?StartDate=${dates.start}&EndDate=${dates.end}&Status=CheckIn`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        ),
+        fetch(`${API_BASE_URL}/api/doctor-profiles`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
-      );
+        }),
+        fetch(
+          `${API_BASE_URL}/api/patient-statistics?startDate=${dates.start}&endDate=${dates.end}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        ),
+        fetch(
+          `${API_BASE_URL}/api/topdoctors/view?startDate=${dates.start}&endDate=${dates.end}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        ),
+        fetch(
+          `${API_BASE_URL}/api/test-view/statistics?startDate=${dates.start}&endDate=${dates.end}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        ),
+        fetch(
+          `${API_BASE_URL}/api/test-view/trends?startDate=${dates.start}&endDate=${dates.end}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        ),
+      ]);
+
       if (!dailySalesResponse.ok) throw new Error("Failed to fetch daily sales");
-      const dailySalesData = await dailySalesResponse.json();
-      console.log("Daily Sales Data:", dailySalesData);
+      if (!bookingsResponse.ok) throw new Error("Failed to fetch bookings");
+      if (!doctorsResponse.ok) throw new Error("Failed to fetch doctors");
+      if (!usersResponse.ok) throw new Error("Failed to fetch users");
+      if (!topDoctorsResponse.ok) throw new Error("Failed to fetch top doctors");
+      if (!testStatsResponse.ok) throw new Error("Failed to fetch test statistics");
+      if (!testTrendsResponse.ok) throw new Error("Failed to fetch test trends");
+
+      const [
+        dailySalesData,
+        bookingsData,
+        doctorsData,
+        usersData,
+        topDoctorsData,
+        testStatsData,
+        testTrendsData,
+      ] = await Promise.all([
+        dailySalesResponse.json(),
+        bookingsResponse.json(),
+        doctorsResponse.json(),
+        usersResponse.json(),
+        topDoctorsResponse.json(),
+        testStatsResponse.json(),
+        testTrendsResponse.json(),
+      ]);
+
       const dailySales = dailySalesData.data?.map((item) => ({
         name: item.date,
         revenue: item.totalAmount || 0,
         payment: item.totalAmount || 0,
       })) || [];
 
-      // Fetch Total Bookings
-      const bookingsResponse = await fetch(
-        `https://mental-care-server-nodenet.onrender.com/api/bookings?StartDate=${dates.start}&EndDate=${dates.end}&Status=CheckIn`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!bookingsResponse.ok) throw new Error("Failed to fetch bookings");
-      const bookingsData = await bookingsResponse.json();
-      console.log("Bookings Data:", bookingsData);
       const bookings = {
         total: (
           (bookingsData.statusSummary?.statusSummary?.totalCheckOut || 0) +
@@ -349,36 +443,8 @@ export default function Dashboard() {
         },
       };
 
-      // Fetch Total Doctors
-      const doctorsResponse = await fetch(
-        "https://mental-care-server-nodenet.onrender.com/api/doctor-profiles",
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!doctorsResponse.ok) throw new Error("Failed to fetch doctors");
-      const doctorsData = await doctorsResponse.json();
-      console.log("Doctors Data:", doctorsData);
       const totalDoctors = doctorsData.data?.length.toLocaleString() || "0";
 
-      // Fetch New Users
-      const usersResponse = await fetch(
-        `https://mental-care-server-nodenet.onrender.com/api/patient-statistics?startDate=${dates.start}&endDate=${dates.end}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!usersResponse.ok) throw new Error("Failed to fetch users");
-      const usersData = await usersResponse.json();
-      console.log("Users Data:", usersData);
       const users = {
         male: (usersData.genderStats?.male || 0).toLocaleString(),
         female: (usersData.genderStats?.female || 0).toLocaleString(),
@@ -387,20 +453,6 @@ export default function Dashboard() {
       const totalUsers = (usersData.registeredInPeriod || 0).toLocaleString();
       const totalUser = (usersData.totalCount || 0).toLocaleString();
 
-      // Fetch Top Performing Doctors
-      const topDoctorsResponse = await fetch(
-        `https://mental-care-server-nodenet.onrender.com/api/topdoctors/view?startDate=${dates.start}&endDate=${dates.end}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!topDoctorsResponse.ok) throw new Error("Failed to fetch top doctors");
-      const topDoctorsData = await topDoctorsResponse.json();
-      console.log("Top Doctors Data:", topDoctorsData);
       const topDoctors = {
         total: (topDoctorsData?.length || 0).toLocaleString(),
         details: topDoctorsData?.map((doctor) => ({
@@ -414,20 +466,6 @@ export default function Dashboard() {
           ],
       };
 
-      // Fetch Test Statistics
-      const testStatsResponse = await fetch(
-        `https://mental-care-server-nodenet.onrender.com/api/test-view/statistics?startDate=${dates.start}&endDate=${dates.end}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!testStatsResponse.ok) throw new Error("Failed to fetch test statistics");
-      const testStatsData = await testStatsResponse.json();
-      console.log("Test Stats Data:", testStatsData);
       const testStatistics = {
         total: (testStatsData.totalTests || 0).toLocaleString(),
         severityDistribution: {
@@ -437,20 +475,6 @@ export default function Dashboard() {
         },
       };
 
-      // Fetch Test Trends
-      const testTrendsResponse = await fetch(
-        `https://mental-care-server-nodenet.onrender.com/api/test-view/trends?startDate=${dates.start}&endDate=${dates.end}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (!testTrendsResponse.ok) throw new Error("Failed to fetch test trends");
-      const testTrendsData = await testTrendsResponse.json();
-      console.log("Test Trends Data:", testTrendsData);
       const testTrends = testTrendsData.trends?.map((item) => ({
         name: item.date,
         depression: item.avgDepressionScore || 0,
@@ -458,7 +482,6 @@ export default function Dashboard() {
         stress: item.avgStressScore || 0,
       })) || [];
 
-      // Update state
       setState({
         totalUsers,
         totalUser,
@@ -470,41 +493,43 @@ export default function Dashboard() {
         testStatistics,
         testTrends,
         totalRevenue: (dailySalesData.totalAmountInRange || 0).toLocaleString("vi-VN") + " ₫",
-        subscriptions: state.subscriptions, // Preserve subscriptions as no API provided
+        subscriptions: state.subscriptions,
       });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "An unexpected error occurred");
       console.error("Fetch Error:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, dates.start, dates.end, navigate]);
 
   useEffect(() => {
     if (!isMounted.current) {
       isMounted.current = true;
       return;
     }
-    fetchData();
-  }, [dates.start, dates.end]);
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 300); // Debounce API calls
+    return () => clearTimeout(timer);
+  }, [fetchData]);
 
-  const handleDateChange = (type) => (e) => {
-    const value = parseInt(e.target.value);
-    setDates((prev) => {
-      let newMonth = prev.month;
-      let newYear = prev.year;
-      if (type === "month") {
-        newMonth = value;
-      } else if (type === "year") {
-        newYear = value;
-      }
-      const start = `${newYear}-${String(newMonth).padStart(2, "0")}-01`;
-      const lastDay = new Date(newYear, newMonth, 0).getDate();
-      const end = `${newYear}-${String(newMonth).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-      console.log("New Dates:", { month: newMonth, year: newYear, start, end });
-      return { month: newMonth, year: newYear, start, end };
-    });
-  };
+  const handleDateChange = useCallback(
+    (type) => (e) => {
+      const value = parseInt(e.target.value);
+      setDates((prev) => {
+        let newMonth = prev.month;
+        let newYear = prev.year;
+        if (type === "month") {
+          newMonth = value;
+        } else if (type === "year") {
+          newYear = value;
+        }
+        return { month: newMonth, year: newYear, ...getMonthDateRange(newYear, newMonth) };
+      });
+    },
+    []
+  );
 
   const getGenderTotalUsers = () => {
     const total = Object.values(state.users).reduce(
@@ -514,7 +539,7 @@ export default function Dashboard() {
     return total ? total.toLocaleString() : "N/A";
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = useCallback(() => {
     const monthName = new Date(0, dates.month - 1).toLocaleString("en-US", {
       month: "long",
     });
@@ -632,7 +657,7 @@ export default function Dashboard() {
     XLSX.utils.book_append_sheet(wb, ws7, "Test Trends");
 
     XLSX.writeFile(wb, `monthly_statistics_${monthName}_${dates.year}.xlsx`);
-  };
+  }, [dates.month, dates.year, state]);
 
   const userributionData = [
     {
@@ -701,7 +726,7 @@ export default function Dashboard() {
     return null;
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <Loader />;
 
   return (
     <div
