@@ -510,7 +510,7 @@ export default function Dashboard() {
       console.log(">>>>>>> check 3");
 
       isMounted.current = true;
-      return;
+      // return;
     }
     console.log(">>>>>>> check 4");
 
