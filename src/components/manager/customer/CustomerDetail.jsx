@@ -24,15 +24,12 @@ const CustomerDetail = () => {
   const [error, setError] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
-  const [purchasedPackageName, setPurchasedPackageName] = useState(null);
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchCustomerData = async () => {
       try {
         setLoading(true);
-
-        // Fetch patient profile
 
         const profileResponse = await fetch(
           `${import.meta.env.VITE_API}/patient-profiles/${id}`,
@@ -40,8 +37,8 @@ const CustomerDetail = () => {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            }
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
         if (!profileResponse.ok) {
@@ -49,7 +46,6 @@ const CustomerDetail = () => {
         }
         const profileData = await profileResponse.json();
 
-        // Fetch profile image
         const imageResponse = await fetch(
           `${import.meta.env.VITE_API}/profile/${id}/image`
         );
@@ -58,16 +54,14 @@ const CustomerDetail = () => {
         }
         const imageData = await imageResponse.json();
 
-        // Fetch medical history
-
         const medicalHistoryResponse = await fetch(
           `https://mental-care-server-nodenet.onrender.com/api/medical-histories/patient/${id}`,
           {
-            method: "GET", // Assuming GET since no method was specified; change if needed
+            method: "GET",
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
-            }
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
         if (!medicalHistoryResponse.ok) {
@@ -75,22 +69,21 @@ const CustomerDetail = () => {
         }
         const medicalHistoryData = await medicalHistoryResponse.json();
 
-        // Fetch medical records
-
-        const medicalRecordsResponse = await fetch(`https://mental-care-server-nodenet.onrender.com/api/medical-records/${id}`, {
-          method: "GET", // Assuming GET since no method was specified; change if needed
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
+        const medicalRecordsResponse = await fetch(
+          `https://mental-care-server-nodenet.onrender.com/api/medical-records/${id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
           }
-        });
-
+        );
         if (!medicalRecordsResponse.ok) {
           throw new Error("Failed to fetch medical records");
         }
         const medicalRecordsData = await medicalRecordsResponse.json();
 
-        // Map API data to the expected customer structure
         const mappedCustomer = {
           fullName: profileData.FullName || "Unknown Name",
           gender: profileData.Gender || "Other",
@@ -100,41 +93,47 @@ const CustomerDetail = () => {
             email: profileData.Email || "N/A",
             address: profileData.Address || "N/A",
           },
-          medicalHistory: medicalHistoryData.length > 0 ? {
-            diagnosedAt: medicalHistoryData[0].DiagnosedAt || medicalHistoryData[0].CreatedAt || "N/A",
-            specificMentalDisorders: medicalHistoryData[0].MedicalHistorySpecificMentalDisorder?.map(
-              (disorder, index) => ({
-                id: index + 1,
-                name: disorder.MentalDisorders.Name,
-                description: disorder.MentalDisorders.Description,
-              })
-            ) || [],
-            physicalSymptoms: medicalHistoryData[0].MedicalHistoryPhysicalSymptom?.map(
-              (symptom, index) => ({
-                id: index + 1,
-                name: symptom.PhysicalSymptoms.Name,
-                description: symptom.PhysicalSymptoms.Description,
-              })
-            ) || [],
-            allergies: profileData.Allergies || "N/A",
-          } : {
-            diagnosedAt: "N/A",
-            specificMentalDisorders: [],
-            physicalSymptoms: [],
-            allergies: profileData.Allergies || "N/A",
-          },
+          medicalHistory: medicalHistoryData.length > 0
+            ? {
+              diagnosedAt:
+                medicalHistoryData[0].DiagnosedAt ||
+                medicalHistoryData[0].CreatedAt ||
+                "N/A",
+              specificMentalDisorders:
+                medicalHistoryData[0].MedicalHistorySpecificMentalDisorder?.map(
+                  (disorder, index) => ({
+                    id: index + 1,
+                    name: disorder.MentalDisorders.Name,
+                    description: disorder.MentalDisorders.Description,
+                  })
+                ) || [],
+              physicalSymptoms:
+                medicalHistoryData[0].MedicalHistoryPhysicalSymptom?.map(
+                  (symptom, index) => ({
+                    id: index + 1,
+                    name: symptom.PhysicalSymptoms.Name,
+                    description: symptom.PhysicalSymptoms.Description,
+                  })
+                ) || [],
+              allergies: profileData.Allergies || "N/A",
+            }
+            : {
+              diagnosedAt: "N/A",
+              specificMentalDisorders: [],
+              physicalSymptoms: [],
+              allergies: profileData.Allergies || "N/A",
+            },
           medicalRecords: medicalRecordsData.map((record, index) => ({
             id: index + 1,
             notes: record.Description || "No notes available",
-            status: record.LastModified ? "Completed" : "Processing", // Assuming status based on LastModified
+            status: record.LastModified ? "Completed" : "Processing",
             createdAt: record.CreatedAt || "N/A",
-            specificMentalDisorders: record.MedicalRecordSpecificMentalDisorder?.map(
-              (disorder, index) => ({
+            specificMentalDisorders:
+              record.MedicalRecordSpecificMentalDisorder?.map((disorder, index) => ({
                 id: index + 1,
                 name: disorder.MentalDisorders.Name,
                 description: disorder.MentalDisorders.Description,
-              })
-            ) || [],
+              })) || [],
           })),
         };
 
@@ -142,8 +141,7 @@ const CustomerDetail = () => {
         setProfileImage(
           imageData.data.publicUrl ||
           "https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100"
-        ); // Fallback image
-        setPurchasedPackageName("Premium Care Package"); // Keep as per original
+        );
         setLoading(false);
       } catch (err) {
         setError(err.message);
@@ -154,39 +152,38 @@ const CustomerDetail = () => {
     fetchCustomerData();
   }, [id]);
 
-  // Rest of the component remains unchanged
   if (loading) return <Loader />;
   if (error)
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-600 text-2xl font-bold bg-red-100">
+      <div className="min-h-screen flex items-center justify-center text-red-600 text-2xl font-semibold bg-red-50">
         Error: {error}
       </div>
     );
   if (!customer)
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600 text-2xl font-bold bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center text-gray-600 text-2xl font-semibold bg-gray-50">
         Customer not found
       </div>
     );
 
   const genderStyles = {
     Male: {
-      bg: "bg-blue-500",
-      border: "border-blue-600",
-      text: "text-blue-600",
-      gradient: "from-blue-500 to-cyan-500",
+      bg: "bg-[#e4c1f9]",
+      border: "border-[#e4c1f9]/50",
+      text: "text-[#6a4c93]",
+      gradient: "from-[#e4c1f9] to-[#6a4c93]",
     },
     Female: {
-      bg: "bg-pink-500",
-      border: "border-pink-600",
-      text: "text-pink-600",
-      gradient: "from-pink-500 to-purple-500",
+      bg: "bg-[#faf3e0]",
+      border: "border-[#faf3e0]/50",
+      text: "text-[#6a4c93]",
+      gradient: "from-[#faf3e0] to-[#e4c1f9]",
     },
     Other: {
-      bg: "bg-purple-500",
-      border: "border-purple-600",
-      text: "text-purple-600",
-      gradient: "from-purple-500 to-indigo-500",
+      bg: "bg-[#6a4c93]",
+      border: "border-[#6a4c93]/50",
+      text: "text-[#faf3e0]",
+      gradient: "from-[#6a4c93] to-[#e4c1f9]",
     },
   };
   const genderStyle = genderStyles[customer.gender] || genderStyles.Other;
@@ -199,25 +196,22 @@ const CustomerDetail = () => {
       transition={{ duration: 0.7 }}
     >
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <motion.div
-            className="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-purple-200"
-            whileHover={{
-              scale: 1.03,
-              boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-            }}
+            className="bg-white rounded-xl shadow-lg overflow-hidden border border-[#e4c1f9]/20"
+            whileHover={{ scale: 1.02, boxShadow: "0 8px 20px rgba(0,0,0,0.1)" }}
             transition={{ duration: 0.3 }}
           >
             <div
-              className={`relative h-36 bg-gradient-to-r ${genderStyle.gradient}`}
+              className={`relative h-40 bg-gradient-to-br ${genderStyle.gradient}`}
             >
-              <div className="absolute inset-0 opacity-30">
+              <div className="absolute inset-0 opacity-20">
                 <svg className="w-full h-full" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="45" fill="white" opacity="0.2" />
+                  <circle cx="50" cy="50" r="40" fill="white" opacity="0.2" />
                   <path
                     d="M20 80 Q50 20 80 80"
                     stroke="white"
-                    strokeWidth="2"
+                    strokeWidth="1.5"
                     fill="none"
                     opacity="0.3"
                   />
@@ -226,45 +220,37 @@ const CustomerDetail = () => {
               <motion.img
                 src={profileImage}
                 alt={customer.fullName}
-                className="w-36 h-36 rounded-full absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 border-4 border-white shadow-lg object-cover"
+                className="w-32 h-32 rounded-full absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 border-4 border-white shadow-md object-cover"
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               />
             </div>
-            <div className="pt-20 pb-8 px-6 text-center">
-              <h2 className="text-3xl font-bold text-gray-800 bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent">
+            <div className="pt-20 pb-6 px-4 text-center">
+              <h2 className="text-2xl font-semibold text-gray-800 bg-gradient-to-r from-[#6a4c93] to-[#e4c1f9] bg-clip-text text-transparent">
                 {customer.fullName}
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                <strong>Package:</strong> {purchasedPackageName || "N/A"}
-              </p>
+
               <motion.div
-                className={`inline-block mt-3 px-4 py-2 rounded-full ${genderStyle.bg} text-white font-bold text-lg shadow-md border ${genderStyle.border}`}
+                className={`inline-block mt-3 px-3 py-1 rounded-full text-sm font-medium shadow-sm border ${customer.gender === "Male"
+                  ? "bg-blue-100 text-blue-800 border-blue-300"
+                  : customer.gender === "Female"
+                    ? "bg-pink-50 text-pink-800 border-pink-300"
+                    : "text-blue-800 border-blue-300 animate-gender-other"
+                  }`}
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.3 }}
-                whileHover={{ scale: 1.1, rotate: 5 }}
+                whileHover={{ scale: 1.05 }}
               >
                 {customer.gender}
               </motion.div>
-              <div className="mt-6 space-y-5">
+
+              <div className="mt-5 space-y-3">
                 {[
-                  {
-                    icon: FaPhone,
-                    color: "text-purple-500",
-                    text: customer.contactInfo?.phoneNumber || "N/A",
-                  },
-                  {
-                    icon: FaEnvelope,
-                    color: "text-cyan-500",
-                    text: customer.contactInfo?.email || "N/A",
-                  },
-                  {
-                    icon: FaMapMarkerAlt,
-                    color: "text-pink-500",
-                    text: customer.contactInfo?.address || "N/A",
-                  },
+                  { icon: FaPhone, color: "text-green-500", text: customer.contactInfo?.phoneNumber || "N/A" },
+                  { icon: FaEnvelope, color: "text-red-500", text: customer.contactInfo?.email || "N/A" },
+                  { icon: FaMapMarkerAlt, color: "text-orange-500", text: customer.contactInfo?.address || "N/A" },
                 ].map((item, index) => (
                   <motion.div
                     key={index}
@@ -273,31 +259,31 @@ const CustomerDetail = () => {
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: index * 0.2 + 0.5 }}
                   >
-                    <item.icon className={`${item.color} text-lg`} />
+                    <item.icon className={`${item.color} text-base`} />
                     <span className="text-sm font-medium">{item.text}</span>
                   </motion.div>
                 ))}
               </div>
-              <div className="mt-6 flex justify-center gap-4">
+              <div className="mt-5 flex justify-center gap-3">
                 <motion.button
                   onClick={() => setActiveTab("profile")}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === "profile"
-                    ? "bg-purple-600 text-white shadow-md"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-200 ${activeTab === "profile"
+                    ? "bg-[#6a4c93] text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   Profile
                 </motion.button>
                 <motion.button
                   onClick={() => setActiveTab("history")}
-                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${activeTab === "history"
-                    ? "bg-purple-600 text-white shadow-md"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors duration-200 ${activeTab === "history"
+                    ? "bg-[#6a4c93] text-white shadow-md"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   History
                 </motion.button>
@@ -305,219 +291,163 @@ const CustomerDetail = () => {
             </div>
           </motion.div>
 
-          <div className="lg:col-span-3 space-y-2">
+          <div className="lg:col-span-3 space-y-6">
             {activeTab === "profile" ? (
               <>
                 <motion.div
-                  className="bg-white rounded-2xl shadow-xl p-4 border-2 border-cyan-200"
-                  whileHover={{
-                    scale: 1.02,
-                    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-                  }}
+                  className="bg-white rounded-xl shadow-lg p-5 border border-[#e4c1f9]/20"
+                  whileHover={{ scale: 1.01, boxShadow: "0 6px 15px rgba(0,0,0,0.1)" }}
                 >
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2 mb-6">
-                    <FaHeartbeat className="text-cyan-500" /> Medical History
+                  <h3 className="text-xl font-semibold bg-gradient-to-r from-[#6a4c93] to-[#e4c1f9] bg-clip-text text-red-500 flex items-center gap-2 mb-4">
+                    <FaHeartbeat className="text-red-500" /> Medical History
                   </h3>
                   {customer.medicalHistory ? (
-                    <div className="space-y-1">
-                      <p className="flex items-center gap-2 text-gray-800 bg-cyan-50 p-3 rounded-lg">
-                        <FaCalendarAlt className="text-purple-500" />
+                    <div className="space-y-3">
+                      <p className="flex items-center gap-2 text-blue-800  p-3 rounded-lg">
+                        <FaCalendarAlt className="text-blue-800" />
                         <span className="font-medium">
-                          Diagnosed:{" "}
-                          {customer.medicalHistory.diagnosedAt !== "N/A"
-                            ? new Date(
-                              customer.medicalHistory.diagnosedAt
-                            ).toLocaleDateString()
+                          Diagnosed:{" "
+                          }{customer.medicalHistory.diagnosedAt !== "N/A"
+                            ? new Date(customer.medicalHistory.diagnosedAt).toLocaleDateString()
                             : "N/A"}
                         </span>
                       </p>
-                      <div className="grid gap-1">
-                        <div className="bg-purple-50 p-4 rounded-lg">
-                          <p className="font-semibold text-purple-700 mb-2">
+                      <div className="grid gap-3">
+                        <div className="bg-[#e4c1f9]/20 p-4 rounded-lg">
+                          <p className="font-medium text-red-500 mb-2">
                             Mental Disorders:
                           </p>
-                          {customer.medicalHistory.specificMentalDisorders
-                            ?.length > 0 ? (
-                            customer.medicalHistory.specificMentalDisorders.map(
-                              (disorder) => (
-                                <motion.div
-                                  key={disorder.id}
-                                  className="flex items-start gap-2 mb-2"
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{ duration: 0.3 }}
-                                >
-                                  <FaBrain className="text-purple-500 mt-1" />
-                                  <span className="text-gray-800">
-                                    <strong>{disorder.name}:</strong>{" "}
-                                    {disorder.description}
-                                  </span>
-                                </motion.div>
-                              )
-                            )
+                          {customer.medicalHistory.specificMentalDisorders?.length > 0 ? (
+                            customer.medicalHistory.specificMentalDisorders.map((disorder) => (
+                              <motion.div
+                                key={disorder.id}
+                                className="flex items-start gap-2 mb-2"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.3 }}
+                              >
+                                <FaBrain className="text-red-500 mt-1" />
+                                <span className="">
+                                  <strong>{disorder.name}:</strong> {disorder.description}
+                                </span>
+                              </motion.div>
+                            ))
                           ) : (
-                            <p className="text-gray-600">
-                              No mental disorders recorded.
-                            </p>
+                            <p className="text-gray-600">No mental disorders recorded.</p>
                           )}
                         </div>
-                        <div className="bg-pink-50 p-4 rounded-lg">
-                          <p className="font-semibold text-pink-700 mb-2">
+                        <div className="bg-blue-50 p-4 rounded-lg">
+                          <p className="font-medium text-blue-600 mb-2">
                             Physical Symptoms:
                           </p>
-                          {customer.medicalHistory.physicalSymptoms?.length >
-                            0 ? (
-                            customer.medicalHistory.physicalSymptoms.map(
-                              (symptom) => (
-                                <motion.div
-                                  key={symptom.id}
-                                  className="flex items-start gap-2 mb-2"
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{ duration: 0.3 }}
-                                >
-                                  <FaHeartbeat className="text-pink-500 mt-1" />
-                                  <span className="text-gray-800">
-                                    <strong>{symptom.name}:</strong>{" "}
-                                    {symptom.description}
-                                  </span>
-                                </motion.div>
-                              )
-                            )
+                          {customer.medicalHistory.physicalSymptoms?.length > 0 ? (
+                            customer.medicalHistory.physicalSymptoms.map((symptom) => (
+                              <motion.div
+                                key={symptom.id}
+                                className="flex items-start gap-2 mb-2"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.3 }}
+                              >
+                                <FaHeartbeat className="text-blue-600 mt-1" />
+                                <span className="">
+                                  <strong>{symptom.name}:</strong> {symptom.description}
+                                </span>
+                              </motion.div>
+                            ))
                           ) : (
-                            <p className="text-gray-600">
-                              No physical symptoms recorded.
-                            </p>
+                            <p className="text-gray-600">No physical symptoms recorded.</p>
                           )}
                         </div>
-                        <p className="flex items-center gap-2 text-gray-800 bg-green-50 p-3 rounded-lg">
-                          <FaAllergies className="text-green-500" />
-                          <span className="font-medium">
-                            Allergies:{" "}
-                            <span className="text-green-700">
-                              {customer.medicalHistory.allergies || "N/A"}
-                            </span>
-                          </span>
-                        </p>
+
                       </div>
                     </div>
                   ) : (
-                    <p className="text-gray-600">
-                      No medical history available.
-                    </p>
+                    <p className="text-gray-600">No medical history available.</p>
                   )}
                 </motion.div>
 
                 <motion.div
-                  className="bg-white rounded-2xl shadow-xl p-6 border-2 border-purple-200"
-                  whileHover={{
-                    scale: 1.02,
-                    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-                  }}
+                  className="bg-white rounded-xl shadow-lg p-6 border border-[#e4c1f9]/20"
+                  whileHover={{ scale: 1.01, boxShadow: "0 6px 15px rgba(0,0,0,0.1)" }}
                 >
-                  <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent flex items-center gap-2 mb-6">
-                    <FaHistory className="text-purple-500" /> Medical Records
+                  <h3 className="text-xl font-semibold bg-gradient-to-r from-[#6a4c93] to-[#e4c1f9] bg-clip-text text-blue-500 flex items-center gap-2 mb-4">
+                    <FaHistory className="text-blue-500" /> Medical Records
                   </h3>
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {customer.medicalRecords?.length > 0 ? (
                       customer.medicalRecords.map((record) => (
                         <motion.div
                           key={record.id}
-                          className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-xl border border-gray-100"
+                          className="bg-[#faf3e0]/20 p-4 rounded-lg border border-[#e4c1f9]/10"
                           initial={{ y: 20, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
                           transition={{ duration: 0.4 }}
                         >
                           <p className="flex items-center gap-2 text-gray-800 mb-2">
-                            <FaNotesMedical className="text-cyan-500" />
+                            <FaNotesMedical className="text-[#6a4c93]" />
                             <span className="font-medium">
                               <strong>Notes:</strong> {record.notes}
                             </span>
                           </p>
                           <p className="flex items-center gap-2 text-gray-800 mb-2">
                             <FaHeartbeat
-                              className={`text-${record.status === "Processing"
-                                ? "yellow"
-                                : "green"
-                                }-500`}
+                              className={`text-${record.status === "Processing" ? "#e4c1f9" : "#6a4c93"}`}
                             />
                             <span className="font-medium">
                               <strong>Status: </strong>
                               <span
-                                className={`text-${record.status === "Processing"
-                                  ? "yellow"
-                                  : "green"
-                                  }-600`}
+                                className={`text-${record.status === "Processing" ? "#e4c1f9" : "#6a4c93"}`}
                               >
                                 {record.status}
                               </span>
                             </span>
                           </p>
                           <p className="flex items-center gap-2 text-gray-800">
-                            <FaCalendarAlt className="text-purple-500" />
+                            <FaCalendarAlt className="text-[#6a4c93]" />
                             <span className="font-medium">
-                              Created:{" "}
-                              {record.createdAt !== "N/A"
+                              Created:{" "
+                              }{record.createdAt !== "N/A"
                                 ? new Date(record.createdAt).toLocaleDateString()
                                 : "N/A"}
                             </span>
                           </p>
                           {record.specificMentalDisorders?.length > 0 && (
-                            <div className="mt-4 bg-cyan-50 p-4 rounded-lg">
-                              <p className="font-semibold text-cyan-700 mb-2">
+                            <div className="mt-3 bg-[#e4c1f9]/20 p-3 rounded-lg">
+                              <p className="font-medium text-red-500 mb-1">
                                 Disorders:
                               </p>
-                              {record.specificMentalDisorders.map(
-                                (disorder) => (
-                                  <div
-                                    key={disorder.id}
-                                    className="flex items-start gap-2 mb-2"
-                                  >
-                                    <FaBrain className="text-cyan-500 mt-1" />
-                                    <span className="text-gray-800">
-                                      <strong>{disorder.name}:</strong>{" "}
-                                      {disorder.description}
-                                    </span>
-                                  </div>
-                                )
-                              )}
+                              {record.specificMentalDisorders.map((disorder) => (
+                                <div key={disorder.id} className="flex items-start gap-2 mb-1">
+                                  <FaBrain className="text-red-500 mt-0.5" />
+                                  <span className="text-red-600">
+                                    <strong>{disorder.name}:</strong> {disorder.description}
+                                  </span>
+                                </div>
+                              ))}
                             </div>
                           )}
                         </motion.div>
                       ))
                     ) : (
-                      <p className="text-gray-600">
-                        No medical records available.
-                      </p>
+                      <p className="text-gray-600">No medical records available.</p>
                     )}
                   </div>
                 </motion.div>
               </>
             ) : (
               <motion.div
-                className="bg-white rounded-2xl shadow-xl p-6 border-2 border-blue-200"
-                whileHover={{
-                  scale: 1.02,
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-                }}
+                className="bg-white rounded-xl shadow-lg p-6 border border-[#e4c1f9]/20"
+                whileHover={{ scale: 1.01, boxShadow: "0 6px 15px rgba(0,0,0,0.1)" }}
               >
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent flex items-center gap-2 mb-4">
-                  <FaHistory className="text-blue-500" /> Patient History
+                <h3 className="text-xl font-semibold bg-gradient-to-r from-[#6a4c93] to-[#e4c1f9] bg-clip-text text-transparent flex items-center gap-2 mb-4">
+                  <FaHistory className="text-[#6a4c93]" /> Patient History
                 </h3>
                 <HistoryPatient />
               </motion.div>
             )}
           </div>
         </div>
-
-        <motion.button
-          onClick={() => navigate("/manager/viewCustomer")}
-          className="mt-8 w-full max-w-md mx-auto block bg-gradient-to-r from-purple-600 to-cyan-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:from-purple-700 hover:to-cyan-700 transition-all"
-          whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}
-          whileTap={{ scale: 0.95 }}
-        >
-          Back to Customers
-        </motion.button>
       </div>
     </motion.div>
   );
