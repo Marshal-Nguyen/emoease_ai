@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   LineChart,
   Line,
@@ -31,7 +31,7 @@ import { useNavigate } from "react-router-dom";
 import Loader from "../../../components/Web/Loader";
 
 // Environment variable for API base URL
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://mental-care-server-nodenet.onrender.com";
+const API_BASE_URL = import.meta.env.VITE_API;
 
 // Utility to get first and last day of the month
 const getMonthDateRange = (year, month) => {
@@ -328,7 +328,7 @@ export default function Dashboard() {
         testTrendsResponse,
       ] = await Promise.all([
         fetch(
-          `${API_BASE_URL}/api/payment-zalo/daily-total?StartDate=${dates.start}&EndDate=${dates.end}`,
+          `${API_BASE_URL}/payment-zalo/daily-total?StartDate=${dates.start}&EndDate=${dates.end}`,
           {
             method: "GET",
             headers: {
@@ -338,7 +338,7 @@ export default function Dashboard() {
           }
         ),
         fetch(
-          `${API_BASE_URL}/api/bookings?StartDate=${dates.start}&EndDate=${dates.end}&Status=CheckIn`,
+          `${API_BASE_URL}/bookings?StartDate=${dates.start}&EndDate=${dates.end}&Status=CheckIn`,
           {
             method: "GET",
             headers: {
@@ -347,7 +347,7 @@ export default function Dashboard() {
             },
           }
         ),
-        fetch(`${API_BASE_URL}/api/doctor-profiles`, {
+        fetch(`${API_BASE_URL}/doctor-profiles`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -355,7 +355,7 @@ export default function Dashboard() {
           },
         }),
         fetch(
-          `${API_BASE_URL}/api/patient-statistics?startDate=${dates.start}&endDate=${dates.end}`,
+          `${API_BASE_URL}/patient-statistics?startDate=${dates.start}&endDate=${dates.end}`,
           {
             method: "GET",
             headers: {
@@ -365,7 +365,7 @@ export default function Dashboard() {
           }
         ),
         fetch(
-          `${API_BASE_URL}/api/topdoctors/view?startDate=${dates.start}&endDate=${dates.end}`,
+          `${API_BASE_URL}/topdoctors/view?startDate=${dates.start}&endDate=${dates.end}`,
           {
             method: "GET",
             headers: {
@@ -375,7 +375,7 @@ export default function Dashboard() {
           }
         ),
         fetch(
-          `${API_BASE_URL}/api/test-view/statistics?startDate=${dates.start}&endDate=${dates.end}`,
+          `${API_BASE_URL}/test-view/statistics?startDate=${dates.start}&endDate=${dates.end}`,
           {
             method: "GET",
             headers: {
@@ -385,7 +385,7 @@ export default function Dashboard() {
           }
         ),
         fetch(
-          `${API_BASE_URL}/api/test-view/trends?startDate=${dates.start}&endDate=${dates.end}`,
+          `${API_BASE_URL}/test-view/trends?startDate=${dates.start}&endDate=${dates.end}`,
           {
             method: "GET",
             headers: {
