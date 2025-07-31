@@ -343,7 +343,7 @@ const TaskProgressChart = () => {
 
         {/* Chart container */}
         <div className="flex-1">
-          <div className="relative bg-gray-50 rounded-lg p-2 h-52">
+          <div className="relative rounded-lg p-2 h-52">
             {/* Grid lines */}
             <div className="absolute inset-0 pointer-events-none">
               <div className="h-44 mt-16 flex flex-col justify-between">
