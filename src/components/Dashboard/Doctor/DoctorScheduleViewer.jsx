@@ -335,7 +335,15 @@ export default function DoctorScheduleViewer({ doctorId }) {
           fetchSchedule(selectedDate);
         }
         setIsModalOpen(false); // Đóng modal sau khi thành công
-        toast.success(createScheduleMessage.text);
+        toast.success("Lịch làm việc đã được tạo thành công!", {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        });
       } else {
         setCreateScheduleMessage({
           type: "error",
@@ -452,18 +460,15 @@ export default function DoctorScheduleViewer({ doctorId }) {
                 className={`flex justify-center items-center h-10 rounded-full
                   cursor-pointer transition-colors duration-200
                   ${isEligible ? "hover:bg-purple-100" : "opacity-70"}
-                  ${
-                    isSelectedDate ? "bg-purple-600 text-white font-medium" : ""
+                  ${isSelectedDate ? "bg-purple-600 text-white font-medium" : ""
                   }
-                  ${
-                    isTodayDate && !isSelectedDate
-                      ? "border border-purple-500 font-medium"
-                      : ""
+                  ${isTodayDate && !isSelectedDate
+                    ? "border border-purple-500 font-medium"
+                    : ""
                   }
-                  ${
-                    currentDate < todayDate && !isSelectedDate
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "hover:bg-purple-100"
+                  ${currentDate < todayDate && !isSelectedDate
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "hover:bg-purple-100"
                   }
                   
                 `}
@@ -492,10 +497,9 @@ export default function DoctorScheduleViewer({ doctorId }) {
                 <div
                   key={i}
                   className={`p-3 border rounded-lg flex justify-between items-center
-                    ${
-                      slot.status === "Unavailable"
-                        ? "bg-red-50 border-red-200"
-                        : slot.status === "Booked"
+                    ${slot.status === "Unavailable"
+                      ? "bg-red-50 border-red-200"
+                      : slot.status === "Booked"
                         ? "bg-blue-50 border-blue-200"
                         : "bg-green-50 border-green-200"
                     }
@@ -510,10 +514,9 @@ export default function DoctorScheduleViewer({ doctorId }) {
                   </div>
                   <span
                     className={`px-2 py-1 rounded-full text-xs font-medium
-                      ${
-                        slot.status === "Unavailable"
-                          ? "bg-red-100 text-red-800"
-                          : slot.status === "Booked"
+                      ${slot.status === "Unavailable"
+                        ? "bg-red-100 text-red-800"
+                        : slot.status === "Booked"
                           ? "bg-blue-100 text-blue-800"
                           : "bg-green-100 text-green-800"
                       }
@@ -688,12 +691,11 @@ export default function DoctorScheduleViewer({ doctorId }) {
                         scheduleForm.year === today.getFullYear() &&
                         month < today.getMonth() + 1
                       }
-                      className={`${
-                        scheduleForm.year === today.getFullYear() &&
-                        month < today.getMonth() + 1
+                      className={`${scheduleForm.year === today.getFullYear() &&
+                          month < today.getMonth() + 1
                           ? "text-gray-400"
                           : "text-gray-800"
-                      } bg-white hover:bg-indigo-50 transition-colors duration-200`}
+                        } bg-white hover:bg-indigo-50 transition-colors duration-200`}
                     >
                       Month {month}
                     </option>
@@ -731,11 +733,10 @@ export default function DoctorScheduleViewer({ doctorId }) {
               <button
                 onClick={createSchedule}
                 disabled={isCreatingSchedule}
-                className={`mt-6 p-3 rounded-lg font-medium text-white flex items-center justify-center w-full transition-all duration-200 ${
-                  isCreatingSchedule
+                className={`mt-6 p-3 rounded-lg font-medium text-white flex items-center justify-center w-full transition-all duration-200 ${isCreatingSchedule
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-indigo-600 hover:bg-indigo-700 active:scale-95"
-                }`}
+                  }`}
               >
                 {isCreatingSchedule ? (
                   <span>Creating...</span>
