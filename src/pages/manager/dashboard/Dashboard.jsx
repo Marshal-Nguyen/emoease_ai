@@ -35,11 +35,26 @@ const API_BASE_URL = import.meta.env.VITE_API;
 
 // Utility to get first and last day of the month
 const getMonthDateRange = (year, month) => {
-  const start = new Date(year, month - 1, 1).toISOString().split("T")[0];
-  const end = new Date(year, month, 0).toISOString().split("T")[0];
-  return { start, end };
+  // Tạo ngày đầu tháng
+  const startDate = new Date(Date.UTC(year, month - 1, 1));
+  // Tạo ngày cuối tháng
+  const endDate = new Date(Date.UTC(year, month, 0));
+
+  // Định dạng ngày thành YYYY-MM-DD
+  const formatDate = (date) => {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  return {
+    start: formatDate(startDate),
+    end: formatDate(endDate)
+  };
 };
 
+console.log(">>>> checkkk", getMonthDateRange(2025, 8));
 const COLORS = {
   primary: "#4F46E5",
   secondary: "#F472B6",
