@@ -8,6 +8,7 @@ const MentalHealthDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const profileId = useSelector((state) => state.auth.profileId);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const fetchLatestTestResult = async () => {
@@ -206,22 +207,7 @@ const MentalHealthDashboard = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-2 bg-[#fff0]">
-      {/* Debug Panel - Remove in production */}
-      {/* {process.env.NODE_ENV === "development" && (
-        <div className="mb-4 p-3 bg-gray-100 rounded-lg text-xs">
-          <details>
-            <summary className="cursor-pointer font-semibold">
-              Debug Info (Click to expand)
-            </summary>
-            <pre className="mt-2 overflow-auto">
-              Profile ID: {profileId}
-              {"\n"}Latest Test: {JSON.stringify(latestTest, null, 2)}
-            </pre>
-          </details>
-        </div>
-      )} */}
-
+    <div className="max-w-4xl mx-auto px-4 py-2 bg-[#fff0] p-5 rounded-2xl shadow-lg border-l-4 border-purple-500">
       {/* Test Date Info */}
       <div className="text-center mb-4">
         <p className="text-sm text-gray-600">
@@ -313,110 +299,91 @@ const MentalHealthDashboard = () => {
       </div>
 
       {/* Recommendations Section */}
-      <div className="bg-white rounded-xl px-6 py-3 shadow-sm mt-4">
-        <h2 className="text-lg font-semibold mb-3 text-center">
-          Recommendations:
-        </h2>
+      {/* <div> */}
+      {recommendations && recommendations.length > 0 ? (
+        <div>
+          <h2 className="text-lg font-semibold mb-3 text-center">
+            Recommendations:
+          </h2>
 
-        {recommendations && recommendations.length > 0 ? (
-          <>
-            <div className="space-y-4">
-              {recommendations.map((text, index) => (
-                <div
-                  key={index}
-                  className="bg-white p-5 rounded-2xl shadow-lg border-l-4 border-purple-500"
+          <div
+            className={`space-y-6 ${
+              !showAll ? "max-h-96 overflow-hidden" : ""
+            }`}
+          >
+            {recommendations.map((text, index) => (
+              <div key={index} className=" pb-5">
+                <ReactMarkdown
+                  components={{
+                    h1: ({ node, ...props }) => (
+                      <h1
+                        className="text-xl font-bold text-purple-700 mt-4 mb-2"
+                        {...props}
+                      />
+                    ),
+                    h2: ({ node, ...props }) => (
+                      <h2
+                        className="text-lg font-semibold text-purple-600 mt-3 mb-2"
+                        {...props}
+                      />
+                    ),
+                    h3: ({ node, ...props }) => (
+                      <h3
+                        className="text-base font-semibold text-indigo-600 mt-2 mb-1"
+                        {...props}
+                      />
+                    ),
+                    p: ({ node, ...props }) => (
+                      <p className="text-gray-700 mb-2" {...props} />
+                    ),
+                    ul: ({ node, ...props }) => (
+                      <ul className="list-disc list-inside mb-2" {...props} />
+                    ),
+                    li: ({ node, ...props }) => (
+                      <li className="ml-4 text-gray-700" {...props} />
+                    ),
+                    strong: ({ node, ...props }) => (
+                      <strong
+                        className="text-pink-600 font-semibold"
+                        {...props}
+                      />
+                    ),
+                    em: ({ node, ...props }) => (
+                      <em className="text-indigo-500" {...props} />
+                    ),
+                  }}
                 >
-                  <ReactMarkdown
-                    components={{
-                      h1: ({ node, ...props }) => (
-                        <h1
-                          className="text-xl font-bold text-purple-700 mt-4 mb-2"
-                          {...props}
-                        />
-                      ),
-                      h2: ({ node, ...props }) => (
-                        <h2
-                          className="text-lg font-semibold text-purple-600 mt-3 mb-2"
-                          {...props}
-                        />
-                      ),
-                      h3: ({ node, ...props }) => (
-                        <h3
-                          className="text-base font-semibold text-indigo-600 mt-2 mb-1"
-                          {...props}
-                        />
-                      ),
-                      p: ({ node, ...props }) => (
-                        <p className="text-gray-700 mb-2" {...props} />
-                      ),
-                      ul: ({ node, ...props }) => (
-                        <ul className="list-disc list-inside mb-2" {...props} />
-                      ),
-                      li: ({ node, ...props }) => (
-                        <li className="ml-4 text-gray-700" {...props} />
-                      ),
-                      strong: ({ node, ...props }) => (
-                        <strong
-                          className="text-pink-600 font-semibold"
-                          {...props}
-                        />
-                      ),
-                      em: ({ node, ...props }) => (
-                        <em className="text-indigo-500" {...props} />
-                      ),
-                    }}
-                  >
-                    {text}
-                  </ReactMarkdown>
-                </div>
-              ))}
-            </div>
-
-            {recommendations.length > 2 && (
-              <div className="flex justify-center mt-4">
-                <button
-                  onClick={() => setShowAll(!showAll)}
-                  className="text-sm text-purple-600 hover:underline font-medium"
-                >
-                  {showAll ? "Thu gọn ▲" : "Hiển thị thêm ▼"}
-                </button>
+                  {text}
+                </ReactMarkdown>
               </div>
-            )}
-          </>
-        ) : (
-          <div className="bg-gray-50 rounded-xl p-6">
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-6 bg-gray-300 rounded animate-pulse"
-                />
-              ))}
-            </div>
-            <p className="text-gray-500 text-center mt-4 italic">
-              No recommendations available
-            </p>
+            ))}
           </div>
-        )}
-      </div>
 
-      {/* Test Details */}
-      {/* <div className="mt-4 text-center">
-        <p className="text-xs text-gray-500">
-          Test ID: {latestTest.Id} | Patient ID: {latestTest.PatientId}
-        </p>
-        {latestTest.TestId && (
-          <p className="text-xs text-gray-500">
-            Assessment ID: {latestTest.TestId}
+          {recommendations.length === 1 && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className="text-sm text-purple-600 hover:underline font-medium"
+              >
+                {showAll ? "Thu gọn ▲" : "Hiển thị thêm ▼"}
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="bg-gray-50 rounded-xl p-6">
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-6 bg-gray-300 rounded animate-pulse" />
+            ))}
+          </div>
+          <p className="text-gray-500 text-center mt-4 italic">
+            No recommendations available
           </p>
-        )}
-        {latestTest.CreatedBy && (
-          <p className="text-xs text-gray-500">
-            Created by: {latestTest.CreatedBy}
-          </p>
-        )}
-      </div> */}
+        </div>
+      )}
     </div>
+    // </div>
   );
 };
 
