@@ -333,7 +333,7 @@ const TaskProgressChart = () => {
 
       <div className="flex gap-2">
         {/* Percentage scale */}
-        <div className="w-6 flex flex-col justify-between h-32 text-xs text-gray-500">
+        <div className="w-6 flex flex-col mt-16 justify-between h-44 text-xs text-gray-500">
           {percentageScaleLabels.map((label, index) => (
             <div key={index} className="flex items-center justify-end">
               <span className="text-xs">{label}</span>
@@ -343,19 +343,21 @@ const TaskProgressChart = () => {
 
         {/* Chart container */}
         <div className="flex-1">
-          <div className="relative bg-gray-50 rounded-lg p-2 h-32">
+          <div className="relative rounded-lg p-2 h-52">
             {/* Grid lines */}
-            <div className="absolute inset-2 flex flex-col justify-between pointer-events-none">
-              {[0, 1, 2, 3, 4, 5].map((index) => (
-                <div
-                  key={index}
-                  className="w-full border-t border-gray-200 h-0"
-                ></div>
-              ))}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="h-44 mt-16 flex flex-col justify-between">
+                {[...Array(6)].map((_, index) => (
+                  <div
+                    key={index}
+                    className="w-full border-t border-gray-200"
+                  />
+                ))}
+              </div>
             </div>
 
             {/* Chart bars */}
-            <div className="relative h-full flex items-end justify-between">
+            <div className="relative h-full mt-16 flex items-end justify-between">
               {animatedBars.length === 0 ? (
                 /* No data state */
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
@@ -388,7 +390,7 @@ const TaskProgressChart = () => {
                     key={index}
                     className="flex flex-col items-center flex-1 max-w-6 group"
                   >
-                    <div className="w-full h-24 bg-gray-100 rounded-md relative overflow-hidden border border-gray-200 transition-all">
+                    <div className="w-full h-52 bg-gray-100 rounded-md relative border border-gray-200 transition-all">
                       <div
                         className={`absolute bottom-0 w-full rounded-md transition-all duration-700 ease-out ${
                           item.percentage === 100
