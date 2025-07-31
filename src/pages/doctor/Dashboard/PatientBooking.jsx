@@ -172,7 +172,26 @@ const PatientBooking = () => {
     }
   };
 
-  const handleCheckIn = (bookingId) => {
+  const handleCheckIn = (bookingId, bookingDate) => {
+    // Kiểm tra ngày hiện tại với ngày booking
+    const today = new Date();
+    const bookingDateObj = new Date(bookingDate);
+
+    // So sánh chỉ ngày, không tính giờ
+    const todayDateString = today.toDateString();
+    const bookingDateString = bookingDateObj.toDateString();
+
+    if (bookingDateString > todayDateString) {
+      toast.error("Chưa đến ngày hẹn, không thể Check In!");
+      return;
+    }
+
+    if (bookingDateString < todayDateString) {
+      toast.error("Đã quá ngày hẹn, không thể Check In!");
+      return;
+    }
+
+    // Nếu đúng ngày thì cho phép Check In
     updateBookingStatus(bookingId, "CheckIn");
   };
 
@@ -313,7 +332,7 @@ const PatientBooking = () => {
                                 patient.Status !== "Cancelled" && (
                                   <button
                                     className="px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors duration-150"
-                                    onClick={() => handleCheckIn(patient.Id)}
+                                    onClick={() => handleCheckIn(patient.Id, patient.Date)}
                                   >
                                     Check In
                                   </button>
