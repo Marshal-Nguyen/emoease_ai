@@ -26,30 +26,47 @@ const TaskProgressChart = () => {
     let startDate, endDate;
 
     switch (period) {
-      case "Tuần này":
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay());
+      case "Tuần này": {
+        // Tính tuần này (Thứ 2 -> Chủ nhật)
+        const currentDayOfWeek = today.getDay(); // 0=CN, 1=T2, ..., 6=T7
+
+        startDate = new Date(today);
+        if (currentDayOfWeek === 0) {
+          // Nếu hôm nay là Chủ nhật, lấy Thứ 2 của tuần này (6 ngày trước)
+          startDate.setDate(today.getDate() - 6);
+        } else {
+          // Các ngày khác, lùi về Thứ 2 đầu tuần
+          startDate.setDate(today.getDate() - (currentDayOfWeek - 1));
+        }
+        startDate.setHours(0, 0, 0, 0);
+
+        endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 6); // Thêm 6 ngày = Chủ nhật
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      }
+
+      case "2 tuần qua": {
+        // 14 ngày trước đến hôm nay
         endDate = new Date(today);
-        endDate.setDate(startOfWeek.getDate() + 6);
-        startDate = startOfWeek;
-        break;
-      case "Tuần trước":
-        const lastWeekStart = new Date(today);
-        lastWeekStart.setDate(today.getDate() - today.getDay() - 7);
-        const lastWeekEnd = new Date(lastWeekStart);
-        lastWeekEnd.setDate(lastWeekStart.getDate() + 6);
-        startDate = lastWeekStart;
-        endDate = lastWeekEnd;
-        break;
-      case "30 ngày qua":
+        endDate.setHours(23, 59, 59, 999);
+
         startDate = new Date(today);
-        startDate.setDate(today.getDate() - 30);
-        endDate = today;
+        startDate.setDate(today.getDate() - 13); // 14 ngày (bao gồm hôm nay)
+        startDate.setHours(0, 0, 0, 0);
         break;
-      default:
+      }
+
+      default: {
+        // Fallback: 7 ngày qua
+        endDate = new Date(today);
+        endDate.setHours(23, 59, 59, 999);
+
         startDate = new Date(today);
-        startDate.setDate(today.getDate() - 7);
-        endDate = today;
+        startDate.setDate(today.getDate() - 6); // 7 ngày (bao gồm hôm nay)
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      }
     }
 
     return {
@@ -158,8 +175,8 @@ const TaskProgressChart = () => {
     }
   }, [profileId, selectedPeriod]);
 
-  // Percentage scale labels
-  const percentageScaleLabels = ["0", "20%", "40%", "60%", "80%", "100%"];
+  // Percentage scale labels - tạo array mới thay vì reverse array gốc
+  const percentageScaleLabels = ["100%", "80%", "60%", "40%", "20%", "0"];
 
   // Animation effect for bars when data changes
   useEffect(() => {
@@ -178,6 +195,20 @@ const TaskProgressChart = () => {
       return () => clearTimeout(timer);
     }
   }, [selectedPeriod, treatmentData.bars]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isDropdownOpen && !event.target.closest(".dropdown-container")) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -202,10 +233,10 @@ const TaskProgressChart = () => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-md p-6 w-full mx-auto">
-        <div className="text-center py-16">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải dữ liệu điều trị...</p>
+      <div className="bg-white rounded-xl shadow-sm p-3 w-full mx-auto border border-gray-100">
+        <div className="text-center py-6">
+          <div className="animate-spin rounded-full h-6 w-6 border-2 border-purple-200 border-t-purple-500 mx-auto"></div>
+          <p className="mt-2 text-xs text-gray-600">Đang tải dữ liệu...</p>
         </div>
       </div>
     );
@@ -213,11 +244,11 @@ const TaskProgressChart = () => {
 
   if (error) {
     return (
-      <div className="bg-white rounded-2xl shadow-md p-6 w-full mx-auto">
-        <div className="flex flex-col justify-center items-center h-64 text-center">
-          <div className="text-red-500 mb-4">
+      <div className="bg-white rounded-xl shadow-sm p-3 w-full mx-auto border border-gray-100">
+        <div className="flex flex-col justify-center items-center h-32 text-center">
+          <div className="text-red-500 mb-2">
             <svg
-              className="w-12 h-12 mx-auto"
+              className="w-6 h-6 mx-auto"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -230,10 +261,10 @@ const TaskProgressChart = () => {
               ></path>
             </svg>
           </div>
-          <p className="text-red-600 font-medium">{error}</p>
+          <p className="text-red-600 font-medium text-xs mb-2">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors"
+            className="px-2 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors text-xs"
           >
             Thử lại
           </button>
@@ -243,23 +274,28 @@ const TaskProgressChart = () => {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-md p-6 w-full mx-auto">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-xl font-semibold text-gray-800">
-          Tiến độ điều trị
-        </h1>
-        <div className="relative inline-block">
+    <div className="rounded-xl bg-white shadow-md p-4 border border-gray-100">
+      <div className="flex justify-between items-center mb-3">
+        <div>
+          <h1 className="text-lg font-semibold text-gray-800">
+            Tiến độ điều trị
+          </h1>
+          <p className="text-xs text-gray-500">Theo dõi quá trình phục hồi</p>
+        </div>
+        <div className="relative inline-block dropdown-container">
           <button
-            className="flex items-center bg-gray-100 border-none rounded-lg px-4 py-2 text-sm text-gray-800"
+            className="flex items-center bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-700 transition-colors"
             onClick={toggleDropdown}
           >
+            <span className="mr-1">📅</span>
             {selectedPeriod}
             <svg
-              className="w-4 h-4 ml-2"
+              className={`w-3 h-3 ml-2 transition-transform ${
+                isDropdownOpen ? "rotate-180" : ""
+              }`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
             >
               <path
                 strokeLinecap="round"
@@ -271,14 +307,23 @@ const TaskProgressChart = () => {
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-10">
-              {["Tuần này", "Tuần trước", "30 ngày qua"].map((period) => (
+            <div className="absolute right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+              {["Tuần này", "2 tuần qua"].map((period, index) => (
                 <div
                   key={period}
-                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                  className={`px-3 py-2 hover:bg-gray-50 cursor-pointer text-xs transition-colors ${
+                    selectedPeriod === period
+                      ? "bg-purple-50 text-purple-700"
+                      : "text-gray-700"
+                  } ${index !== 1 ? "border-b border-gray-100" : ""}`}
                   onClick={() => selectPeriod(period)}
                 >
-                  {period}
+                  <div className="flex items-center">
+                    <span className="mr-2 text-sm">
+                      {period === "Tuần này" ? "📅" : "📊"}
+                    </span>
+                    {period}
+                  </div>
                 </div>
               ))}
             </div>
@@ -286,22 +331,22 @@ const TaskProgressChart = () => {
         </div>
       </div>
 
-      <div className="flex">
+      <div className="flex gap-2">
         {/* Percentage scale */}
-        <div className="w-10 mr-2 flex flex-col justify-between h-56 text-xs text-gray-500">
-          {percentageScaleLabels.reverse().map((label, index) => (
-            <div key={index} className="flex items-center">
-              <span>{label}</span>
+        <div className="w-6 flex flex-col justify-between h-32 text-xs text-gray-500">
+          {percentageScaleLabels.map((label, index) => (
+            <div key={index} className="flex items-center justify-end">
+              <span className="text-xs">{label}</span>
             </div>
           ))}
         </div>
 
         {/* Chart container */}
-        <div className="w-9/12 pr-6">
-          <div className="flex h-64 items-end justify-between relative">
-            {/* Horizontal guide lines */}
-            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-              {percentageScaleLabels.map((_, index) => (
+        <div className="flex-1">
+          <div className="relative bg-gray-50 rounded-lg p-2 h-32">
+            {/* Grid lines */}
+            <div className="absolute inset-2 flex flex-col justify-between pointer-events-none">
+              {[0, 1, 2, 3, 4, 5].map((index) => (
                 <div
                   key={index}
                   className="w-full border-t border-gray-200 h-0"
@@ -309,92 +354,100 @@ const TaskProgressChart = () => {
               ))}
             </div>
 
-            {/* Check if there's data to display */}
-            {animatedBars.length === 0 ? (
-              /* No data state */
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="text-gray-400 mb-4">
-                  <svg
-                    className="w-16 h-16 mx-auto"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    ></path>
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-500 mb-2">
-                  Chưa có dữ liệu
-                </h3>
-                <p className="text-sm text-gray-400 max-w-xs">
-                  Không có dữ liệu điều trị trong khoảng thời gian "
-                  {selectedPeriod.toLowerCase()}". Hãy thử chọn khoảng thời gian
-                  khác.
-                </p>
-              </div>
-            ) : (
-              /* Bars when data exists */
-              animatedBars.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col items-center w-5 z-10"
-                  onMouseEnter={() => handleMouseEnter(item, index)}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <div className="w-full h-56 bg-gradient-to-t from-purple-50 to-purple-100 rounded-2xl relative overflow-hidden shadow-inner">
-                    <div
-                      className={`absolute bottom-0 w-full rounded-2xl transition-all duration-1000 ease-out ${
-                        item.percentage === 100
-                          ? "bg-gradient-to-t from-green-500 to-green-400"
-                          : item.percentage >= 50
-                          ? "bg-gradient-to-t from-purple-600 to-purple-500"
-                          : "bg-gradient-to-t from-orange-500 to-orange-400"
-                      }`}
-                      style={{ height: `${item.percentage}%` }}
+            {/* Chart bars */}
+            <div className="relative h-full flex items-end justify-between">
+              {animatedBars.length === 0 ? (
+                /* No data state */
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <div className="text-gray-300 mb-1">
+                    <svg
+                      className="w-6 h-6 mx-auto"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      {item.percentage > 0 && (
-                        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 text-white text-xs font-semibold">
-                          {item.percentage}%
-                        </div>
-                      )}
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.5"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      ></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-xs font-medium text-gray-400 mb-1">
+                    Chưa có dữ liệu
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    Không có dữ liệu trong {selectedPeriod.toLowerCase()}
+                  </p>
+                </div>
+              ) : (
+                /* Data bars */
+                animatedBars.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col items-center flex-1 max-w-6 group"
+                  >
+                    <div className="w-full h-24 bg-gray-100 rounded-md relative overflow-hidden border border-gray-200 transition-all">
+                      <div
+                        className={`absolute bottom-0 w-full rounded-md transition-all duration-700 ease-out ${
+                          item.percentage === 100
+                            ? "bg-gradient-to-t from-green-500 to-green-400"
+                            : item.percentage >= 75
+                            ? "bg-gradient-to-t from-blue-500 to-blue-400"
+                            : item.percentage >= 50
+                            ? "bg-gradient-to-t from-purple-500 to-purple-400"
+                            : item.percentage >= 25
+                            ? "bg-gradient-to-t from-yellow-500 to-yellow-400"
+                            : item.percentage > 0
+                            ? "bg-gradient-to-t from-red-500 to-red-400"
+                            : ""
+                        }`}
+                        style={{ height: `${item.percentage}%` }}
+                      >
+                        {item.percentage > 0 && item.percentage > 30 && (
+                          <div className="absolute top-0.5 left-1/2 transform -translate-x-1/2">
+                            <span className="inline-block bg-white/80 text-gray-700 text-xs font-semibold px-0.5 py-0.5 rounded text-center">
+                              {item.percentage}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-1 text-center">
+                      <div className="text-xs font-medium text-gray-600">
+                        {item.day}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {format(new Date(item.fullDate), "dd/MM")}
+                      </div>
                     </div>
                   </div>
-                  <div className="mt-2 text-xs font-medium text-gray-600">
-                    {item.day}
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {format(new Date(item.fullDate), "dd/MM")}
-                  </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
 
-            {/* Hover tooltip - only show when there's data */}
+            {/* Tooltip */}
             {hoverInfo && animatedBars.length > 0 && (
               <div
-                className="absolute bg-gray-800 text-white p-3 rounded-lg shadow-lg z-20 text-xs min-w-max"
+                className="absolute bg-gray-800 text-white p-2 rounded-lg shadow-lg z-30 text-xs min-w-max"
                 style={{
-                  bottom: `${hoverInfo.item.percentage + 10}%`,
-                  left: `${hoverInfo.index * 40}px`,
+                  bottom: `${Math.min(
+                    hoverInfo.item.percentage * 0.6 + 15,
+                    80
+                  )}%`,
+                  left: `${
+                    8 + (hoverInfo.index / (animatedBars.length - 1)) * 75
+                  }%`,
                   transform: "translateX(-50%)",
                 }}
               >
-                <div className="font-bold text-sm mb-1">
-                  {hoverInfo.item.day}
-                </div>
+                <div className="font-semibold mb-1">{hoverInfo.item.day}</div>
                 <div className="text-gray-300 mb-1">
-                  {hoverInfo.item.fullDate}
+                  {format(new Date(hoverInfo.item.fullDate), "dd/MM/yyyy")}
                 </div>
                 <div className="text-green-300">
                   Hoàn thành: {hoverInfo.item.percentage}%
-                </div>
-                <div className="text-gray-300 text-xs mt-1">
-                  ID: {hoverInfo.item.sessionId.slice(0, 8)}...
                 </div>
               </div>
             )}
@@ -402,27 +455,40 @@ const TaskProgressChart = () => {
         </div>
 
         {/* Metrics container */}
-        <div className="w-2/12 flex flex-col justify-center space-y-6">
+        <div className="w-36 flex flex-col justify-center space-y-2 pl-2">
           {treatmentData.metrics.map((metric, index) => (
-            <div key={index} className="flex flex-col space-y-2">
-              <div className="text-sm text-gray-500">{metric.label}</div>
+            <div
+              key={index}
+              className="bg-gray-50 rounded-lg p-2 border border-gray-100"
+            >
+              <div className="flex items-center justify-between mb-0.5">
+                <div className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                  {metric.label}
+                </div>
+                <div className="text-xs">
+                  {index === 0 ? "✅" : index === 1 ? "📊" : "📈"}
+                </div>
+              </div>
               <div className="flex flex-col">
-                <div className="text-2xl font-semibold text-gray-800">
+                <div className="text-lg font-bold text-gray-800">
                   {metric.value}
                 </div>
                 {metric.subText && (
-                  <div className="text-xs text-gray-400 mt-1">
-                    {metric.subText}
-                  </div>
+                  <div className="text-xs text-gray-500">{metric.subText}</div>
                 )}
               </div>
             </div>
           ))}
 
           {/* Period info */}
-          <div className="border-t pt-4 mt-6">
-            <div className="text-xs text-gray-500 mb-2">Khoảng thời gian</div>
-            <div className="text-xs text-gray-600">
+          <div className="bg-purple-50 rounded-lg p-2 border border-purple-100">
+            <div className="flex items-center justify-between mb-0.5">
+              <div className="text-xs font-medium text-purple-700 uppercase tracking-wide">
+                Thời gian
+              </div>
+              <div className="text-xs">📅</div>
+            </div>
+            <div className="text-xs font-semibold text-purple-800">
               {treatmentData.period.startDate && treatmentData.period.endDate
                 ? `${format(
                     new Date(treatmentData.period.startDate),

@@ -9,8 +9,8 @@ import { IoPartlySunnySharp } from "react-icons/io5";
 const formatDateKey = (date) =>
   date
     ? `${date.getFullYear()}-${(date.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`
+        .toString()
+        .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`
     : "";
 
 const isToday = (date) => {
@@ -22,25 +22,40 @@ const isToday = (date) => {
   );
 };
 
-const formatDayName = (date) => ["CN", "T2", "T3", "T4", "T5", "T6", "T7"][date.getDay()];
+const formatDayName = (date) =>
+  ["CN", "T2", "T3", "T4", "T5", "T6", "T7"][date.getDay()];
 
 const getMonthName = (date) =>
-  ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"][
-  date.getMonth()
-  ];
+  [
+    "Th1",
+    "Th2",
+    "Th3",
+    "Th4",
+    "Th5",
+    "Th6",
+    "Th7",
+    "Th8",
+    "Th9",
+    "Th10",
+    "Th11",
+    "Th12",
+  ][date.getMonth()];
 
 const getColorForPeriod = (periodName) =>
-  ({ "Buối sáng": "yellow", "Buổi chiều": "blue", "Buổi tối": "purple" })[periodName] || "gray";
+  ({ "Buổi sáng": "yellow", "Buổi chiều": "blue", "Buổi tối": "purple" }[
+    periodName
+  ] || "gray");
 
 // Reusable Components
 const DateButton = ({ date, isSelected, isToday, hasData, onClick }) => (
   <button
-    className={`flex flex-col items-center p-3 min-w-16 rounded-lg ${isSelected
-      ? "bg-purple-600 text-white"
-      : hasData
+    className={`flex flex-col items-center p-3 min-w-16 rounded-lg ${
+      isSelected
+        ? "bg-purple-600 text-white"
+        : hasData
         ? "bg-purple-100 text-purple-800 border border-purple-300"
         : `bg-white border ${isToday ? "border-purple-500" : "border-gray-200"}`
-      }`}
+    }`}
     onClick={() => onClick(date)}
   >
     <span className="text-xs font-medium">{formatDayName(date)}</span>
@@ -57,7 +72,13 @@ DateButton.propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
-const TaskItem = ({ activityId, action, periodName, taskStatus, toggleTaskStatus }) => (
+const TaskItem = ({
+  activityId,
+  action,
+  periodName,
+  taskStatus,
+  toggleTaskStatus,
+}) => (
   <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 flex items-center">
     <div className="mx-4">
       <label
@@ -97,10 +118,11 @@ const TaskItem = ({ activityId, action, periodName, taskStatus, toggleTaskStatus
         </div>
         <div>
           <span
-            className={`px-2 py-1 rounded-full text-xs ${taskStatus[activityId]
-              ? "bg-green-100 text-green-800"
-              : "bg-yellow-100 text-yellow-800"
-              }`}
+            className={`px-2 py-1 rounded-full text-xs ${
+              taskStatus[activityId]
+                ? "bg-green-100 text-green-800"
+                : "bg-yellow-100 text-yellow-800"
+            }`}
           >
             {taskStatus[activityId] ? "Hoàn thành" : "Chờ"}
           </span>
@@ -112,7 +134,10 @@ const TaskItem = ({ activityId, action, periodName, taskStatus, toggleTaskStatus
 
 TaskItem.propTypes = {
   activityId: PropTypes.string.isRequired,
-  action: PropTypes.shape({ ActionName: PropTypes.string.isRequired, Id: PropTypes.string.isRequired }).isRequired,
+  action: PropTypes.shape({
+    ActionName: PropTypes.string.isRequired,
+    Id: PropTypes.string.isRequired,
+  }).isRequired,
   periodName: PropTypes.string.isRequired,
   taskStatus: PropTypes.object.isRequired,
   toggleTaskStatus: PropTypes.func.isRequired,
@@ -164,9 +189,9 @@ const WeeklyPlanner = () => {
           RoadMap: [
             {
               PeriodId: "morning",
-              PeriodName: "Buối sáng",
+              PeriodName: "Buổi sáng",
               Actions: item.Actions.filter(
-                (action) => action.TimePeriods.PeriodName === "Buối sáng"
+                (action) => action.TimePeriods.PeriodName === "Buổi sáng"
               ).map((action) => ({
                 ActionName: action.ActionName,
                 Id: action.Id,
@@ -201,26 +226,25 @@ const WeeklyPlanner = () => {
         setActivities(processedActivities);
 
         // Store available dates as strings for comparison
-        const dates = [
-          ...new Set(
-            result.data.map((item) => item.Date)
-          ),
-        ];
+        const dates = [...new Set(result.data.map((item) => item.Date))];
         setAvailableDates(dates);
 
         // Set initial selected date to today
         setSelectedDate(new Date());
 
         // Initialize task status
-        const initialTaskStatus = processedActivities.reduce((acc, activity) => {
-          activity.RoadMap.forEach((period) => {
-            period.Actions.forEach((action, index) => {
-              acc[`${activity.Id}-${period.PeriodId}-${index}`] =
-                action.Status === "completed";
+        const initialTaskStatus = processedActivities.reduce(
+          (acc, activity) => {
+            activity.RoadMap.forEach((period) => {
+              period.Actions.forEach((action, index) => {
+                acc[`${activity.Id}-${period.PeriodId}-${index}`] =
+                  action.Status === "completed";
+              });
             });
-          });
-          return acc;
-        }, {});
+            return acc;
+          },
+          {}
+        );
         setTaskStatus(initialTaskStatus);
       } catch (error) {
         console.error("Error loading activities:", error);
@@ -233,42 +257,44 @@ const WeeklyPlanner = () => {
     loadActivities();
   }, []);
 
-  const toggleTaskStatus = useCallback(
-    async (taskId, actionId) => {
-      setTaskStatus((prev) => {
-        const currentStatus = prev[taskId] || false;
-        const newStatus = !currentStatus;
-        const statusPayload = newStatus ? "completed" : "not_started";
+  const toggleTaskStatus = useCallback(async (taskId, actionId) => {
+    setTaskStatus((prev) => {
+      const currentStatus = prev[taskId] || false;
+      const newStatus = !currentStatus;
+      const statusPayload = newStatus ? "completed" : "not_started";
 
-        // Make API call to update status
-        fetch(`https://mental-care-server-nodenet.onrender.com/api/treatment-routes/actions/${actionId}/status`, {
+      // Make API call to update status
+      fetch(
+        `https://mental-care-server-nodenet.onrender.com/api/treatment-routes/actions/${actionId}/status`,
+        {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ status: statusPayload }),
+        }
+      )
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to update task status");
+          }
+          return response.json();
         })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Failed to update task status");
-            }
-            return response.json();
-          })
-          .then(() => {
-            toast.success(`Cập nhật trạng thái thành ${newStatus ? "Hoàn thành" : "Chờ"}!`);
-            setTaskStatus((prev) => ({ ...prev, [taskId]: newStatus }));
-          })
-          .catch((error) => {
-            console.error("Error updating status:", error);
-            toast.error("Lỗi khi cập nhật trạng thái. Vui lòng thử lại!");
-          });
+        .then(() => {
+          toast.success(
+            `Cập nhật trạng thái thành ${newStatus ? "Hoàn thành" : "Chờ"}!`
+          );
+          setTaskStatus((prev) => ({ ...prev, [taskId]: newStatus }));
+        })
+        .catch((error) => {
+          console.error("Error updating status:", error);
+          toast.error("Lỗi khi cập nhật trạng thái. Vui lòng thử lại!");
+        });
 
-        // Optimistically update UI
-        return { ...prev, [taskId]: newStatus };
-      });
-    },
-    []
-  );
+      // Optimistically update UI
+      return { ...prev, [taskId]: newStatus };
+    });
+  }, []);
 
   const progress = useMemo(() => {
     if (!activities.length) return 0;
@@ -280,7 +306,8 @@ const WeeklyPlanner = () => {
         activity.RoadMap.forEach((period) => {
           period.Actions.forEach((_, index) => {
             totalTasks++;
-            if (taskStatus[`${activity.Id}-${period.PeriodId}-${index}`]) completedTasks++;
+            if (taskStatus[`${activity.Id}-${period.PeriodId}-${index}`])
+              completedTasks++;
           });
         });
       });
@@ -313,7 +340,8 @@ const WeeklyPlanner = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <h3 className="text-lg font-bold">
-              {formatDayName(selectedDate)}, {selectedDate.getDate()} {getMonthName(selectedDate)}
+              {formatDayName(selectedDate)}, {selectedDate.getDate()}{" "}
+              {getMonthName(selectedDate)}
             </h3>
             {isToday(selectedDate) && (
               <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
@@ -334,7 +362,6 @@ const WeeklyPlanner = () => {
       <div className="bg-white rounded-lg shadow-md p-4 mb-4">
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-bold">Tiến độ hôm nay</h3>
-
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2.5">
           <div
@@ -351,9 +378,12 @@ const WeeklyPlanner = () => {
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500 mx-auto"></div>
             <p className="mt-2 text-gray-600">Đang tải...</p>
           </div>
-        ) : activities.filter((a) => a.Date === formatDateKey(selectedDate)).length === 0 ? (
+        ) : activities.filter((a) => a.Date === formatDateKey(selectedDate))
+            .length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <p className="text-gray-500">Không có hoạt động nào được lên lịch cho ngày này</p>
+            <p className="text-gray-500">
+              Không có hoạt động nào được lên lịch cho ngày này
+            </p>
           </div>
         ) : (
           <div className="relative">
@@ -369,7 +399,7 @@ const WeeklyPlanner = () => {
                           period.PeriodName
                         )}-400 rounded-full flex items-center justify-center z-10`}
                       >
-                        {period.PeriodName === "Buối sáng" && (
+                        {period.PeriodName === "Buổi sáng" && (
                           <FaSun className="text-white text-lg" />
                         )}
                         {period.PeriodName === "Buổi chiều" && (
@@ -379,7 +409,9 @@ const WeeklyPlanner = () => {
                           <FaCloudMoon className="text-white text-lg" />
                         )}
                       </div>
-                      <h3 className="ml-4 text-lg font-semibold">{period.PeriodName}</h3>
+                      <h3 className="ml-4 text-lg font-semibold">
+                        {period.PeriodName}
+                      </h3>
                     </div>
                     <div className="ml-12 space-y-4">
                       {period.Actions.map((action, index) => (
