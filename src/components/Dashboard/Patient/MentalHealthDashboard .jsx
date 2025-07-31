@@ -299,7 +299,6 @@ const MentalHealthDashboard = () => {
       </div>
 
       {/* Recommendations Section */}
-      {/* <div> */}
       {recommendations && recommendations.length > 0 ? (
         <div>
           <h2 className="text-lg font-semibold mb-3 text-center">
@@ -383,7 +382,6 @@ const MentalHealthDashboard = () => {
         </div>
       )}
     </div>
-    // </div>
   );
 };
 
