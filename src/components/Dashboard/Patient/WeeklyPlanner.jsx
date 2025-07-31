@@ -9,8 +9,8 @@ import { IoPartlySunnySharp } from "react-icons/io5";
 const formatDateKey = (date) =>
   date
     ? `${date.getFullYear()}-${(date.getMonth() + 1)
-        .toString()
-        .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`
+      .toString()
+      .padStart(2, "0")}-${date.getDate().toString().padStart(2, "0")}`
     : "";
 
 const isToday = (date) => {
@@ -42,20 +42,28 @@ const getMonthName = (date) =>
   ][date.getMonth()];
 
 const getColorForPeriod = (periodName) =>
-  ({ "Buổi sáng": "yellow", "Buổi chiều": "blue", "Buổi tối": "purple" }[
-    periodName
-  ] || "gray");
+({ "Buổi sáng": "yellow", "Buổi chiều": "blue", "Buổi tối": "purple" }[
+  periodName
+] || "gray");
 
 // Reusable Components
 const DateButton = ({ date, isSelected, isToday, hasData, onClick }) => (
   <button
-    className={`flex flex-col items-center p-3 min-w-16 rounded-lg ${
-      isSelected
-        ? "bg-purple-600 text-white"
+    // className={`flex flex-col items-center p-3 min-w-16 rounded-lg ${isSelected
+    //     ? "bg-purple-600 text-white"
+    //     : hasData
+    //       ? "bg-purple-100 text-purple-800 border border-purple-300"
+    //       : `bg-white ${isToday ? "bg-pink-100 border border-purple-500" : "border border-gray-200"}`
+    //   }`}
+    className={`flex flex-col items-center p-3 min-w-16 rounded-lg transition-all duration-200 ${isSelected
+      ? "bg-purple-600 text-white"
+      : `${isToday
+        ? "bg-pink-100 border border-purple-500"
         : hasData
-        ? "bg-purple-100 text-purple-800 border border-purple-300"
-        : `bg-white border ${isToday ? "border-purple-500" : "border-gray-200"}`
-    }`}
+          ? " border border-purple-500"
+          : "bg-white border border-gray-200"
+      }`
+      } hover:shadow-md`}
     onClick={() => onClick(date)}
   >
     <span className="text-xs font-medium">{formatDayName(date)}</span>
@@ -87,8 +95,8 @@ const TaskItem = ({
       >
         <input
           className="peer appearance-none"
-          id={`heart-${activityId}`}
-          name={`heart-${activityId}`}
+          id={`heart-${activityId} `}
+          name={`heart - ${activityId} `}
           type="checkbox"
           checked={taskStatus[activityId] || false}
           onChange={() => toggleTaskStatus(activityId, action.Id)}
@@ -118,11 +126,10 @@ const TaskItem = ({
         </div>
         <div>
           <span
-            className={`px-2 py-1 rounded-full text-xs ${
-              taskStatus[activityId]
-                ? "bg-green-100 text-green-800"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
+            className={`px - 2 py - 1 rounded - full text - xs ${taskStatus[activityId]
+              ? "bg-green-100 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+              } `}
           >
             {taskStatus[activityId] ? "Hoàn thành" : "Chờ"}
           </span>
@@ -379,7 +386,7 @@ const WeeklyPlanner = () => {
             <p className="mt-2 text-gray-600">Đang tải...</p>
           </div>
         ) : activities.filter((a) => a.Date === formatDateKey(selectedDate))
-            .length === 0 ? (
+          .length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
             <p className="text-gray-500">
               Không có hoạt động nào được lên lịch cho ngày này
