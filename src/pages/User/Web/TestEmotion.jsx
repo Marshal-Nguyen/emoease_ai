@@ -29,10 +29,10 @@ const getScoreColor = (type, score) => {
     type === "trầm cảm"
       ? "depression"
       : type === "lo âu"
-      ? "anxiety"
-      : type === "căng thẳng"
-      ? "stress"
-      : type;
+        ? "anxiety"
+        : type === "căng thẳng"
+          ? "stress"
+          : type;
 
   const severityLevels = {
     depression: [
@@ -66,10 +66,10 @@ const getScoreLevel = (type, score) => {
     type === "trầm cảm"
       ? "depression"
       : type === "lo âu"
-      ? "anxiety"
-      : type === "căng thẳng"
-      ? "stress"
-      : type;
+        ? "anxiety"
+        : type === "căng thẳng"
+          ? "stress"
+          : type;
 
   const severityLabels = {
     depression: [
@@ -113,16 +113,13 @@ const ScoreCard = ({ type, score, compact }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white ${
-        compact ? "p-3" : "p-5"
-      } rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-l-8 ${
-        borderColorMap[type] || "border-indigo-200"
-      } flex flex-col items-center justify-center`}
+      className={`bg-white ${compact ? "p-3" : "p-5"
+        } rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border-l-8 ${borderColorMap[type] || "border-indigo-200"
+        } flex flex-col items-center justify-center`}
     >
       <h3
-        className={`font-semibold text-gray-800 mb-1 flex items-center capitalize ${
-          compact ? "text-base" : "text-lg"
-        }`}
+        className={`font-semibold text-gray-800 mb-1 flex items-center capitalize ${compact ? "text-base" : "text-lg"
+          }`}
       >
         {/* Đã xóa icon */}
         {type}
@@ -393,8 +390,7 @@ const TestEmotion = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `${
-            import.meta.env.VITE_API
+          `${import.meta.env.VITE_API
           }/tests/${testId}/questions?pageIndex=1&pageSize=21`,
           {
             headers: {
@@ -542,7 +538,7 @@ const TestEmotion = () => {
   // Loading khi lấy kết quả bài test
   if (submitting) {
     return (
-      <div className="flex flex-col w-screen items-center justify-center h-screen bg-gradient-to-b from-white to-teal-200 z-50 text-center px-6">
+      <div className="flex flex-col w-screen items-center justify-center h-screen bg-gradient-to-b from-white to-purple-100 z-50 text-center px-6">
         <LoadingWithHamster />
         <p className="mt-6 text-lg md:text-xl font-semibold text-gray-700 animate-pulse">
           {loadingMessages[messageIndex]}
@@ -555,7 +551,7 @@ const TestEmotion = () => {
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
 
   return (
-    <div className="min-h-[calc(100vh-120px)] bg-gradient-to-b from-white to-teal-200 p-4 md:p-8">
+    <div className="min-h-[calc(100vh-120px)] bg-gradient-to-b from-white to-purple-100 p-4 md:p-1">
       {/* Hiển thị popup IncompleteAssessment trước */}
       <AnimatePresence>
         {showIntro && (
@@ -605,13 +601,11 @@ const TestEmotion = () => {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => handleOptionChange(option.Content)}
-                        className={`p-3 md:p-4 rounded-lg text-left transition-all duration-300 text-base font-medium ${
-                          answers[currentQuestionIndex] === option.Content
-                            ? `${colorMap[option.Content]} ${
-                                textColorMap[option.Content]
-                              } shadow-md`
-                            : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                        }`}
+                        className={`p-3 md:p-4 rounded-lg text-left transition-all duration-300 text-base font-medium ${answers[currentQuestionIndex] === option.Content
+                          ? `${colorMap[option.Content]} ${textColorMap[option.Content]
+                          } shadow-md`
+                          : "bg-gray-100 hover:bg-gray-200 text-gray-800"
+                          }`}
                       >
                         {option.Content}
                       </motion.button>
@@ -623,7 +617,7 @@ const TestEmotion = () => {
 
             {/* Nút nộp bài chỉ hiển thị khi chưa nộp bài */}
             {!submitted && (
-              <div className="mt-6 md:mt-8 flex justify-center">
+              <div className="my-4 flex justify-center">
                 {isLastQuestion && (
                   <motion.button
                     onClick={handleSubmit}
@@ -635,11 +629,11 @@ const TestEmotion = () => {
                       scale: answers[currentQuestionIndex] ? 0.95 : 1,
                     }}
                     className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all duration-300
-    ${
-      answers[currentQuestionIndex]
-        ? "bg-gradient-to-r from-emerald-500 to-indigo-500 text-white shadow-lg hover:shadow-xl"
-        : "bg-gray-300 text-gray-500 cursor-not-allowed"
-    }`}
+  ${answers[currentQuestionIndex]
+                        ? "bg-purple-500  text-white shadow-lg hover:shadow-xl"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      }`}
+
                   >
                     <span>Nộp bài</span>
                     <svg
@@ -691,11 +685,10 @@ const TestEmotion = () => {
                       <li>
                         <strong>Mức độ nghiêm trọng:</strong>{" "}
                         <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
-                            testInfo.severityLevel === "Severe"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-green-100 text-green-700"
-                          }`}
+                          className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${testInfo.severityLevel === "Severe"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-green-100 text-green-700"
+                            }`}
                         >
                           {testInfo.severityLevel}
                         </span>
