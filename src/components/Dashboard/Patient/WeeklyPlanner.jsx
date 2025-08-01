@@ -255,7 +255,7 @@ const WeeklyPlanner = () => {
         setTaskStatus(initialTaskStatus);
       } catch (error) {
         console.error("Error loading activities:", error);
-        toast.error("Lỗi khi tải hoạt động. Vui lòng thử lại!");
+        // toast.error("Lỗi khi tải hoạt động. Vui lòng thử lại!");
       } finally {
         setLoading(false);
       }

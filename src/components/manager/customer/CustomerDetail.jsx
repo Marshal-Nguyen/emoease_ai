@@ -140,7 +140,7 @@ const CustomerDetail = () => {
         setCustomer(mappedCustomer);
         setProfileImage(
           imageData.data.publicUrl ||
-          "https://cdn-healthcare.hellohealthgroup.com/2023/05/1684813854_646c381ea5d030.57844254.jpg?w=1920&q=100"
+          "https://i.pinimg.com/736x/bc/43/98/bc439871417621836a0eeea768d60944.jpg"
         );
         setLoading(false);
       } catch (err) {

@@ -312,10 +312,10 @@ const WeeklyPlanner = ({ patientId }) => {
                 });
                 setCustomActivities((prev) => ({ ...prev, ...activitiesBySession }));
             } else {
-                toast.error("Không thể lấy danh sách lộ trình điều trị.");
+                // toast.error("Không thể lấy danh sách lộ trình điều trị.");
             }
         } catch (error) {
-            toast.error("Lỗi khi lấy dữ liệu lộ trình điều trị.");
+            // toast.error("Lỗi khi lấy dữ liệu lộ trình điều trị.");
         } finally {
             setLoading(false);
         }
