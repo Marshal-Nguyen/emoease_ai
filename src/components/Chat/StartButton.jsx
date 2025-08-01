@@ -30,7 +30,8 @@ const StartButton = ({ onClick }) => {
       whileTap={{ scale: 0.95 }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5, delay: 0.2 }}>
+      transition={{ duration: 0.5, delay: 0.2 }}
+    >
       <motion.div
         className="absolute inset-0 bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 opacity-0 group-hover:opacity-80 transition-opacity duration-300"
         style={{ zIndex: 0 }}
@@ -40,7 +41,8 @@ const StartButton = ({ onClick }) => {
       <div className="relative flex items-center gap-2 z-10">
         <motion.div
           animate={{ rotate: [0, 10, -10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}>
+          transition={{ duration: 2, repeat: Infinity }}
+        >
           <MessageCircle className="w-5 h-5 text-purple-400" />
         </motion.div>
 
@@ -57,7 +59,8 @@ const StartButton = ({ onClick }) => {
             duration: 1.5,
             repeat: Infinity,
             delay: 0.5,
-          }}>
+          }}
+        >
           <Sparkles className="w-5 h-5 text-pink-400" />
         </motion.div>
       </div>
@@ -74,7 +77,8 @@ const StartButton = ({ onClick }) => {
           repeat: Infinity,
           delay: 1,
         }}
-        style={{ zIndex: 1 }}>
+        style={{ zIndex: 1 }}
+      >
         <div className="text-purple-200 text-5xl">✨</div>
       </motion.div>
     </motion.button>
