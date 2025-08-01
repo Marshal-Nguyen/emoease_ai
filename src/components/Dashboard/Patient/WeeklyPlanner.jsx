@@ -95,8 +95,8 @@ const TaskItem = ({
       >
         <input
           className="peer appearance-none"
-          id={`heart-${activityId} `}
-          name={`heart - ${activityId} `}
+          id={`heart-${activityId}`}
+          name={`heart-${activityId}`}
           type="checkbox"
           checked={taskStatus[activityId] || false}
           onChange={() => toggleTaskStatus(activityId, action.Id)}
@@ -265,13 +265,13 @@ const WeeklyPlanner = () => {
   }, []);
 
   const toggleTaskStatus = useCallback(async (taskId, actionId) => {
-    setTaskStatus((prev) => {
-      const currentStatus = prev[taskId] || false;
+    try {
+      const currentStatus = taskStatus[taskId] || false;
       const newStatus = !currentStatus;
       const statusPayload = newStatus ? "completed" : "not_started";
 
-      // Make API call to update status
-      fetch(
+      // Gọi API để cập nhật trạng thái
+      const response = await fetch(
         `https://mental-care-server-nodenet.onrender.com/api/treatment-routes/actions/${actionId}/status`,
         {
           method: "PUT",
@@ -280,28 +280,20 @@ const WeeklyPlanner = () => {
           },
           body: JSON.stringify({ status: statusPayload }),
         }
-      )
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Failed to update task status");
-          }
-          return response.json();
-        })
-        .then(() => {
-          toast.success(
-            `Cập nhật trạng thái thành ${newStatus ? "Hoàn thành" : "Chờ"}!`
-          );
-          setTaskStatus((prev) => ({ ...prev, [taskId]: newStatus }));
-        })
-        .catch((error) => {
-          console.error("Error updating status:", error);
-          toast.error("Lỗi khi cập nhật trạng thái. Vui lòng thử lại!");
-        });
+      );
 
-      // Optimistically update UI
-      return { ...prev, [taskId]: newStatus };
-    });
-  }, []);
+      if (!response.ok) {
+        throw new Error("Failed to update task status");
+      }
+
+      // Cập nhật trạng thái sau khi API thành công
+      setTaskStatus((prev) => ({ ...prev, [taskId]: newStatus }));
+      toast.success(`Cập nhật trạng thái thành ${newStatus ? "Hoàn thành" : "Chờ"}!`);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Lỗi khi cập nhật trạng thái. Vui lòng thử lại!");
+    }
+  }, [taskStatus]); // Thêm taskStatus vào dependency array
 
   const progress = useMemo(() => {
     if (!activities.length) return 0;
