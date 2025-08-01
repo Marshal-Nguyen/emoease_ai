@@ -205,8 +205,9 @@ const NavigaForWeb = () => {
   const handleTestClick = (event) => {
     console.log("userRole:", userRole);
     if (["Doctor", "Staff", "Manager"].includes(userRole)) {
-      toast.info("Bạn không thể truy cập vào bài kiểm tra!", {
-        position: "top-center",
+      event.preventDefault();
+      toast.warning("Bạn không thể truy cập vào!", {
+        position: "top-right",
         autoClose: 2000,
       });
     }
@@ -244,18 +245,20 @@ const NavigaForWeb = () => {
           </a>
           <Link
             to="learnAboutEmo"
-            className={`hover:text-purple-500 text-base ${location.pathname === "/EMO/learnAboutEmo"
-              ? "text-purple-500"
-              : ""
-              }`}
+            className={`hover:text-purple-500 text-base ${
+              location.pathname === "/EMO/learnAboutEmo"
+                ? "text-purple-500"
+                : ""
+            }`}
           >
             {shortMenu ? "Lear..." : "Learn about EmoEase"}
           </Link>
           {/* {userRole === "User" && ( */}
           <Link
             to="counselor"
-            className={`hover:text-purple-500 ${location.pathname === "/EMO/counselor" ? "text-purple-500" : ""
-              }`}
+            className={`hover:text-purple-500 ${
+              location.pathname === "/EMO/counselor" ? "text-purple-500" : ""
+            }`}
           >
             Therapist
           </Link>
@@ -288,8 +291,9 @@ const NavigaForWeb = () => {
           </a>
           <Link
             to="shop"
-            className={`hover:text-purple-500 ${location.pathname === "/EMO/shop" ? "text-purple-500" : ""
-              }`}
+            className={`hover:text-purple-500 ${
+              location.pathname === "/EMO/shop" ? "text-purple-500" : ""
+            }`}
           >
             Store
           </Link>
